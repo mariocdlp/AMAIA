@@ -7,6 +7,14 @@ description: Genera una propuesta de automatización profesional para AMAIA en G
 
 Tu trabajo es producir un Google Doc con una propuesta de automatización detallada para un cliente de AMAIA. El doc final debe transmitir la profundidad del trabajo y elevar el valor percibido — los ejemplos que el usuario tomó de referencia tienen 4-8 páginas con secciones muy específicas (pipelines numerados, workflows con triggers/acciones/exit conditions, forms con campos exactos, timeline por fases, pricing detallado).
 
+## Tech stack de AMAIA (asumir por defecto)
+
+- **HighLevel (GHL)** es la herramienta principal de toda propuesta. Asumí que la cuenta del cliente vive en GHL salvo que el usuario diga lo contrario. Pipelines, contactos, oportunidades, formularios, calendarios, workflows nativos, conversaciones (SMS/Email/WhatsApp/voz), funnels y sitios se construyen ahí.
+- **n8n** se usa para todo lo que GHL no puede hacer nativo: integraciones con APIs externas no soportadas, transformaciones complejas de datos, flujos de aprobación con sistemas internos, scraping/enriquecimiento, lógica condicional avanzada, fan-out a múltiples sistemas. Cuando incluyas un workflow de n8n, **siempre justificá por qué no se hace en GHL** ("GHL no soporta X", "se necesita procesamiento batch que GHL no permite", etc.).
+- **Stack del cliente**: cualquier herramienta que el cliente ya use o pida (CRM legacy, telefonía, pasarela de pago, ERP, agendamiento, BI, etc.) debe quedar reflejada en la sección de Integraciones, especificando si se conecta vía nativo de GHL, API directa de GHL, o n8n como puente.
+
+Si el usuario no menciona el stack del cliente en el brief, preguntá explícitamente: "¿qué herramientas usa hoy el cliente que tengamos que integrar?" antes de generar el doc.
+
 ## Flujo de la conversación
 
 ### 1. Briefing inicial
@@ -17,8 +25,8 @@ Si el usuario ya describió el proyecto, no le pidas que repita lo que ya dijo. 
 > 2. **Problema/contexto**: qué pasa hoy que no les gusta o qué quieren mejorar.
 > 3. **Objetivos**: qué resultados esperan (más leads, menos tiempo, mejor conversión, etc.).
 > 4. **Alcance**: qué procesos o canales toca la automatización (ventas, atención, agendamiento, cobros, post-venta, etc.).
-> 5. **Stack actual**: herramientas que usan (CRM, calendario, telefonía, pagos, ads, web).
-> 6. **Integraciones específicas** que tengan que sí o sí estar.
+> 5. **Stack actual del cliente**: herramientas que ya usan y queremos integrar (telefonía, pagos, ads, web, CRM legacy si están migrando, ERP, agendamiento externo, etc.). El stack base de AMAIA es **GHL + n8n** — eso ya lo asumo.
+> 6. **Integraciones específicas** que tengan que sí o sí estar, y procesos que claramente no se resuelven en GHL (ahí pongo n8n).
 > 7. **Timeline** deseado y **presupuesto** (si lo tienen definido).
 > 8. **Diferenciales** o cualquier nota de tono/marca para incluir.
 
@@ -28,10 +36,15 @@ Después del brief, identificá qué falta para producir un doc convincente. Hac
 Datos que típicamente sí necesitás confirmar:
 - Nombre exacto del cliente (para el título del doc)
 - Pricing total y desglose (a menos que el usuario haya dicho "vos decidí")
-- Si hay integraciones inusuales o stack desconocido
+- Stack que ya usa el cliente (para integraciones)
+- Si hay procesos que requieren claramente n8n (lógica que GHL no resuelve)
+- Volumen aproximado (leads/mes, contactos esperados) — impacta A2P, n8n hosting, y pricing
 
 Datos que NO debés preguntar (inferí o redactá vos):
 - Nombres de pipelines, etapas, workflows internos
+- Custom fields exactos a crear (proponé el set completo, marcalo como "propuesto, ajustable")
+- API keys / slugs de custom fields (generá vos en snake_case desde el nombre)
+- Convención de naming de tags
 - Cantidad de campos en formularios
 - Texto de mensajes de seguimiento
 - Wording de objetivos y outcomes
@@ -49,11 +62,58 @@ La estructura es **adaptable por proyecto**. Incluí solo las secciones que apor
 | **Workflows & Automation** | Casi siempre. Es el corazón del entregable. |
 | **Calendars** | Si hay agendamiento de citas o asignación de slots. |
 | **AI Agents / Chatbot** | Si parte del flujo es conversacional con IA. |
+| **Plan de Build en GHL** | **Siempre** — ver formato detallado abajo. |
+| **Workflows complementarios en n8n** | Si hay flujos que GHL no puede resolver nativo. |
 | **Integrations** | Siempre que haya 1+ integración con stack del cliente. |
 | **Reporting & Dashboards** | Si el cliente pidió métricas o el caso lo amerita. |
 | **Timeline** | Siempre. Adaptá las fases al alcance real. |
 | **Pricing** | Siempre, salvo que el usuario diga explícitamente que no lo incluyas. |
 | **Soporte & Mantenimiento** | Siempre. |
+
+### Plan de Build en GHL (obligatorio, alto detalle)
+
+Esta sección es la que más eleva el valor percibido — el cliente ve exactamente qué se va a configurar en su sub-cuenta de GHL. Incluí estos sub-bloques cuando apliquen, con tablas concretas:
+
+1. **Custom Fields — Contact**
+   Tabla con columnas: `Nombre del campo` · `API key (slug)` · `Tipo` · `Grupo/Folder` · `Opciones (si Dropdown/Multi)` · `Required` · `Propósito`.
+   Tipos válidos GHL: Text, Large Text, Number, Phone, Email, Date, Dropdown (Single), Dropdown (Multi), Checkbox, Radio, File Upload, Textbox List, Monetary, Signature.
+
+2. **Custom Fields — Opportunity**
+   Misma tabla pero para opportunities. Cada pipeline puede tener sus campos.
+
+3. **Custom Values (account-level)**
+   Variables que se reutilizan en mensajes/workflows: link de booking, número de WhatsApp, nombre del comercio, link de pago, etc. Tabla: `Nombre` · `Valor sugerido` · `Dónde se usa`.
+
+4. **Tags (convención de naming)**
+   Listá los tags con convención consistente (ej: `lead-source-google`, `qualified`, `nurture-30d`, `dbr-triggered`). Tabla: `Tag` · `Cuándo se asigna` · `Cuándo se remueve`.
+
+5. **Pipelines + Stages**
+   Para cada pipeline: nombre, cantidad de stages, lista numerada de stages con goal de cada uno (esto puede solaparse con la sección Customer Journey — si la incluiste arriba, acá podés referenciarla y solo agregar el detalle técnico de orden y triggers de cambio de stage).
+
+6. **Forms & Surveys (GHL)**
+   Si ya tenés sección de Forms arriba, acá solo el detalle de implementación: en qué embed/funnel/standalone va cada uno, redirect post-submit, workflow disparado.
+
+7. **Calendars (GHL)**
+   Tipo (Round Robin / Class / Collective / Service), team members, slot duration, buffer, working hours, form de booking asociado, custom fields del booking, confirmation/reminder workflows.
+
+8. **Workflows nativos GHL**
+   Para cada uno: nombre, trigger (event-based, contact tag, form submit, appointment, pipeline stage change, etc.), pasos numerados (Send SMS, Send Email, If/Else, Wait, Update Field, Add Tag, Remove Tag, Create Opportunity, Move to Stage, Webhook, Math, etc.), exit conditions.
+
+9. **Triggers links / Snapshot items**
+   Si hay trigger links (clicks que disparan workflows), listalos. Si la entrega incluye un snapshot exportable, mencionalo.
+
+10. **Conversaciones — Templates**
+    SMS, Email (subject + preview), WhatsApp templates si aplica. Para cada uno: nombre del template, canal, momento del journey en que se envía, cuerpo (puede ser sample, no literal).
+
+11. **Memberships / Funnels / Websites**
+    Solo si aplica. Páginas a construir, formularios embebidos, dominio.
+
+12. **Sub-cuenta y configuración inicial**
+    Bullet list: creación de sub-account, branding (logo, colores), dominio custom, A2P registration (US), número(s) telefónico(s) a provisionar, SMTP/email sending domain, integraciones nativas a conectar (Google, Facebook, Stripe, etc.), users/roles internos del cliente.
+
+### Workflows complementarios en n8n (cuando aplique)
+
+Para cada workflow n8n incluí: `Nombre` · `Trigger` (webhook desde GHL / cron / evento externo) · `Nodos principales` (numerados con la lógica) · `Sistemas que toca` · `Por qué no se hace nativo en GHL` · `Manejo de errores` (retry, alerta a Slack/email, logging). Mencioná dónde se hostea n8n (cloud propio de AMAIA o instancia del cliente).
 
 ### 4. Generar el HTML
 Usá el archivo `template.html` de este mismo skill como referencia visual y de estructura. Construí el HTML completo en memoria (no lo escribas a disco) siguiendo estas reglas:
@@ -99,7 +159,8 @@ Devolvé al usuario:
 - **NO** inventes números de pricing si el usuario no los dio. Si no hay precio, dejá la sección con un placeholder claro (`[A definir según alcance final]`) o omitila si el usuario lo pidió.
 - **NO** copies frases textuales de los ejemplos del colega. La estructura sí, el wording propio.
 - **SÍ** asumí defaults razonables para detalles operativos (cantidad de etapas, nombres de workflows, mensajes de follow-up) y marcalos como editables.
-- **SÍ** mantené coherencia: si mencionás "Pipeline 003" en Workflows, debe existir en la sección Pipelines.
+- **SÍ** mantené coherencia: si mencionás "Pipeline 003" en Workflows, debe existir en la sección Pipelines. Si un workflow lee/escribe un custom field, ese campo debe figurar en el Plan de Build en GHL. Si referenciás un custom value (ej: `{{custom_values.booking_link}}`), declaralo en la tabla de Custom Values.
+- **SÍ** marcá explícitamente cada automatización como `[GHL nativo]` o `[n8n]` en la sección de Workflows. Si está en n8n, la justificación de por qué no se hace en GHL debe ser clara.
 
 ## Iteración
 

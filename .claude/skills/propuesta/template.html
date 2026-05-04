@@ -97,7 +97,7 @@
 <!-- Casi siempre presente -->
 <h2>5. Workflows & Automation</h2>
 
-<h3>Workflow 1 — {{WORKFLOW_NOMBRE}} 🤖</h3>
+<h3>Workflow 1 — {{WORKFLOW_NOMBRE}} 🤖 <em>[GHL nativo | n8n]</em></h3>
 <p><strong>Goal</strong>: {{WORKFLOW_GOAL}}</p>
 <p><strong>Triggers</strong>:</p>
 <ul>
@@ -116,7 +116,7 @@
   <li>{{EXIT_2}}</li>
 </ul>
 
-<!-- Repetir por cada workflow del proyecto -->
+<!-- Repetir por cada workflow del proyecto. Marcar siempre [GHL nativo] o [n8n] en el título. -->
 
 <!-- ============================================== -->
 <!-- {{OPTIONAL}} Si hay agendamiento -->
@@ -145,21 +145,146 @@
 <p><strong>Handoff a humano</strong>: {{CRITERIO_DE_ESCALAMIENTO}}</p>
 
 <!-- ============================================== -->
-<h2>8. Integraciones</h2>
+<!-- Obligatoria. Acá vive el "valor concreto" de la propuesta. -->
+<h2>8. Plan de Build en GHL</h2>
+
+<p>Detalle exacto de lo que se va a configurar en la sub-cuenta de HighLevel del cliente. Todo el listado es propuesto y ajustable durante la fase de relevamiento.</p>
+
+<h3>8.1. Custom Fields — Contact</h3>
+<table>
+  <thead>
+    <tr><th>Nombre</th><th>API key</th><th>Tipo</th><th>Grupo</th><th>Opciones / Default</th><th>Required</th><th>Propósito</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{NOMBRE_CAMPO}}</td><td>{{api_key_snake}}</td><td>{{TIPO}}</td><td>{{GRUPO}}</td><td>{{OPCIONES}}</td><td>{{SI_NO}}</td><td>{{PROPOSITO}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.2. Custom Fields — Opportunity</h3>
+<table>
+  <thead>
+    <tr><th>Nombre</th><th>API key</th><th>Tipo</th><th>Pipeline asociado</th><th>Opciones / Default</th><th>Propósito</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{NOMBRE}}</td><td>{{api_key}}</td><td>{{TIPO}}</td><td>{{PIPELINE}}</td><td>{{OPCIONES}}</td><td>{{PROPOSITO}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3. Custom Values (account-level)</h3>
+<table>
+  <thead>
+    <tr><th>Nombre</th><th>Slug</th><th>Valor sugerido</th><th>Dónde se usa</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{NOMBRE}}</td><td>{{slug}}</td><td>{{VALOR}}</td><td>{{USO}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.4. Tags</h3>
+<table>
+  <thead>
+    <tr><th>Tag</th><th>Cuándo se asigna</th><th>Cuándo se remueve</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{tag-slug}}</td><td>{{ASIGNACION}}</td><td>{{REMOCION}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.5. Pipelines & Stages</h3>
+<p><strong>{{NOMBRE_PIPELINE}}</strong> — {{N}} stages</p>
+<ol>
+  <li><strong>{{STAGE_NOMBRE}}</strong>: {{GOAL}} · <em>Trigger de cambio de stage</em>: {{TRIGGER}}</li>
+</ol>
+
+<h3>8.6. Calendars (GHL)</h3>
+<ul>
+  <li><strong>Nombre</strong>: {{NOMBRE_CALENDARIO}}</li>
+  <li><strong>Tipo</strong>: Round Robin / Class / Collective / Service</li>
+  <li><strong>Team members</strong>: {{LISTA_USUARIOS}}</li>
+  <li><strong>Slot duration / Buffer</strong>: {{MIN}} / {{MIN}}</li>
+  <li><strong>Working hours</strong>: {{HORARIOS}}</li>
+  <li><strong>Form de booking</strong>: {{FORM_NOMBRE}}</li>
+  <li><strong>Custom fields del booking</strong>: {{LISTA}}</li>
+  <li><strong>Confirmation / Reminder workflows</strong>: {{LISTA_WORKFLOWS}}</li>
+</ul>
+
+<h3>8.7. Workflows nativos de GHL</h3>
+<p>Listado y referencia cruzada con la sección 5. Workflows. Cada workflow marcado como <em>[GHL nativo]</em> se construye acá usando triggers y acciones nativas (Send SMS, Send Email, If/Else, Wait, Update Custom Field, Add/Remove Tag, Create Opportunity, Move to Pipeline Stage, Webhook out, Math operation, etc.).</p>
+
+<h3>8.8. Trigger Links</h3>
+<table>
+  <thead>
+    <tr><th>Nombre</th><th>URL destino</th><th>Workflow disparado al click</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{NOMBRE}}</td><td>{{URL}}</td><td>{{WORKFLOW}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.9. Templates de mensajes</h3>
+<table>
+  <thead>
+    <tr><th>Nombre</th><th>Canal</th><th>Momento</th><th>Subject (si Email)</th><th>Sample del cuerpo</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{NOMBRE}}</td><td>SMS / Email / WhatsApp</td><td>{{MOMENTO}}</td><td>{{SUBJECT}}</td><td>{{SAMPLE}}</td></tr>
+  </tbody>
+</table>
+
+<h3>8.10. Funnels / Sites / Memberships <em>{{OPTIONAL}}</em></h3>
+<ul>
+  <li>{{PAGINA_O_FUNNEL}}: {{PROPOSITO}} · dominio: {{DOMINIO}}</li>
+</ul>
+
+<h3>8.11. Setup inicial de la sub-cuenta</h3>
+<ul>
+  <li>Creación de sub-account dentro de la agencia AMAIA en GHL.</li>
+  <li>Branding: logo, colores primarios/secundarios, favicon, dominio custom ({{DOMINIO}}).</li>
+  <li>A2P 10DLC registration (si el cliente opera en US) — {{ESTADO}}.</li>
+  <li>Provisioning de número(s) telefónico(s): {{CANTIDAD}} · tipo: {{LOCAL_TOLLFREE}}.</li>
+  <li>Sending domain de email (SPF / DKIM / DMARC) configurado en {{DOMINIO_MAIL}}.</li>
+  <li>Integraciones nativas a conectar: {{GOOGLE_FACEBOOK_STRIPE_QB_ETC}}.</li>
+  <li>Usuarios y roles del cliente: {{LISTA_USUARIOS_CON_ROLES}}.</li>
+</ul>
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Solo si hay flujos que GHL no resuelve nativo -->
+<h2>9. Workflows complementarios en n8n</h2>
+
+<p>Para flujos que exceden las capacidades nativas de GHL, se construyen workflows en n8n alojados en {{INSTANCIA_AMAIA_O_CLIENTE}}.</p>
+
+<h3>n8n Workflow 1 — {{NOMBRE}}</h3>
+<ul>
+  <li><strong>Trigger</strong>: {{WEBHOOK_GHL_O_CRON_O_EVENTO}}</li>
+  <li><strong>Sistemas que toca</strong>: {{LISTA_SISTEMAS}}</li>
+  <li><strong>Por qué no se hace en GHL</strong>: {{JUSTIFICACION_TECNICA}}</li>
+</ul>
+<p><strong>Pasos</strong>:</p>
+<ol>
+  <li>{{NODO_1}}: {{DESCRIPCION}}</li>
+  <li>{{NODO_2}}: {{DESCRIPCION}}</li>
+  <li>{{NODO_3}}: {{DESCRIPCION}}</li>
+</ol>
+<p><strong>Manejo de errores</strong>: {{RETRY_POLICY_Y_ALERTAS}}</p>
+
+<!-- Repetir por cada workflow n8n -->
+
+<!-- ============================================== -->
+<h2>10. Integraciones</h2>
 
 <table>
   <thead>
-    <tr><th>Herramienta</th><th>Tipo</th><th>Propósito</th></tr>
+    <tr><th>Herramienta</th><th>Conexión</th><th>Propósito</th></tr>
   </thead>
   <tbody>
-    <tr><td>{{TOOL_1}}</td><td>{{TIPO_1}}</td><td>{{PROPOSITO_1}}</td></tr>
-    <tr><td>{{TOOL_2}}</td><td>{{TIPO_2}}</td><td>{{PROPOSITO_2}}</td></tr>
+    <tr><td>{{TOOL_1}}</td><td>Nativo GHL / API GHL / n8n</td><td>{{PROPOSITO_1}}</td></tr>
+    <tr><td>{{TOOL_2}}</td><td>Nativo GHL / API GHL / n8n</td><td>{{PROPOSITO_2}}</td></tr>
   </tbody>
 </table>
 
 <!-- ============================================== -->
 <!-- {{OPTIONAL}} Si el cliente pidió métricas -->
-<h2>9. Reporting & Dashboards</h2>
+<h2>11. Reporting & Dashboards</h2>
 
 <p><strong>KPIs trackeados</strong>:</p>
 <ul>
@@ -170,7 +295,7 @@
 <p><strong>Herramienta</strong>: {{LOOKER_GHL_NATIVO_ETC}}</p>
 
 <!-- ============================================== -->
-<h2>10. Timeline</h2>
+<h2>12. Timeline</h2>
 
 <table>
   <thead>
@@ -211,7 +336,7 @@
 </table>
 
 <!-- ============================================== -->
-<h2>11. Inversión</h2>
+<h2>13. Inversión</h2>
 
 <p><strong>Total del proyecto</strong>: {{MONEDA}} {{TOTAL}}</p>
 
@@ -229,7 +354,7 @@
 <p><strong>Soporte mensual</strong>: {{MONEDA}} {{SOPORTE}}/mes — incluye monitoreo, ajustes, hasta {{N}} horas de cambios menores y respuesta a incidentes en menos de {{X}} horas hábiles.</p>
 
 <!-- ============================================== -->
-<h2>12. Soporte y Mantenimiento</h2>
+<h2>14. Soporte y Mantenimiento</h2>
 
 <ul>
   <li><strong>Garantía post-implementación</strong>: {{N}} días de ajustes sin cargo sobre el alcance contratado.</li>
