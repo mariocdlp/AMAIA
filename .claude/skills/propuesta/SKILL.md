@@ -7,6 +7,32 @@ description: Genera una propuesta de automatización profesional para AMAIA en G
 
 Tu trabajo es producir un Google Doc con una propuesta de automatización detallada para un cliente de AMAIA. El doc final debe transmitir la profundidad del trabajo y elevar el valor percibido — los ejemplos que el usuario tomó de referencia tienen 4-8 páginas con secciones muy específicas (pipelines numerados, workflows con triggers/acciones/exit conditions, forms con campos exactos, timeline por fases, pricing detallado).
 
+## Perspectiva del proyecto
+
+AMAIA construye **directamente sobre la sub-cuenta de GHL del cliente final**. La sub-cuenta es el entregable, no un producto a revender. El cliente es un **negocio operativo** (ej: clínica, taller, inmobiliaria, agencia de viajes), no una agencia que va a revender el sistema.
+
+**Reglas duras de framing:**
+- No hablar de "cuenta maestra", "cuenta de agencia", "white-label", ni "snapshot". Todos esos son conceptos internos de AMAIA, no del cliente.
+- No incluir como entregable "creación de la sub-cuenta" o "configuración de cuenta de agencia": eso es preparación interna y no se factura como deliverable.
+- Sí incluir como entregable todo lo que se construye **dentro** de la sub-cuenta del cliente: pipelines, custom fields, workflows, funnels, agentes, integraciones, etc.
+
+## Assets a reutilizar (leelos antes de redactar)
+
+Antes de generar cualquier propuesta, leé estos archivos del mismo skill y **preferí reutilizar** su contenido en lugar de inventar wording nuevo:
+
+1. **`plan-base.md`** — convenciones de naming (pipelines `001/002`, workflows `A001/A002`, custom fields snake_case, tags kebab-case), pipeline base de captación, funnels base, workflows base con tabla A001-A005, herramientas GHL típicas, las 5 fases del cronograma con su wording, bloque completo de Soporte/Managed Services (incluidos, excluidos, SLA), y defaults de pricing.
+
+2. **`agentes-esenciales.md`** — catálogo canónico de los 5 agentes AMAIA (Chatbot Conversacional, Recepcionista Telefónica, RBD, Reseñas, RBD Reseñas) con sus capacidades y cuándo proponer cada uno.
+
+3. **`template.html`** — estructura visual y orden de secciones del doc.
+
+**Cuándo reutilizar vs. crear nuevo**:
+- Si el caso del cliente encaja con un agente del catálogo → copiá la descripción canónica adaptando solo los detalles específicos (canal, integraciones del cliente, criterios de handoff).
+- Si el flujo del proyecto encaja con el pipeline base → usá esos nombres y números, ajustando solo lo que la industria del cliente requiera distinto.
+- Si Timeline → usá las 5 fases tal cual, ajustando solo las duraciones.
+- Si Soporte → copiá el bloque completo de Managed Services, completando los `{{N}}` específicos del paquete que se ofrezca.
+- **Nunca** inventes wording nuevo cuando el plan-base ya tiene uno aprobado.
+
 ## Tech stack de AMAIA (asumir por defecto)
 
 - **HighLevel (GHL)** es la herramienta principal de toda propuesta. Asumí que la cuenta del cliente vive en GHL salvo que el usuario diga lo contrario. Pipelines, contactos, oportunidades, formularios, calendarios, workflows nativos, conversaciones (SMS/Email/WhatsApp/voz), funnels y sitios se construyen ahí.
@@ -108,8 +134,8 @@ Esta sección es la que más eleva el valor percibido — el cliente ve exactame
 11. **Memberships / Funnels / Websites**
     Solo si aplica. Páginas a construir, formularios embebidos, dominio.
 
-12. **Sub-cuenta y configuración inicial**
-    Bullet list: creación de sub-account, branding (logo, colores), dominio custom, A2P registration (US), número(s) telefónico(s) a provisionar, SMTP/email sending domain, integraciones nativas a conectar (Google, Facebook, Stripe, etc.), users/roles internos del cliente.
+12. **Configuración base de la cuenta del cliente**
+    Bullet list de configuraciones que sí van a la propuesta como entregable visible al cliente: branding (logo, colores, favicon), dominio custom, A2P 10DLC (si opera en US), número(s) telefónico(s) a provisionar, sending domain de email (SPF/DKIM/DMARC), integraciones nativas a conectar (Google, Facebook, Stripe, Mercado Pago, etc.), usuarios y roles del equipo del cliente. **No** mencionar "creación de la sub-cuenta" — es trabajo interno de AMAIA, no entregable visible.
 
 ### Workflows complementarios en n8n (cuando aplique)
 

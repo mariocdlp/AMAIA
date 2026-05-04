@@ -236,15 +236,14 @@
   <li>{{PAGINA_O_FUNNEL}}: {{PROPOSITO}} · dominio: {{DOMINIO}}</li>
 </ul>
 
-<h3>8.11. Setup inicial de la sub-cuenta</h3>
+<h3>8.11. Configuración base de la cuenta</h3>
 <ul>
-  <li>Creación de sub-account dentro de la agencia AMAIA en GHL.</li>
   <li>Branding: logo, colores primarios/secundarios, favicon, dominio custom ({{DOMINIO}}).</li>
   <li>A2P 10DLC registration (si el cliente opera en US) — {{ESTADO}}.</li>
   <li>Provisioning de número(s) telefónico(s): {{CANTIDAD}} · tipo: {{LOCAL_TOLLFREE}}.</li>
   <li>Sending domain de email (SPF / DKIM / DMARC) configurado en {{DOMINIO_MAIL}}.</li>
-  <li>Integraciones nativas a conectar: {{GOOGLE_FACEBOOK_STRIPE_QB_ETC}}.</li>
-  <li>Usuarios y roles del cliente: {{LISTA_USUARIOS_CON_ROLES}}.</li>
+  <li>Integraciones nativas a conectar: {{GOOGLE_FACEBOOK_STRIPE_MP_ETC}}.</li>
+  <li>Usuarios y roles del equipo del cliente: {{LISTA_USUARIOS_CON_ROLES}}.</li>
 </ul>
 
 <!-- ============================================== -->
@@ -295,7 +294,8 @@
 <p><strong>Herramienta</strong>: {{LOOKER_GHL_NATIVO_ETC}}</p>
 
 <!-- ============================================== -->
-<h2>12. Timeline</h2>
+<!-- Wording canónico de fases definido en plan-base.md - reutilizar tal cual ajustando solo duraciones -->
+<h2>12. Cronograma del Proyecto</h2>
 
 <table>
   <thead>
@@ -303,34 +303,29 @@
   </thead>
   <tbody>
     <tr>
-      <td>Consulta inicial y relevamiento</td>
+      <td>Fase 1 — Descubrimiento y Estrategia</td>
       <td>1 semana</td>
-      <td>Reuniones con el cliente para entender flujos actuales, accesos a herramientas, criterios de éxito.</td>
+      <td>Reunión inicial para alinear visión y criterios de éxito. Acceso a herramientas actuales del cliente. Recopilación de branding (logo, colores, dominios) y textos para embudos/mensajes. Definición fina de pipelines, custom fields y workflows del alcance.</td>
     </tr>
     <tr>
-      <td>Diseño y construcción</td>
+      <td>Fase 2 — Construcción y Personalización</td>
       <td>{{N}} semanas</td>
-      <td>Build de pipelines, workflows, forms, integraciones y agentes de IA.</td>
+      <td>Build completo en la cuenta del cliente: pipelines, custom fields y custom values, tags, formularios, calendarios, workflows nativos, funnels/sitios, integraciones y agentes de IA. Configuración de mensajería (SMS/Email/WhatsApp) y plantillas. Si aplica, construcción de workflows complementarios en n8n.</td>
     </tr>
     <tr>
-      <td>Testing y feedback</td>
+      <td>Fase 3 — Pruebas y Retroalimentación</td>
       <td>1 semana</td>
-      <td>Pruebas en ambiente controlado, ajustes con feedback del cliente.</td>
+      <td>Pruebas internas end-to-end de cada flujo. Entrega de un entorno funcional para revisión del cliente. Aplicación de ajustes según feedback.</td>
     </tr>
     <tr>
-      <td>Capacitación e implementación</td>
+      <td>Fase 4 — Capacitación y Entrega</td>
       <td>1 semana</td>
-      <td>Sesiones de training, documentación entregable, go-live asistido.</td>
+      <td>Sesiones de capacitación con el equipo del cliente para uso de la plataforma, lectura del CRM, manejo de oportunidades, conversaciones y respuestas. Entrega de documentación operativa.</td>
     </tr>
     <tr>
-      <td>Revisión post-implementación</td>
-      <td>2 semanas</td>
-      <td>Monitoreo de performance, resolución de issues iniciales.</td>
-    </tr>
-    <tr>
-      <td>Soporte continuo</td>
-      <td>Mensual</td>
-      <td>Mantenimiento, ajustes, optimización (incluido en plan de soporte).</td>
+      <td>Fase 5 — Soporte Post-Implementación</td>
+      <td>{{2-4}} semanas</td>
+      <td>Soporte para resolver dudas o ajustes técnicos en las primeras semanas de operación. Pasada esta fase continúa el plan de soporte mensual.</td>
     </tr>
   </tbody>
 </table>
@@ -354,13 +349,56 @@
 <p><strong>Soporte mensual</strong>: {{MONEDA}} {{SOPORTE}}/mes — incluye monitoreo, ajustes, hasta {{N}} horas de cambios menores y respuesta a incidentes en menos de {{X}} horas hábiles.</p>
 
 <!-- ============================================== -->
+<!-- Wording canónico definido en plan-base.md (Managed Services). Reutilizar tal cual completando los {{N}}. -->
 <h2>14. Soporte y Mantenimiento</h2>
 
+<p>Tras la entrega inicial, AMAIA ofrece un servicio de gestión continua que libera al cliente de las operaciones técnicas diarias de la plataforma. Permite al cliente enfocarse en su operación comercial mientras el equipo de AMAIA actúa como brazo técnico y de soporte.</p>
+
+<h3>Servicios incluidos</h3>
+<p><strong>Mantenimiento técnico</strong></p>
 <ul>
-  <li><strong>Garantía post-implementación</strong>: {{N}} días de ajustes sin cargo sobre el alcance contratado.</li>
-  <li><strong>SLA de soporte</strong>: respuesta inicial en menos de {{X}} hs hábiles.</li>
-  <li><strong>Mejora continua</strong>: revisión trimestral de métricas con propuestas de optimización.</li>
+  <li>Monitoreo del funcionamiento de pipelines, workflows e integraciones.</li>
+  <li>Diagnóstico y resolución de problemas técnicos (workflows que no se disparan, formularios que fallan, integraciones rotas, etc.).</li>
+  <li>Mantenimiento frente a actualizaciones de GHL y proveedores integrados.</li>
 </ul>
+<p><strong>Soporte continuo</strong></p>
+<ul>
+  <li>Canal de tickets centralizado para reportar incidencias.</li>
+  <li>Sesiones grupales periódicas con resolución de dudas, mejores prácticas y novedades.</li>
+  <li>Hasta {{N}} horas mensuales de cambios menores (ajuste de mensajes, agregado de campos simples, edición de templates, etc.).</li>
+</ul>
+<p><strong>Onboarding adicional (si el cliente suma usuarios o áreas nuevas)</strong></p>
+<ul>
+  <li>Configuración inicial de los nuevos componentes en la cuenta existente.</li>
+  <li>Conexión de cuentas adicionales (redes sociales, calendarios, números telefónicos).</li>
+  <li>Una sesión 1-a-1 de hasta 60 minutos por cada nueva área/usuario que se sume.</li>
+</ul>
+
+<h3>Servicios excluidos</h3>
+<ul>
+  <li>Soporte 1-a-1 individualizado más allá de la sesión de onboarding inicial. Las consultas se canalizan vía tickets o sesiones grupales.</li>
+  <li>Gestión de campañas de marketing (Facebook Ads, Google Ads, etc.).</li>
+  <li>Creación de contenido o copy (textos publicitarios, diseño, video, redacción de emails/posts).</li>
+  <li>Gestión de leads y conversaciones: AMAIA no interactúa con los leads del cliente.</li>
+  <li>Desarrollos a medida (nuevos funnels complejos, workflows extensos, integraciones con software no nativo, código CSS/JS personalizado): se cotizan aparte.</li>
+  <li>Resultados de negocio: AMAIA no garantiza número de leads, ventas o reseñas.</li>
+</ul>
+
+<h3>SLA y operación</h3>
+<ul>
+  <li><strong>Canal</strong>: portal de tickets / email de soporte.</li>
+  <li><strong>Horario</strong>: Lunes a Viernes, 9:00 a 18:00 ({{ZONA_HORARIA}}).</li>
+  <li><strong>Tiempos de primera respuesta</strong>:
+    <ul>
+      <li>Crítico (plataforma caída): menos de 4 horas hábiles.</li>
+      <li>Técnico general: menos de 24 horas hábiles.</li>
+      <li>Consultas generales: menos de 48 horas hábiles.</li>
+    </ul>
+  </li>
+  <li><strong>Sesiones grupales</strong>: {{DIA_HORA}}; grabaciones disponibles para todos los clientes.</li>
+</ul>
+
+<p><strong>Compromiso mínimo</strong>: 3 meses de soporte mensual.</p>
 
 <hr>
 <footer>
