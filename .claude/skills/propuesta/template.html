@@ -1,0 +1,247 @@
+<!--
+  Plantilla de referencia para propuestas AMAIA.
+  No la subas tal cual al Drive: úsala como guía estructural y ejemplos de markup.
+  Reglas:
+   - Las secciones marcadas {{OPTIONAL}} se incluyen solo si aplican al proyecto.
+   - Reemplazá cada {{PLACEHOLDER}} con contenido específico del cliente.
+   - Pipelines, workflows y forms deben tener detalle real (triggers, campos, acciones), no genéricos.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Propuesta — {{CLIENTE}} — {{FECHA}}</title>
+</head>
+<body>
+
+<header>
+  <p><strong>AMAIA — Automatización Inteligente</strong></p>
+  <p><em>Propuesta preparada para {{CLIENTE}} · {{FECHA}}</em></p>
+</header>
+
+<h1>Propuesta de Automatización — {{CLIENTE}}</h1>
+
+<p>{{INTRO_1_2_PARRAFOS: Contexto del cliente, problema central que vinieron a resolver y el approach general de AMAIA. Personalizar con datos concretos: industria, tamaño, herramientas actuales.}}</p>
+
+<!-- ============================================== -->
+<h2>1. Goals & Outcomes</h2>
+
+<h3>Objetivos</h3>
+<ul>
+  <li><strong>{{OBJETIVO_1_TITULO}}</strong>: {{OBJETIVO_1_DETALLE}}</li>
+  <li><strong>{{OBJETIVO_2_TITULO}}</strong>: {{OBJETIVO_2_DETALLE}}</li>
+  <li><strong>{{OBJETIVO_3_TITULO}}</strong>: {{OBJETIVO_3_DETALLE}}</li>
+</ul>
+
+<h3>Resultados esperados</h3>
+<ul>
+  <li><strong>{{RESULTADO_1_TITULO}}</strong>: {{RESULTADO_1_DETALLE}}</li>
+  <li><strong>{{RESULTADO_2_TITULO}}</strong>: {{RESULTADO_2_DETALLE}}</li>
+  <li><strong>{{RESULTADO_3_TITULO}}</strong>: {{RESULTADO_3_DETALLE}}</li>
+</ul>
+
+<!-- {{OPTIONAL}} Solo si hay riesgos operativos no triviales -->
+<h3>Desafíos identificados</h3>
+<ul>
+  <li><strong>{{DESAFIO_1}}</strong>: {{DESAFIO_1_MITIGACION}}</li>
+  <li><strong>{{DESAFIO_2}}</strong>: {{DESAFIO_2_MITIGACION}}</li>
+</ul>
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si hay flujo de leads/clientes con múltiples estados -->
+<h2>2. Customer Journey — Pipelines</h2>
+
+<p>Cada etapa del pipeline está diseñada para mover al lead/cliente al siguiente paso de manera medible. Los íconos 🤖 indican etapas con intervención de IA.</p>
+
+<h3>001. {{ETAPA_1_NOMBRE}} 🤖</h3>
+<p><strong>Trigger</strong>: {{ETAPA_1_TRIGGER}}</p>
+<p><strong>Goal</strong>: {{ETAPA_1_GOAL}}</p>
+<p><strong>Acciones</strong>:</p>
+<ul>
+  <li>{{ACCION_1}}</li>
+  <li>{{ACCION_2}}</li>
+</ul>
+<p><strong>Exit conditions</strong>: {{EXIT_CONDITIONS}}</p>
+
+<!-- Repetir bloque 003, 004, ... según pipelines del proyecto -->
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si hay landings o booking pages -->
+<h2>3. Funnels & Websites</h2>
+
+<h3>Funnel 1 — {{FUNNEL_NOMBRE}}</h3>
+<p><strong>Propósito</strong>: {{FUNNEL_PROPOSITO}}</p>
+<p><strong>Páginas</strong>:</p>
+<ul>
+  <li><strong>Opt-in</strong>: headline, formulario, CTA. {{DETALLE}}</li>
+  <li><strong>Thank You</strong>: confirmación + próximo paso. {{DETALLE}}</li>
+</ul>
+<p><strong>Automatizaciones disparadas</strong>: {{AUTOMATIZACIONES}}</p>
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si hay captura de datos estructurada -->
+<h2>4. Forms & Surveys</h2>
+
+<h3>Form 1 — {{FORM_NOMBRE}}</h3>
+<p><strong>Propósito</strong>: {{FORM_PROPOSITO}}</p>
+<p><strong>Campos</strong>:</p>
+<ul>
+  <li>Nombre completo (Texto)</li>
+  <li>Email (Email)</li>
+  <li>Teléfono (Phone)</li>
+  <li>{{CAMPO_CUSTOM}} ({{TIPO}})</li>
+</ul>
+<p><strong>Acciones automáticas al enviar</strong>: {{ACCIONES_POST_SUBMIT}}</p>
+
+<!-- ============================================== -->
+<!-- Casi siempre presente -->
+<h2>5. Workflows & Automation</h2>
+
+<h3>Workflow 1 — {{WORKFLOW_NOMBRE}} 🤖</h3>
+<p><strong>Goal</strong>: {{WORKFLOW_GOAL}}</p>
+<p><strong>Triggers</strong>:</p>
+<ul>
+  <li>{{TRIGGER_1}}</li>
+  <li>{{TRIGGER_2}}</li>
+</ul>
+<p><strong>Acciones</strong>:</p>
+<ol>
+  <li>{{PASO_1}}</li>
+  <li>{{PASO_2}}</li>
+  <li>{{PASO_3}}</li>
+</ol>
+<p><strong>Exit conditions</strong>:</p>
+<ul>
+  <li>{{EXIT_1}}</li>
+  <li>{{EXIT_2}}</li>
+</ul>
+
+<!-- Repetir por cada workflow del proyecto -->
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si hay agendamiento -->
+<h2>6. Calendarios</h2>
+
+<h3>{{CALENDAR_NOMBRE}}</h3>
+<ul>
+  <li><strong>Propósito</strong>: {{PROPOSITO}}</li>
+  <li><strong>Disponibilidad</strong>: {{HORARIOS}}</li>
+  <li><strong>Sync</strong>: {{INTEGRACIONES_CALENDAR}}</li>
+  <li><strong>Asignación</strong>: {{ROUND_ROBIN_O_FIJO}}</li>
+</ul>
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si hay componente de IA conversacional -->
+<h2>7. Agentes de IA</h2>
+
+<h3>{{AGENTE_NOMBRE}}</h3>
+<p><strong>Rol</strong>: {{ROL_DEL_AGENTE}}</p>
+<p><strong>Canales</strong>: {{SMS_WHATSAPP_VOZ_WEB}}</p>
+<p><strong>Capacidades</strong>:</p>
+<ul>
+  <li>{{CAPACIDAD_1}}</li>
+  <li>{{CAPACIDAD_2}}</li>
+</ul>
+<p><strong>Handoff a humano</strong>: {{CRITERIO_DE_ESCALAMIENTO}}</p>
+
+<!-- ============================================== -->
+<h2>8. Integraciones</h2>
+
+<table>
+  <thead>
+    <tr><th>Herramienta</th><th>Tipo</th><th>Propósito</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>{{TOOL_1}}</td><td>{{TIPO_1}}</td><td>{{PROPOSITO_1}}</td></tr>
+    <tr><td>{{TOOL_2}}</td><td>{{TIPO_2}}</td><td>{{PROPOSITO_2}}</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================== -->
+<!-- {{OPTIONAL}} Si el cliente pidió métricas -->
+<h2>9. Reporting & Dashboards</h2>
+
+<p><strong>KPIs trackeados</strong>:</p>
+<ul>
+  <li>{{KPI_1}}</li>
+  <li>{{KPI_2}}</li>
+</ul>
+<p><strong>Frecuencia de reporte</strong>: {{FRECUENCIA}}</p>
+<p><strong>Herramienta</strong>: {{LOOKER_GHL_NATIVO_ETC}}</p>
+
+<!-- ============================================== -->
+<h2>10. Timeline</h2>
+
+<table>
+  <thead>
+    <tr><th>Fase</th><th>Duración</th><th>Actividades</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Consulta inicial y relevamiento</td>
+      <td>1 semana</td>
+      <td>Reuniones con el cliente para entender flujos actuales, accesos a herramientas, criterios de éxito.</td>
+    </tr>
+    <tr>
+      <td>Diseño y construcción</td>
+      <td>{{N}} semanas</td>
+      <td>Build de pipelines, workflows, forms, integraciones y agentes de IA.</td>
+    </tr>
+    <tr>
+      <td>Testing y feedback</td>
+      <td>1 semana</td>
+      <td>Pruebas en ambiente controlado, ajustes con feedback del cliente.</td>
+    </tr>
+    <tr>
+      <td>Capacitación e implementación</td>
+      <td>1 semana</td>
+      <td>Sesiones de training, documentación entregable, go-live asistido.</td>
+    </tr>
+    <tr>
+      <td>Revisión post-implementación</td>
+      <td>2 semanas</td>
+      <td>Monitoreo de performance, resolución de issues iniciales.</td>
+    </tr>
+    <tr>
+      <td>Soporte continuo</td>
+      <td>Mensual</td>
+      <td>Mantenimiento, ajustes, optimización (incluido en plan de soporte).</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============================================== -->
+<h2>11. Inversión</h2>
+
+<p><strong>Total del proyecto</strong>: {{MONEDA}} {{TOTAL}}</p>
+
+<table>
+  <thead>
+    <tr><th>Hito</th><th>%</th><th>Monto</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Inicio del proyecto</td><td>50%</td><td>{{MONTO_50}}</td></tr>
+    <tr><td>Testing y feedback</td><td>40%</td><td>{{MONTO_40}}</td></tr>
+    <tr><td>Capacitación e implementación</td><td>10%</td><td>{{MONTO_10}}</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Soporte mensual</strong>: {{MONEDA}} {{SOPORTE}}/mes — incluye monitoreo, ajustes, hasta {{N}} horas de cambios menores y respuesta a incidentes en menos de {{X}} horas hábiles.</p>
+
+<!-- ============================================== -->
+<h2>12. Soporte y Mantenimiento</h2>
+
+<ul>
+  <li><strong>Garantía post-implementación</strong>: {{N}} días de ajustes sin cargo sobre el alcance contratado.</li>
+  <li><strong>SLA de soporte</strong>: respuesta inicial en menos de {{X}} hs hábiles.</li>
+  <li><strong>Mejora continua</strong>: revisión trimestral de métricas con propuestas de optimización.</li>
+</ul>
+
+<hr>
+<footer>
+  <p><em>AMAIA — Automatización Inteligente</em></p>
+  <p>{{CONTACTO_AMAIA}}</p>
+</footer>
+
+</body>
+</html>
