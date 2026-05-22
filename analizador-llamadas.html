@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMAIA · Analizador de Llamadas de Venta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0B0E14;
+    --bg-2: #11151E;
+    --card: #151B26;
+    --card-hover: #1A2230;
+    --border: #232C3D;
+    --text: #E5E7EB;
+    --text-dim: #94A3B8;
+    --text-muted: #64748B;
+    --primary: #8B5CF6;
+    --primary-2: #A78BFA;
+    --primary-soft: rgba(139, 92, 246, 0.12);
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --info: #38BDF8;
+    --star: #FBBF24;
+    --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 85% 100%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header.app-header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(11, 14, 20, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+  }
+  .brand-sub {
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 13px;
+    margin-left: 2px;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .api-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .api-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--danger);
+  }
+  .api-status.ok .dot { background: var(--success); }
+  .api-status.ok { color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
+
+  /* Tabs */
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  nav.tabs button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 18px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  nav.tabs button:hover { color: var(--text); }
+  nav.tabs button.active {
+    color: var(--primary-2);
+    border-bottom-color: var(--primary);
+  }
+
+  /* Generic */
+  .tab-content { display: none; animation: fadeIn 0.2s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card + .card { margin-top: 16px; }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 14px; letter-spacing: -0.01em; }
+  h3 { font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+  label .required { color: var(--danger); }
+  input[type="text"], input[type="password"], select, textarea {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  textarea { resize: vertical; min-height: 140px; font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 13px; line-height: 1.55; }
+  textarea.tall { min-height: 240px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover:not(:disabled) { background: var(--primary-2); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--card-hover); border-color: var(--primary); transform: none; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    padding: 8px 12px;
+  }
+  .btn-ghost:hover:not(:disabled) { background: var(--card-hover); color: var(--text); transform: none; }
+  .btn-danger { background: var(--danger); }
+  .btn-danger:hover:not(:disabled) { background: #DC2626; }
+
+  .action-bar { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
+  .spacer { flex: 1; }
+
+  /* Loader */
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result */
+  .score-hero {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: 28px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(56, 189, 248, 0.05) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 12px;
+  }
+  .score-big {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--primary-2) 0%, var(--info) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1;
+  }
+  .score-meta { display: flex; flex-direction: column; gap: 6px; }
+  .score-meta .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .score-meta .value { font-size: 18px; font-weight: 600; }
+  .resultado-badge {
+    padding: 8px 14px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .resultado-badge.ganada { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+  .resultado-badge.perdida { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+  .resultado-badge.seguimiento { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+  .resultado-badge.no_show { background: rgba(100, 116, 139, 0.15); color: var(--text-dim); border: 1px solid rgba(100, 116, 139, 0.3); }
+
+  .categories { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 20px; }
+  .cat-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+  .cat-card:hover { border-color: var(--primary); }
+  .cat-card .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cat-card .name { font-weight: 600; font-size: 14px; }
+  .cat-card .just { color: var(--text-dim); font-size: 13px; line-height: 1.55; }
+  .stars { color: var(--star); font-size: 14px; letter-spacing: 1px; }
+  .stars .empty { color: var(--border); }
+  .stars.na { color: var(--text-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.05em; }
+
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .insight-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .insight-card.positive { border-left: 3px solid var(--success); }
+  .insight-card.negative { border-left: 3px solid var(--danger); }
+  .insight-card h4 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .insight-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .insight-card li { font-size: 13px; line-height: 1.5; padding-left: 18px; position: relative; }
+  .insight-card.positive li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 700; }
+  .insight-card.negative li::before { content: "✗"; position: absolute; left: 0; color: var(--danger); font-weight: 700; }
+
+  .deviation-list { display: flex; flex-direction: column; gap: 8px; }
+  .deviation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .impact-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .impact-tag.alto { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+  .impact-tag.medio { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+  .impact-tag.bajo { background: rgba(56, 189, 248, 0.15); color: var(--info); }
+
+  .coaching-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .coaching-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .coaching-body h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary-2); margin-bottom: 4px; }
+  .coaching-body p { font-size: 14px; line-height: 1.55; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
+  .empty-state h3 { color: var(--text); text-transform: none; letter-spacing: 0; font-size: 16px; margin-bottom: 6px; }
+
+  /* History table */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+  }
+  tbody td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--card-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  .score-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .score-pill.high { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+  .score-pill.mid { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+  .score-pill.low { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+  /* Dashboard */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
+  .kpi .val { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi .delta { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .chart-card h2 { font-size: 14px; margin-bottom: 16px; }
+  .chart-wrap { height: 260px; position: relative; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-lg { max-width: 900px; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { margin: 0; font-size: 16px; }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+  .close-btn {
+    background: none; border: none; color: var(--text-dim);
+    font-size: 22px; cursor: pointer; line-height: 1;
+    width: 32px; height: 32px; border-radius: 6px;
+  }
+  .close-btn:hover { background: var(--card-hover); color: var(--text); }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .hint a { color: var(--primary-2); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    z-index: 200;
+    max-width: 360px;
+    animation: slideIn 0.2s ease;
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-grid, .categories, .insight-grid, .chart-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .score-hero { grid-template-columns: 1fr; text-align: center; }
+    .header-inner { padding: 14px 16px; }
+    main { padding: 16px; }
+    .brand-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div>
+        AMAIA<span class="brand-sub"> · Analizador de Llamadas</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div id="apiStatus" class="api-status"><span class="dot"></span><span id="apiStatusText">Sin API key</span></div>
+      <button class="btn btn-ghost" onclick="openSettings()">⚙ Configuración</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs">
+    <button data-tab="analizar" class="active">Analizar</button>
+    <button data-tab="resultado">Resultado</button>
+    <button data-tab="historial">Historial</button>
+    <button data-tab="dashboard">Dashboard</button>
+  </nav>
+
+  <!-- ========== ANALIZAR ========== -->
+  <section id="tab-analizar" class="tab-content active">
+    <div class="card">
+      <h1>Nuevo análisis de llamada</h1>
+      <p class="subtitle">Pegá la transcripción, el script maestro y elegí el resultado. La IA va a evaluar la performance del closer en 6 categorías.</p>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="callId">Call ID</label>
+          <input type="text" id="callId" placeholder="se genera automáticamente">
+        </div>
+        <div class="form-group">
+          <label for="resultado">Resultado de la llamada <span class="required">*</span></label>
+          <select id="resultado">
+            <option value="ganada">Ganada</option>
+            <option value="perdida">Perdida</option>
+            <option value="seguimiento" selected>Seguimiento</option>
+            <option value="no_show">No show</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label for="scriptMaestro">Script maestro de ventas <span class="required">*</span></label>
+          <textarea id="scriptMaestro" placeholder="Pegá acá el script maestro contra el cual evaluar la llamada..."></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label for="transcripcion">Transcripción de la llamada <span class="required">*</span></label>
+          <textarea id="transcripcion" class="tall" placeholder="Pegá acá la transcripción completa de la llamada..."></textarea>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-secondary" onclick="loadSample()">Cargar ejemplo</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Limpiar</button>
+        <div class="spacer"></div>
+        <button class="btn" id="analyzeBtn" onclick="runAnalysis()">
+          <span>Analizar llamada</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== RESULTADO ========== -->
+  <section id="tab-resultado" class="tab-content">
+    <div id="resultadoContent">
+      <div class="card empty-state">
+        <div class="icon">📞</div>
+        <h3>Todavía no analizaste ninguna llamada</h3>
+        <p>Andá a la pestaña <strong>Analizar</strong>, pegá una transcripción y dale al botón.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HISTORIAL ========== -->
+  <section id="tab-historial" class="tab-content">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:10px; flex-wrap:wrap;">
+        <div>
+          <h1>Historial de análisis</h1>
+          <p class="subtitle" style="margin:0;">Click en cualquier fila para ver el detalle completo.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="exportCSV()">↓ Exportar CSV</button>
+          <button class="btn btn-secondary" onclick="exportXLSX()">↓ Exportar Excel</button>
+          <button class="btn btn-ghost btn-danger" onclick="clearHistory()" style="color:var(--danger)">Borrar todo</button>
+        </div>
+      </div>
+      <div id="historialContent"></div>
+    </div>
+  </section>
+
+  <!-- ========== DASHBOARD ========== -->
+  <section id="tab-dashboard" class="tab-content">
+    <div id="dashboardContent"></div>
+  </section>
+</main>
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Configuración</h2>
+      <button class="close-btn" onclick="closeSettings()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="apiKey">Anthropic API Key <span class="required">*</span></label>
+        <input type="password" id="apiKey" placeholder="sk-ant-...">
+        <p class="hint">Se guarda solo en tu navegador (localStorage). Conseguila en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>.</p>
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label for="modelSelect">Modelo</label>
+        <select id="modelSelect">
+          <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (recomendado · balance precio/calidad)</option>
+          <option value="claude-opus-4-7">Claude Opus 4.7 (máxima calidad)</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (más rápido y barato)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancelar</button>
+      <button class="btn" onclick="saveSettings()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="detailTitle">Detalle del análisis</h2>
+      <button class="close-btn" onclick="closeDetail()">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-danger" onclick="deleteCurrentDetail()" style="color:var(--danger)">Eliminar</button>
+      <div class="spacer"></div>
+      <button class="btn btn-secondary" onclick="closeDetail()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================================
+// STATE & STORAGE
+// =============================================================
+const STORAGE_KEYS = {
+  apiKey: 'amaia_anthropic_key',
+  model: 'amaia_model',
+  history: 'amaia_history',
+  lastScript: 'amaia_last_script'
+};
+
+let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
+let currentResult = null;
+let currentDetailId = null;
+let charts = {};
+
+// =============================================================
+// SYSTEM PROMPT
+// =============================================================
+const SYSTEM_PROMPT = `Sos un analista experto en llamadas de venta. Vas a recibir (1) un script maestro de ventas, (2) la transcripción de una llamada, y (3) el resultado de la llamada. Tu tarea es evaluar la performance del closer en seis categorías usando una rúbrica estricta de 1 a 5 estrellas. Devolvé únicamente JSON válido — sin preámbulos, sin markdown, sin texto adicional.
+
+Categorías de Evaluación y Criterios de Puntaje
+
+1. Adherencia al Script — ¿Qué tan de cerca siguió el closer el script maestro?
+* 5 estrellas: Siguió todas las secciones principales del script. Las desviaciones fueron solo para adaptar el tono o aclarar puntos.
+* 4 estrellas: Siguió el 80% o más del script. Salteó o reordenó secciones menores sin impacto.
+* 3 estrellas: Siguió entre el 60% y el 80%. Salteó una sección importante (por ejemplo, descubrimiento o pitch de valor).
+* 2 estrellas: Siguió entre el 40% y el 60%. Salteó varias secciones clave.
+* 1 estrella: Siguió menos del 40% del script. Se fue totalmente del guion.
+
+2. Descubrimiento y Calificación — ¿Hizo las preguntas correctas para entender al prospecto?
+* 5 estrellas: Hizo 5 o más preguntas abiertas de descubrimiento. Descubrió dolor, presupuesto, tiempos y quién toma la decisión.
+* 4 estrellas: Hizo 4 o más preguntas de descubrimiento. Consiguió la mayor parte de la info para calificar.
+* 3 estrellas: Hizo entre 2 y 3 preguntas de descubrimiento. Calificación parcial.
+* 2 estrellas: Hizo solo 1 pregunta de descubrimiento. La mayor parte fue pitch.
+* 1 estrella: No hubo descubrimiento real. Le habló al prospecto en lugar de escucharlo.
+
+3. Comunicación de Valor — ¿Conectó las características con la situación específica del prospecto?
+* 5 estrellas: Cada beneficio lo conectó con un dolor concreto del prospecto. Usó ejemplos o casos de éxito.
+* 4 estrellas: La mayoría de los beneficios los conectó con las necesidades. Usó al menos un caso o ejemplo.
+* 3 estrellas: Algunos beneficios conectados con las necesidades. La mayor parte fue explicación genérica de features.
+* 2 estrellas: Listó características sin conectarlas con la situación del prospecto.
+* 1 estrella: No hubo comunicación clara de valor. Tiró el precio o pasó rápido por el valor.
+
+4. Manejo de Objeciones — ¿Qué tan bien atendió las preocupaciones del prospecto?
+* 5 estrellas: Reconoció, aisló y resolvió todas las objeciones con pruebas. El prospecto verbalizó su acuerdo.
+* 4 estrellas: Atendió todas las objeciones. La mayoría las resolvió con seguridad.
+* 3 estrellas: Atendió las objeciones pero algunas de forma defensiva o sin pruebas.
+* 2 estrellas: Esquivó, discutió o ignoró parcialmente las objeciones.
+* 1 estrella: Ignoró las objeciones. Se puso a la defensiva o perdió el control.
+* N/A: No surgieron objeciones (indicalo así en el JSON).
+
+5. Control y Ritmo de la Llamada — ¿Guió la conversación con un objetivo claro?
+* 5 estrellas: Agenda clara desde el inicio. Transiciones fluidas. Buen manejo del tiempo. Prospecto enganchado de principio a fin.
+* 4 estrellas: Mayormente bajo control. Una o dos transiciones torpes o desvíos menores.
+* 3 estrellas: Perdió parte del control. Dejó que el prospecto manejara la conversación por momentos.
+* 2 estrellas: Fue reactivo toda la call. No hubo un flujo claro.
+* 1 estrella: Se fue por las ramas. Sin estructura. Perdió la atención del prospecto.
+
+6. Cierre y Próximos Pasos — ¿Logró un próximo paso claro y comprometido?
+* 5 estrellas: Próximo paso específico agendado en el calendario con fecha y hora. Ambas partes confirmaron.
+* 4 estrellas: Próximo paso claro acordado verbalmente. Día o semana definidos.
+* 3 estrellas: Próximo paso vago (por ejemplo, "te escribo la semana que viene").
+* 2 estrellas: Mencionó un próximo paso pero sin compromiso real.
+* 1 estrella: No hubo próximo paso. La llamada terminó sin definición.
+
+Formato de Salida Requerido
+Devolvé exactamente esta estructura JSON, sin texto adicional:
+
+{
+  "call_id": "string del input",
+  "resultado": "ganada | perdida | seguimiento | no_show",
+  "puntaje_general": 0.0,
+  "categorias": {
+    "adherencia_script": { "estrellas": 0, "justificacion": "1-2 oraciones citando momentos específicos de la llamada" },
+    "descubrimiento_calificacion": { "estrellas": 0, "justificacion": "..." },
+    "comunicacion_valor": { "estrellas": 0, "justificacion": "..." },
+    "manejo_objeciones": { "estrellas": 0, "justificacion": "..." },
+    "control_ritmo": { "estrellas": 0, "justificacion": "..." },
+    "cierre_proximos_pasos": { "estrellas": 0, "justificacion": "..." }
+  },
+  "desviaciones_script": [ { "seccion_salteada": "string", "impacto": "alto | medio | bajo" } ],
+  "que_funciono": [ "momento específico 1", "momento específico 2" ],
+  "que_no_funciono": [ "momento específico 1", "momento específico 2" ],
+  "correlacion_resultado": "1-2 oraciones sobre qué comportamientos probablemente influyeron en el resultado",
+  "recomendacion_coaching": "1 acción específica para la próxima llamada del closer"
+}
+
+Reglas de Cálculo
+* puntaje_general = promedio de todas las estrellas de las categorías (excluyendo las marcadas como N/A). Redondeá a un decimal.
+* Si una categoría es N/A, marcá estrellas: null y justificacion: "N/A — no aplicó en esta llamada".
+* Toda justificación debe citar un momento específico de la transcripción, no ser genérica.
+* Las recomendaciones de coaching deben ser accionables y concretas, no abstractas.`;
+
+// =============================================================
+// CATEGORY METADATA
+// =============================================================
+const CATEGORIES = [
+  { key: 'adherencia_script', label: 'Adherencia al Script' },
+  { key: 'descubrimiento_calificacion', label: 'Descubrimiento y Calificación' },
+  { key: 'comunicacion_valor', label: 'Comunicación de Valor' },
+  { key: 'manejo_objeciones', label: 'Manejo de Objeciones' },
+  { key: 'control_ritmo', label: 'Control y Ritmo' },
+  { key: 'cierre_proximos_pasos', label: 'Cierre y Próximos Pasos' }
+];
+
+// =============================================================
+// INIT
+// =============================================================
+function init() {
+  // Restore last script
+  const lastScript = localStorage.getItem(STORAGE_KEYS.lastScript);
+  if (lastScript) document.getElementById('scriptMaestro').value = lastScript;
+
+  // Tabs
+  document.querySelectorAll('nav.tabs button').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // Generate initial call ID
+  refreshCallId();
+
+  // API status
+  refreshApiStatus();
+
+  // Render history and dashboard placeholders
+  renderHistory();
+  renderDashboard();
+
+  // Render last result if exists
+  if (history.length > 0) {
+    currentResult = history[0];
+    renderResult(currentResult);
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll('nav.tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(t => {
+    t.classList.toggle('active', t.id === `tab-${name}`);
+  });
+  if (name === 'historial') renderHistory();
+  if (name === 'dashboard') renderDashboard();
+}
+
+function refreshCallId() {
+  const d = new Date();
+  const id = `CALL-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  document.getElementById('callId').value = id;
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function refreshApiStatus() {
+  const el = document.getElementById('apiStatus');
+  const txt = document.getElementById('apiStatusText');
+  const key = localStorage.getItem(STORAGE_KEYS.apiKey);
+  if (key) {
+    el.classList.add('ok');
+    txt.textContent = 'API conectada';
+  } else {
+    el.classList.remove('ok');
+    txt.textContent = 'Sin API key';
+  }
+}
+
+// =============================================================
+// SETTINGS MODAL
+// =============================================================
+function openSettings() {
+  document.getElementById('apiKey').value = localStorage.getItem(STORAGE_KEYS.apiKey) || '';
+  document.getElementById('modelSelect').value = localStorage.getItem(STORAGE_KEYS.model) || 'claude-sonnet-4-6';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings() {
+  const key = document.getElementById('apiKey').value.trim();
+  const model = document.getElementById('modelSelect').value;
+  if (key) localStorage.setItem(STORAGE_KEYS.apiKey, key);
+  else localStorage.removeItem(STORAGE_KEYS.apiKey);
+  localStorage.setItem(STORAGE_KEYS.model, model);
+  refreshApiStatus();
+  closeSettings();
+  toast('Configuración guardada', 'success');
+}
+
+// =============================================================
+// FORM ACTIONS
+// =============================================================
+function clearForm() {
+  document.getElementById('transcripcion').value = '';
+  document.getElementById('scriptMaestro').value = '';
+  document.getElementById('resultado').value = 'seguimiento';
+  refreshCallId();
+}
+
+function loadSample() {
+  document.getElementById('scriptMaestro').value = SAMPLE_SCRIPT;
+  document.getElementById('transcripcion').value = SAMPLE_TRANSCRIPT;
+  document.getElementById('resultado').value = 'seguimiento';
+  toast('Ejemplo cargado', 'success');
+}
+
+async function runAnalysis() {
+  const apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+  if (!apiKey) {
+    toast('Configurá tu Anthropic API key primero', 'error');
+    openSettings();
+    return;
+  }
+
+  const callId = document.getElementById('callId').value.trim() || `CALL-${Date.now()}`;
+  const resultado = document.getElementById('resultado').value;
+  const script = document.getElementById('scriptMaestro').value.trim();
+  const transcripcion = document.getElementById('transcripcion').value.trim();
+
+  if (!script || !transcripcion) {
+    toast('Pegá el script maestro y la transcripción', 'error');
+    return;
+  }
+
+  // Save last script for convenience
+  localStorage.setItem(STORAGE_KEYS.lastScript, script);
+
+  const btn = document.getElementById('analyzeBtn');
+  const originalContent = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span><span>Analizando...</span>';
+
+  try {
+    const model = localStorage.getItem(STORAGE_KEYS.model) || 'claude-sonnet-4-6';
+    const userMessage = `INPUTS:
+
+call_id: ${callId}
+resultado: ${resultado}
+
+=== SCRIPT MAESTRO ===
+${script}
+
+=== TRANSCRIPCIÓN DE LA LLAMADA ===
+${transcripcion}
+
+Devolvé únicamente el JSON.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+    }
+
+    const data = await response.json();
+    const rawText = data.content[0].text;
+    const json = extractJson(rawText);
+
+    // Augment with metadata (previews only to keep localStorage light)
+    json._meta = {
+      timestamp: Date.now(),
+      transcripcion_preview: transcripcion.slice(0, 300),
+      script_preview: script.slice(0, 300),
+      model
+    };
+
+    // Save to history
+    history.unshift(json);
+    localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+
+    currentResult = json;
+    renderResult(json);
+    switchTab('resultado');
+    toast('Análisis completado', 'success');
+    refreshCallId();
+  } catch (err) {
+    console.error(err);
+    toast(`Error: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalContent;
+  }
+}
+
+function extractJson(text) {
+  // Strip markdown code fences if present
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  // Try to find first { and last }
+  const first = cleaned.indexOf('{');
+  const last = cleaned.lastIndexOf('}');
+  if (first >= 0 && last > first) {
+    cleaned = cleaned.slice(first, last + 1);
+  }
+  return JSON.parse(cleaned);
+}
+
+// =============================================================
+// RENDER RESULT
+// =============================================================
+function renderResult(r, targetId = 'resultadoContent') {
+  const stars = n => {
+    if (n === null || n === undefined) return '<span class="stars na">N/A</span>';
+    const filled = '★'.repeat(n);
+    const empty = '☆'.repeat(5 - n);
+    return `<span class="stars">${filled}<span class="empty">${empty}</span></span>`;
+  };
+
+  const score = r.puntaje_general || 0;
+  const scoreClass = score >= 4 ? 'high' : score >= 2.5 ? 'mid' : 'low';
+
+  const fechaIso = r._meta ? new Date(r._meta.timestamp).toISOString().slice(0, 16).replace('T', ' ') : '';
+
+  const desviaciones = (r.desviaciones_script || []).map(d => `
+    <div class="deviation">
+      <span>${escapeHtml(d.seccion_salteada || '')}</span>
+      <span class="impact-tag ${d.impacto || 'bajo'}">${d.impacto || 'bajo'}</span>
+    </div>
+  `).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin desviaciones detectadas.</p>';
+
+  const queFunciono = (r.que_funciono || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+  const queNoFunciono = (r.que_no_funciono || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+
+  const catCards = CATEGORIES.map(cat => {
+    const c = (r.categorias || {})[cat.key] || {};
+    return `
+      <div class="cat-card">
+        <div class="head">
+          <span class="name">${cat.label}</span>
+          ${stars(c.estrellas)}
+        </div>
+        <p class="just">${escapeHtml(c.justificacion || '')}</p>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="card">
+      <div class="score-hero">
+        <div>
+          <div class="score-big">${score.toFixed(1)}</div>
+          <div style="color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; margin-top:4px;">/ 5.0 · puntaje general</div>
+        </div>
+        <div class="score-meta">
+          <span class="label">Call ID</span>
+          <span class="value" style="font-family:'JetBrains Mono', monospace; font-size:14px;">${escapeHtml(r.call_id || '')}</span>
+          ${fechaIso ? `<span class="label" style="margin-top:4px;">Analizado</span><span style="font-size:13px; color:var(--text-dim);">${fechaIso}</span>` : ''}
+        </div>
+        <div class="resultado-badge ${r.resultado}">${(r.resultado || '').replace('_', ' ')}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Evaluación por categoría</h2>
+      <div class="categories">${catCards}</div>
+    </div>
+
+    <div class="card">
+      <h2>Insights</h2>
+      <div class="insight-grid">
+        <div class="insight-card positive">
+          <h4>✓ Qué funcionó</h4>
+          <ul>${queFunciono || '<li style="padding-left:0">—</li>'}</ul>
+        </div>
+        <div class="insight-card negative">
+          <h4>✗ Qué no funcionó</h4>
+          <ul>${queNoFunciono || '<li style="padding-left:0">—</li>'}</ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:24px;">Desviaciones del script</h3>
+      <div class="deviation-list">${desviaciones}</div>
+
+      <h3 style="margin-top:24px;">Correlación con el resultado</h3>
+      <p style="color:var(--text-dim); font-size:14px; line-height:1.6;">${escapeHtml(r.correlacion_resultado || '')}</p>
+    </div>
+
+    <div class="card">
+      <div class="coaching-card">
+        <div class="coaching-icon">💡</div>
+        <div class="coaching-body">
+          <h4>Recomendación de coaching</h4>
+          <p>${escapeHtml(r.recomendacion_coaching || '')}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById(targetId).innerHTML = html;
+}
+
+// =============================================================
+// HISTORIAL
+// =============================================================
+function renderHistory() {
+  const el = document.getElementById('historialContent');
+  if (history.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <h3>Sin análisis todavía</h3>
+        <p>Cuando analices llamadas, van a aparecer acá.</p>
+      </div>`;
+    return;
+  }
+
+  const rows = history.map((r, i) => {
+    const score = r.puntaje_general || 0;
+    const scoreClass = score >= 4 ? 'high' : score >= 2.5 ? 'mid' : 'low';
+    const fecha = r._meta ? new Date(r._meta.timestamp).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+    const cats = r.categorias || {};
+    return `
+      <tr onclick="openDetail(${i})">
+        <td style="font-family:'JetBrains Mono', monospace; color:var(--text-dim);">${escapeHtml(r.call_id || '')}</td>
+        <td>${fecha}</td>
+        <td><span class="resultado-badge ${r.resultado}" style="font-size:11px; padding:4px 10px;">${(r.resultado || '').replace('_', ' ')}</span></td>
+        <td><span class="score-pill ${scoreClass}">${score.toFixed(1)}</span></td>
+        <td>${starInline(cats.adherencia_script?.estrellas)}</td>
+        <td>${starInline(cats.descubrimiento_calificacion?.estrellas)}</td>
+        <td>${starInline(cats.comunicacion_valor?.estrellas)}</td>
+        <td>${starInline(cats.manejo_objeciones?.estrellas)}</td>
+        <td>${starInline(cats.control_ritmo?.estrellas)}</td>
+        <td>${starInline(cats.cierre_proximos_pasos?.estrellas)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Call ID</th>
+            <th>Fecha</th>
+            <th>Resultado</th>
+            <th>Puntaje</th>
+            <th>Script</th>
+            <th>Descubrim.</th>
+            <th>Valor</th>
+            <th>Objeciones</th>
+            <th>Control</th>
+            <th>Cierre</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function starInline(n) {
+  if (n === null || n === undefined) return '<span style="color:var(--text-muted); font-size:11px;">N/A</span>';
+  return `<span style="color:var(--star); font-weight:600;">${n}<span style="color:var(--text-muted); font-weight:400;">/5</span></span>`;
+}
+
+function openDetail(idx) {
+  const r = history[idx];
+  if (!r) return;
+  currentDetailId = idx;
+  document.getElementById('detailTitle').textContent = `Detalle · ${r.call_id || ''}`;
+  renderResult(r, 'detailBody');
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+  currentDetailId = null;
+}
+
+function deleteCurrentDetail() {
+  if (currentDetailId === null) return;
+  if (!confirm('¿Eliminar este análisis del historial?')) return;
+  history.splice(currentDetailId, 1);
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+  currentResult = history[0] || null;
+  if (currentResult) renderResult(currentResult);
+  else document.getElementById('resultadoContent').innerHTML = `
+    <div class="card empty-state">
+      <div class="icon">📞</div>
+      <h3>Sin análisis</h3>
+    </div>`;
+  renderHistory();
+  renderDashboard();
+  closeDetail();
+  toast('Análisis eliminado', 'success');
+}
+
+function clearHistory() {
+  if (history.length === 0) return;
+  if (!confirm(`¿Borrar los ${history.length} análisis del historial? Esta acción no se puede deshacer.`)) return;
+  history = [];
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+  currentResult = null;
+  document.getElementById('resultadoContent').innerHTML = `
+    <div class="card empty-state">
+      <div class="icon">📞</div>
+      <h3>Sin análisis</h3>
+    </div>`;
+  renderHistory();
+  renderDashboard();
+  toast('Historial borrado', 'success');
+}
+
+// =============================================================
+// EXPORT
+// =============================================================
+function buildExportRows() {
+  return history.map(r => {
+    const cats = r.categorias || {};
+    return {
+      call_id: r.call_id || '',
+      fecha: r._meta ? new Date(r._meta.timestamp).toISOString() : '',
+      resultado: r.resultado || '',
+      puntaje_general: r.puntaje_general || 0,
+      adherencia_script: cats.adherencia_script?.estrellas ?? '',
+      adherencia_script_just: cats.adherencia_script?.justificacion ?? '',
+      descubrimiento: cats.descubrimiento_calificacion?.estrellas ?? '',
+      descubrimiento_just: cats.descubrimiento_calificacion?.justificacion ?? '',
+      comunicacion_valor: cats.comunicacion_valor?.estrellas ?? '',
+      comunicacion_valor_just: cats.comunicacion_valor?.justificacion ?? '',
+      manejo_objeciones: cats.manejo_objeciones?.estrellas ?? '',
+      manejo_objeciones_just: cats.manejo_objeciones?.justificacion ?? '',
+      control_ritmo: cats.control_ritmo?.estrellas ?? '',
+      control_ritmo_just: cats.control_ritmo?.justificacion ?? '',
+      cierre: cats.cierre_proximos_pasos?.estrellas ?? '',
+      cierre_just: cats.cierre_proximos_pasos?.justificacion ?? '',
+      que_funciono: (r.que_funciono || []).join(' | '),
+      que_no_funciono: (r.que_no_funciono || []).join(' | '),
+      desviaciones: (r.desviaciones_script || []).map(d => `${d.seccion_salteada} [${d.impacto}]`).join(' | '),
+      correlacion_resultado: r.correlacion_resultado || '',
+      recomendacion_coaching: r.recomendacion_coaching || ''
+    };
+  });
+}
+
+function exportCSV() {
+  if (history.length === 0) { toast('No hay datos para exportar', 'error'); return; }
+  const rows = buildExportRows();
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => csvEscape(r[h])).join(','))
+  ].join('\n');
+  download(`amaia-analisis-${dateStamp()}.csv`, csv, 'text/csv;charset=utf-8;');
+  toast('CSV exportado', 'success');
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function exportXLSX() {
+  if (history.length === 0) { toast('No hay datos para exportar', 'error'); return; }
+  const rows = buildExportRows();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Análisis');
+  XLSX.writeFile(wb, `amaia-analisis-${dateStamp()}.xlsx`);
+  toast('Excel exportado', 'success');
+}
+
+function download(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function dateStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+
+// =============================================================
+// DASHBOARD
+// =============================================================
+function renderDashboard() {
+  const el = document.getElementById('dashboardContent');
+  if (history.length === 0) {
+    el.innerHTML = `
+      <div class="card empty-state">
+        <div class="icon">📊</div>
+        <h3>Sin datos para graficar</h3>
+        <p>Analizá al menos una llamada para ver tu performance.</p>
+      </div>`;
+    return;
+  }
+
+  // KPIs
+  const total = history.length;
+  const avgScore = history.reduce((a, r) => a + (r.puntaje_general || 0), 0) / total;
+  const ganadas = history.filter(r => r.resultado === 'ganada').length;
+  const winRate = (ganadas / total) * 100;
+
+  const last10 = history.slice(0, 10);
+  const last10Avg = last10.reduce((a, r) => a + (r.puntaje_general || 0), 0) / last10.length;
+
+  el.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="label">Total análisis</div>
+        <div class="val">${total}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Puntaje promedio</div>
+        <div class="val" style="color:${avgScore >= 4 ? 'var(--success)' : avgScore >= 2.5 ? 'var(--warning)' : 'var(--danger)'}">${avgScore.toFixed(2)}</div>
+        <div class="delta">/ 5.0</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Win rate</div>
+        <div class="val" style="color:var(--success)">${winRate.toFixed(0)}%</div>
+        <div class="delta">${ganadas} ganadas de ${total}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Promedio últimas 10</div>
+        <div class="val">${last10Avg.toFixed(2)}</div>
+        <div class="delta">vs ${avgScore.toFixed(2)} global</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h2>Evolución del puntaje</h2>
+        <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Promedio por categoría</h2>
+        <div class="chart-wrap"><canvas id="chartRadar"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Distribución de resultados</h2>
+        <div class="chart-wrap"><canvas id="chartResults"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Comparativa por categoría</h2>
+        <div class="chart-wrap"><canvas id="chartBars"></canvas></div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(buildCharts, 50);
+}
+
+function buildCharts() {
+  // Destroy existing charts
+  Object.values(charts).forEach(c => c && c.destroy());
+  charts = {};
+
+  Chart.defaults.color = '#94A3B8';
+  Chart.defaults.borderColor = '#232C3D';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // Trend: chronological order (oldest left)
+  const chrono = [...history].reverse();
+  const trendData = chrono.map((r, i) => ({
+    x: i + 1,
+    y: r.puntaje_general || 0,
+    label: r.call_id
+  }));
+
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type: 'line',
+    data: {
+      labels: chrono.map((_, i) => `#${i + 1}`),
+      datasets: [{
+        label: 'Puntaje general',
+        data: chrono.map(r => r.puntaje_general || 0),
+        borderColor: '#8B5CF6',
+        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#A78BFA',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: '#1F2937' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Radar: avg per category
+  const catAvgs = CATEGORIES.map(cat => {
+    const vals = history.map(r => r.categorias?.[cat.key]?.estrellas).filter(v => v !== null && v !== undefined);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  });
+
+  charts.radar = new Chart(document.getElementById('chartRadar'), {
+    type: 'radar',
+    data: {
+      labels: CATEGORIES.map(c => c.label),
+      datasets: [{
+        label: 'Promedio',
+        data: catAvgs,
+        backgroundColor: 'rgba(139, 92, 246, 0.25)',
+        borderColor: '#8B5CF6',
+        pointBackgroundColor: '#A78BFA',
+        pointBorderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 5,
+          ticks: { stepSize: 1, color: '#64748B', backdropColor: 'transparent' },
+          grid: { color: '#232C3D' },
+          angleLines: { color: '#232C3D' },
+          pointLabels: { color: '#E5E7EB', font: { size: 11 } }
+        }
+      }
+    }
+  });
+
+  // Results doughnut
+  const resultCounts = { ganada: 0, perdida: 0, seguimiento: 0, no_show: 0 };
+  history.forEach(r => { if (resultCounts.hasOwnProperty(r.resultado)) resultCounts[r.resultado]++; });
+
+  charts.results = new Chart(document.getElementById('chartResults'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Ganada', 'Perdida', 'Seguimiento', 'No show'],
+      datasets: [{
+        data: [resultCounts.ganada, resultCounts.perdida, resultCounts.seguimiento, resultCounts.no_show],
+        backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#64748B'],
+        borderColor: '#0B0E14',
+        borderWidth: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } }
+      },
+      cutout: '60%'
+    }
+  });
+
+  // Bar: per-category last vs avg
+  const lastCats = CATEGORIES.map(cat => history[0].categorias?.[cat.key]?.estrellas || 0);
+
+  charts.bars = new Chart(document.getElementById('chartBars'), {
+    type: 'bar',
+    data: {
+      labels: CATEGORIES.map(c => c.label.split(' ')[0]),
+      datasets: [
+        { label: 'Última llamada', data: lastCats, backgroundColor: '#8B5CF6', borderRadius: 4 },
+        { label: 'Promedio histórico', data: catAvgs, backgroundColor: '#38BDF8', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } } },
+      scales: {
+        y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: '#1F2937' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// =============================================================
+// UTILS
+// =============================================================
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(20px)';
+    t.style.transition = 'all 0.2s';
+    setTimeout(() => t.remove(), 200);
+  }, 3000);
+}
+
+// =============================================================
+// SAMPLE DATA
+// =============================================================
+const SAMPLE_SCRIPT = `SCRIPT MAESTRO — Llamada de Discovery / Closing
+
+1. APERTURA Y RAPPORT (1-2 min)
+   - Saludar por nombre, confirmar disponibilidad.
+   - Pequeño rapport.
+   - Agenda de la call: "En esta llamada quiero entender bien tu situación, mostrarte si lo que hacemos te encaja, y si te hace sentido, definir próximos pasos."
+
+2. DESCUBRIMIENTO (10-15 min) — Mínimo 5 preguntas abiertas
+   - ¿Cómo está funcionando hoy [proceso actual]?
+   - ¿Cuál es el dolor más grande que estás teniendo?
+   - ¿Qué pasaría si esto sigue así 6 meses más?
+   - ¿Tenés un presupuesto asignado para resolverlo?
+   - ¿En qué timing necesitás tener esto resuelto?
+   - ¿Quién más participa de la decisión?
+
+3. PITCH DE VALOR (5-8 min)
+   - Conectar cada feature con un dolor mencionado por el prospecto.
+   - Usar al menos un caso de éxito de un cliente similar.
+   - No tirar precio acá.
+
+4. MANEJO DE OBJECIONES
+   - Reconocer ("Tiene sentido lo que decís...")
+   - Aislar ("¿Esa es la única preocupación o hay algo más?")
+   - Resolver con prueba (caso, dato, garantía).
+
+5. CIERRE Y PRÓXIMOS PASOS
+   - Resumir lo hablado.
+   - Proponer próximo paso CONCRETO con día y hora.
+   - Agendar en calendario en vivo.
+   - Confirmar.`;
+
+const SAMPLE_TRANSCRIPT = `[00:00] Closer: Hola Juan, ¿cómo andás? Gracias por hacerte el tiempo.
+[00:08] Prospecto: Bien, bien, gracias por llamar.
+[00:15] Closer: Perfecto. Mirá, te cuento un poco lo que hacemos. Nosotros somos AMAIA, una agencia de automatización...
+[01:30] Closer: Tenemos un sistema que integra GoHighLevel con n8n, hacemos pipelines, workflows, agentes de IA, todo lo que necesites.
+[03:00] Closer: ¿Vos qué venís usando hoy?
+[03:10] Prospecto: Estamos con HubSpot pero medio improvisado, perdemos muchos leads.
+[03:25] Closer: Bueno, justamente lo que hacemos resuelve eso. Te paso el pricing, tenemos un plan de 3000 USD setup y 800 USD/mes.
+[04:00] Prospecto: Uh, está caro. No sé si tenemos presupuesto para tanto.
+[04:10] Closer: Pero es una inversión, va a pagar solo. Mirá, tenemos un cliente que con esto facturó 50k más al mes.
+[04:40] Prospecto: Sí, pero no sé... ¿no tienen algo más chico?
+[04:50] Closer: Mirá, te tiro la propuesta por mail y la vemos. ¿Te parece?
+[05:05] Prospecto: Dale, mandame.
+[05:15] Closer: Listo, hablamos. Chau.`;
+
+// Boot
+init();
+</script>
+</body>
+</html>
