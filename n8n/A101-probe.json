@@ -1,0 +1,121 @@
+{
+  "name": "A101-PROBE — ERS API Shape Discovery",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Run Probe",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://elpasofiesta.ourers.com/api/test/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.ERS_DEV_KEY }}" },
+            { "name": "token", "value": "={{ $env.ERS_API_TOKEN }}" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "autodetect", "fullResponse": true } }
+        }
+      },
+      "id": "ers-test",
+      "name": "1) /api/test/",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://elpasofiesta.ourers.com/api/read/order_counts/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.ERS_DEV_KEY }}" },
+            { "name": "token", "value": "={{ $env.ERS_API_TOKEN }}" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "autodetect", "fullResponse": true } }
+        }
+      },
+      "id": "ers-order-counts",
+      "name": "2) /api/read/order_counts/",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://elpasofiesta.ourers.com/api/read/guest_queue/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.ERS_DEV_KEY }}" },
+            { "name": "token", "value": "={{ $env.ERS_API_TOKEN }}" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "autodetect", "fullResponse": true } }
+        }
+      },
+      "id": "ers-guest-queue",
+      "name": "3) /api/read/guest_queue/  <-- KEY UNKNOWN",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://elpasofiesta.ourers.com/api/read/customers/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.ERS_DEV_KEY }}" },
+            { "name": "token", "value": "={{ $env.ERS_API_TOKEN }}" },
+            { "name": "searchterm", "value": "" },
+            { "name": "limit", "value": "5" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "autodetect", "fullResponse": true } }
+        }
+      },
+      "id": "ers-customers",
+      "name": "4) /api/read/customers/",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 700]
+    }
+  ],
+  "connections": {
+    "Run Probe": {
+      "main": [
+        [
+          { "node": "1) /api/test/", "type": "main", "index": 0 },
+          { "node": "2) /api/read/order_counts/", "type": "main", "index": 0 },
+          { "node": "3) /api/read/guest_queue/  <-- KEY UNKNOWN", "type": "main", "index": 0 },
+          { "node": "4) /api/read/customers/", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "",
+  "id": "A101-PROBE",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

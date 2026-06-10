@@ -1,0 +1,713 @@
+{
+  "name": "A101 - ERS to GHL Bridge",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.A101_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A101_orders_state"
+        },
+        "options": {}
+      },
+      "id": "read-state",
+      "name": "Read orders_state",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        450,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.A101_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A101_meta"
+        },
+        "options": {}
+      },
+      "id": "read-meta",
+      "name": "Read A101_meta",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://elpasofiesta.ourers.com/api/read/guest_queue/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.ERS_DEV_KEY }}"
+            },
+            {
+              "name": "token",
+              "value": "={{ $env.ERS_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "ers-guest",
+      "name": "ERS: guest_queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// === A101: Diff & Decide Events ===\n// Reads three inputs (immediate parent = fresh ERS poll, plus two referenced nodes\n// = sheet state and meta config) and outputs one item per \"action\" the workflow must take.\n//\n// Output item shape:\n//   { _action: \"upsert_only\" | \"fire_event\" | \"meta_update\",\n//     _event_type?: \"new_checkout\" | \"abandoned_cart\" | \"purchase\",\n//     _event_id?:   \"<order_id>:<event>\",\n//     ...row fields matching the A101_orders_state schema }\n//\n// === TODO post-probe ===\n// Run A101-PROBE first. The Normalize section below assumes a likely shape for the\n// /api/read/guest_queue/ response. After you see the real shape in PROBES.md, adjust\n// the field accessors inside `Normalize fresh poll`.\n\nconst ABANDONED_THRESHOLD_MIN = 30;\nconst now = new Date();\nconst nowIso = now.toISOString();\n\n// --- Load meta tab into a flat object (sheet has key/value rows) ---\nconst metaRows = $('Read A101_meta').all();\nconst meta = {};\nfor (const r of metaRows) {\n  const j = r.json || {};\n  if (j.key) meta[j.key] = j.value;\n}\nconst bootstrapDone = !!meta.bootstrap_completed_at;\n\n// --- Index prior state by order_id ---\nconst stateRows = $('Read orders_state').all();\nconst stateById = {};\nfor (const r of stateRows) {\n  const j = r.json || {};\n  if (j.order_id) stateById[String(j.order_id)] = j;\n}\n\n// --- Normalize fresh poll (parent input) ---\nfunction statusNorm(raw) {\n  if (!raw) return 'other';\n  const s = String(raw).toLowerCase();\n  if (['paid', 'confirmed', 'complete', 'completed', 'closed', 'won'].includes(s)) return 'paid';\n  if (['pending', 'quote', 'open', 'new', 'waiting', 'cart'].includes(s)) return 'pending';\n  return 'other';\n}\n\nconst fresh = [];\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  // ERS endpoints sometimes wrap arrays in named keys. Handle a few shapes defensively.\n  const records = Array.isArray(j)\n    ? j\n    : (j.guest_queue || j.queue || j.orders || j.data || j.results || [j]);\n  for (const n of (Array.isArray(records) ? records : [records])) {\n    if (!n || (!n.order_id && !n.id)) continue;\n    fresh.push({\n      order_id: String(n.order_id || n.id),\n      customer_id: String(n.customer_id || n.customer || ''),\n      status_raw: n.status || n.order_status || n.state || '',\n      status_norm: statusNorm(n.status || n.order_status || n.state),\n      total: Number(n.total || n.amount || n.grand_total || 0),\n      ers_created_at: n.created_at || n.created_datetime || n.created || '',\n      ers_updated_at: n.updated_at || n.modified_datetime || n.updated || ''\n    });\n  }\n}\n\nconst out = [];\n\n// --- Bootstrap path: silent import, NO webhooks ---\nif (!bootstrapDone) {\n  let maxCreated = '';\n  for (const f of fresh) {\n    out.push({\n      _action: 'upsert_only',\n      _bootstrap: true,\n      order_id: f.order_id,\n      customer_id: f.customer_id,\n      status_raw: f.status_raw,\n      status_norm: f.status_norm,\n      total: f.total,\n      ers_created_at: f.ers_created_at,\n      ers_updated_at: f.ers_updated_at,\n      first_seen_at: f.ers_created_at || nowIso,\n      last_seen_at: nowIso,\n      last_status: f.status_norm,\n      new_checkout_fired_at: 'BOOTSTRAP',\n      abandoned_cart_fired_at: f.status_norm === 'paid' ? 'BOOTSTRAP' : '',\n      purchase_fired_at: f.status_norm === 'paid' ? 'BOOTSTRAP' : '',\n      last_error: '',\n      retry_count: 0\n    });\n    if (f.ers_created_at > maxCreated) maxCreated = f.ers_created_at;\n  }\n  out.push({\n    _action: 'meta_update',\n    key: 'bootstrap_completed_at',\n    value: nowIso\n  });\n  out.push({\n    _action: 'meta_update',\n    key: 'cutoff_order_created_at',\n    value: maxCreated\n  });\n  out.push({\n    _action: 'meta_update',\n    key: 'last_tick_at',\n    value: nowIso\n  });\n  return out.map(o => ({ json: o }));\n}\n\n// --- Normal path ---\nfor (const f of fresh) {\n  const prior = stateById[f.order_id];\n  const events = [];\n\n  if (!prior) {\n    events.push('new_checkout');\n  } else {\n    const firstSeen = new Date(prior.first_seen_at || prior.ers_created_at || nowIso);\n    const ageMin = (now - firstSeen) / 60000;\n    if (f.status_norm === 'pending' && ageMin > ABANDONED_THRESHOLD_MIN && !prior.abandoned_cart_fired_at) {\n      events.push('abandoned_cart');\n    }\n    if (prior.last_status !== 'paid' && f.status_norm === 'paid' && !prior.purchase_fired_at) {\n      events.push('purchase');\n    }\n  }\n\n  const baseRow = {\n    order_id: f.order_id,\n    customer_id: f.customer_id,\n    status_raw: f.status_raw,\n    status_norm: f.status_norm,\n    total: f.total,\n    ers_created_at: prior ? prior.ers_created_at : f.ers_created_at,\n    ers_updated_at: f.ers_updated_at,\n    first_seen_at: prior ? prior.first_seen_at : nowIso,\n    last_seen_at: nowIso,\n    last_status: f.status_norm,\n    new_checkout_fired_at: prior ? prior.new_checkout_fired_at : '',\n    abandoned_cart_fired_at: prior ? prior.abandoned_cart_fired_at : '',\n    purchase_fired_at: prior ? prior.purchase_fired_at : '',\n    last_error: prior ? prior.last_error : '',\n    retry_count: prior ? Number(prior.retry_count || 0) : 0\n  };\n\n  if (events.length === 0) {\n    out.push({ _action: 'upsert_only', ...baseRow });\n  } else {\n    for (const ev of events) {\n      out.push({\n        _action: 'fire_event',\n        _event_type: ev,\n        _event_id: `${f.order_id}:${ev}`,\n        ...baseRow\n      });\n    }\n  }\n}\n\nout.push({ _action: 'meta_update', key: 'last_tick_at', value: nowIso });\n\nreturn out.map(o => ({ json: o }));\n"
+      },
+      "id": "diff",
+      "name": "Diff & Decide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._action }}",
+                    "rightValue": "upsert_only",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "upsert_only"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._action }}",
+                    "rightValue": "fire_event",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fire_event"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._action }}",
+                    "rightValue": "meta_update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "meta_update"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "switch-action",
+      "name": "Switch _action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        950,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.A101_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A101_orders_state"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": [
+            "order_id"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "upsert-state",
+      "name": "Upsert orders_state",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.A101_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A101_meta"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": [
+            "key"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "upsert-meta",
+      "name": "Upsert A101_meta",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://elpasofiesta.ourers.com/api/read/account/{{ $json.customer_id }}/",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.ERS_DEV_KEY }}"
+            },
+            {
+              "name": "token",
+              "value": "={{ $env.ERS_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "ers-enrich",
+      "name": "Enrich: ERS account",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// === A101: Build Webhook Payload ===\n// Combines the diff item (carries _event_type and order fields) with the customer\n// enrichment from the prior HTTP node ($('Enrich: ERS account')) and produces the\n// JSON body that goes to the matching GHL Inbound Webhook.\n\nconst e = $input.first().json;\n\n// Enrichment from the immediately preceding \"Enrich: ERS account\" HTTP node.\n// Newer n8n versions expose the response under .data or .body depending on options.\nconst enrichRaw = $('Enrich: ERS account').first().json || {};\nconst cust = enrichRaw.customer || enrichRaw.data || enrichRaw;\n\nconst customer = {\n  id: e.customer_id,\n  first_name: cust.firstname || cust.first_name || '',\n  last_name:  cust.lastname  || cust.last_name  || '',\n  email:      cust.email     || '',\n  phone:      cust.phone     || cust.mobile_phone || cust.work_phone || '',\n  billing_address: cust.billing_address || '',\n  billing_city:    cust.billing_city    || '',\n  billing_state:   cust.billing_state   || '',\n  billing_zip:     cust.billing_zip     || ''\n};\n\nreturn [{\n  json: {\n    event: e._event_type,\n    event_id: e._event_id,\n    order_id: e.order_id,\n    status: e.status_norm,\n    status_raw: e.status_raw,\n    total: e.total,\n    customer,\n    ers_created_at: e.ers_created_at,\n    ers_updated_at: e.ers_updated_at,\n    source: 'A101-ers-ghl-bridge',\n    sent_at: new Date().toISOString(),\n    // pass through for downstream sheet-marking node\n    _event_type: e._event_type,\n    _event_id: e._event_id,\n    _row: e\n  }\n}];\n"
+      },
+      "id": "build-payload",
+      "name": "Build Webhook Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._event_type }}",
+                    "rightValue": "new_checkout",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "new_checkout"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._event_type }}",
+                    "rightValue": "abandoned_cart",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "abandoned_cart"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._event_type }}",
+                    "rightValue": "purchase",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "purchase"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "switch-event",
+      "name": "Switch _event_type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1700,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GHL_WH_NEW_CHECKOUT }}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "ghl-new",
+      "name": "GHL: new_checkout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1950,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GHL_WH_ABANDONED_CART }}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "ghl-abandoned",
+      "name": "GHL: abandoned_cart",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1950,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GHL_WH_PURCHASE }}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "ghl-purchase",
+      "name": "GHL: purchase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1950,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// === A101: Compute fired_at columns for sheet upsert ===\n// Carries forward existing *_fired_at values and stamps the one matching _event_type.\nconst e = $json;\nconst now = new Date().toISOString();\nconst row = e._row || {};\nconst evt = e._event_type;\nreturn [{\n  json: {\n    order_id: row.order_id,\n    customer_id: row.customer_id,\n    status_raw: row.status_raw,\n    status_norm: row.status_norm,\n    total: row.total,\n    ers_created_at: row.ers_created_at,\n    ers_updated_at: row.ers_updated_at,\n    first_seen_at: row.first_seen_at,\n    last_seen_at: now,\n    last_status: row.status_norm,\n    new_checkout_fired_at:   evt === 'new_checkout'   ? now : (row.new_checkout_fired_at   || ''),\n    abandoned_cart_fired_at: evt === 'abandoned_cart' ? now : (row.abandoned_cart_fired_at || ''),\n    purchase_fired_at:       evt === 'purchase'       ? now : (row.purchase_fired_at       || ''),\n    last_error: '',\n    retry_count: 0\n  }\n}];\n"
+      },
+      "id": "mark-fired",
+      "name": "Mark fired_at",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.A101_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "A101_orders_state"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": [
+            "order_id"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "write-fired",
+      "name": "Write fired_at row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2450,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Read orders_state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read orders_state": {
+      "main": [
+        [
+          {
+            "node": "Read A101_meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read A101_meta": {
+      "main": [
+        [
+          {
+            "node": "ERS: guest_queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERS: guest_queue": {
+      "main": [
+        [
+          {
+            "node": "Diff & Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diff & Decide": {
+      "main": [
+        [
+          {
+            "node": "Switch _action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch _action": {
+      "main": [
+        [
+          {
+            "node": "Upsert orders_state",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enrich: ERS account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert A101_meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich: ERS account": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Webhook Payload": {
+      "main": [
+        [
+          {
+            "node": "Switch _event_type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch _event_type": {
+      "main": [
+        [
+          {
+            "node": "GHL: new_checkout",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GHL: abandoned_cart",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GHL: purchase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GHL: new_checkout": {
+      "main": [
+        [
+          {
+            "node": "Mark fired_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GHL: abandoned_cart": {
+      "main": [
+        [
+          {
+            "node": "Mark fired_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GHL: purchase": {
+      "main": [
+        [
+          {
+            "node": "Mark fired_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark fired_at": {
+      "main": [
+        [
+          {
+            "node": "Write fired_at row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": false,
+    "executionTimeout": 240
+  },
+  "versionId": "",
+  "id": "A101-ers-ghl-bridge",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

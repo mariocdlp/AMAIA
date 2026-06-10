@@ -1,0 +1,1 @@
+order_id,customer_id,status_raw,status_norm,total,ers_created_at,ers_updated_at,first_seen_at,last_seen_at,last_status,new_checkout_fired_at,abandoned_cart_fired_at,purchase_fired_at,last_error,retry_count
