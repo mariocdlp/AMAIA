@@ -1,0 +1,33 @@
+title,street,city,category,exclude_reason,phone,website
+University Medical Center of El Paso,4815 Alameda Ave,El Paso,University hospital,excluded_category,(915) 544-1200,https://www.umcelpaso.org/
+Canutillo Independent School District,7965 Artcraft Rd,El Paso,School district office,excluded_category,(915) 877-7401,http://www.canutillo-isd.org/
+El Paso Independent School Dst,4400 Elm St,El Paso,School district office,excluded_category,(915) 565-1158,https://www.episd.org/
+Southwest University Lounge,701 N Americas Ave Ste 101,El Paso,School center,excluded_category,,https://southwestuniversity.edu/
+El Paso Independent School District,1100 N Stanton St,El Paso,School district office,excluded_category,(915) 230-2000,https://www.episd.org/
+El Paso Independent School District - Delta Operations Center,1905 Delta Dr,El Paso,School district office,excluded_category,(915) 230-2420,https://www.episd.org/page/operations-support-services
+El Paso Independent School Dst,3200 Wheeling Ave,El Paso,School district office,excluded_category,(915) 566-0921,https://www.episd.org/
+Ysleta Independent School District,7615 Mimosa Ave,El Paso,School district office,excluded_category,(915) 434-7310,https://www.yisd.net/
+El Paso Independent School District Administrative Office,1014 N Stanton St,El Paso,School district office,excluded_category,(915) 230-2000,http://episd.org/
+Clayworks Pottery School,2323 Alameda Ave B,El Paso,School center,excluded_category,(915) 222-8055,http://www.clayworkselp.com/
+Socorro Independent School District - District Service Center,12440 Rojas Dr,El Paso,School district office,excluded_category,(915) 937-0000,http://www.sisd.net/
+Ysleta Independent School District,9600 Sims Dr,El Paso,School district office,excluded_category,(915) 434-0000,https://www.yisd.net/
+Southwest University Lounge,12703 Montana Ave Ste B1 and B2,El Paso,School center,excluded_category,,https://southwestuniversity.edu/
+scolarships,14323 N Cave Dr,El Paso,School center,excluded_category,(334) 861-1085,
+University Library,1900 Wiggins Rd,El Paso,University library,excluded_category,(915) 747-5672,http://www.utep.edu/library
+Campbell Building,"Health Sciences Bldg, 1101 N Campbell St",El Paso,University lab room,unmapped_category,(915) 747-7280,https://www.utep.edu/chs/pt/about/facilities.html
+Bright Kids Academy,10710 Gateway N Blvd,El Paso,School center,excluded_category,(915) 313-5771,
+The Online Trade School,11450 Rojas Dr Suite D18-11,El Paso,School center,excluded_category,(915) 201-2742,https://theonlinetradeschool.com/
+Eastview Cottages,1637 Leroy Bonse Dr,El Paso,School administration office,excluded_category,(915) 937-0000,https://www.sisd.net/
+Sandy Creek Cottages,11400 Long John Dr,El Paso,School administration office,excluded_category,(915) 937-0000,https://www.sisd.net/
+El Paso ISD Purchasing,4900 Woodrow Bean Transmountain,El Paso,School district office,excluded_category,(915) 230-3120,https://www.episd.org/page/warehouse-services
+EPISD Fine Arts Office,4864 Doniphan Dr,El Paso,School district office,excluded_category,(915) 230-3500,https://www.episd.org/o/episd/page/fine-arts
+El Paso Isd,3700 Thomason Ave,El Paso,School district office,excluded_category,(214) 214-3100,
+Chapin JROTC Building,4220 Ellerthorpe Ave,El Paso,School center,excluded_category,,
+Chapin Fine Arts Building,7000 Dyer St,El Paso,School center,excluded_category,,
+SISD Technology Services Center,12440 Rojas Dr Suite B,El Paso,School district office,excluded_category,(915) 937-1111,https://www.sisd.net/page/technology-services
+SISD Department of Transportation,12460 Rojas Dr,El Paso,School bus service,excluded_category,(915) 937-0600,https://www.sisd.net/page/transportation
+Lone Star Real Estate School,"Single Story Building, 9440 Viscount Blvd Unit B",El Paso,Real estate school,unmapped_category,(915) 209-2001,https://www.lonestarrealestateschool.com/
+"Math Tutoring in El Paso, Tx",1114 E Rio Grande Ave #5,El Paso,Mathematics school,unmapped_category,(915) 270-2256,https://www.wyzant.com/Tutors/DavidYB
+Epcc Learning Emporium,918 N Oregon St,El Paso,School center,excluded_category,,
+Administration Building,,El Paso,School center,excluded_category,,
+YISD Transportation,7944 Yermoland Dr,El Paso,School bus service,excluded_category,(915) 434-1740,http://www.yisd.net/
