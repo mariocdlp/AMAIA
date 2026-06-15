@@ -1,33 +1,95 @@
 title,street,city,category,exclude_reason,phone,website
-University Medical Center of El Paso,4815 Alameda Ave,El Paso,University hospital,excluded_category,(915) 544-1200,https://www.umcelpaso.org/
-Canutillo Independent School District,7965 Artcraft Rd,El Paso,School district office,excluded_category,(915) 877-7401,http://www.canutillo-isd.org/
-El Paso Independent School Dst,4400 Elm St,El Paso,School district office,excluded_category,(915) 565-1158,https://www.episd.org/
-Southwest University Lounge,701 N Americas Ave Ste 101,El Paso,School center,excluded_category,,https://southwestuniversity.edu/
-El Paso Independent School District,1100 N Stanton St,El Paso,School district office,excluded_category,(915) 230-2000,https://www.episd.org/
-El Paso Independent School District - Delta Operations Center,1905 Delta Dr,El Paso,School district office,excluded_category,(915) 230-2420,https://www.episd.org/page/operations-support-services
-El Paso Independent School Dst,3200 Wheeling Ave,El Paso,School district office,excluded_category,(915) 566-0921,https://www.episd.org/
-Ysleta Independent School District,7615 Mimosa Ave,El Paso,School district office,excluded_category,(915) 434-7310,https://www.yisd.net/
-El Paso Independent School District Administrative Office,1014 N Stanton St,El Paso,School district office,excluded_category,(915) 230-2000,http://episd.org/
-Clayworks Pottery School,2323 Alameda Ave B,El Paso,School center,excluded_category,(915) 222-8055,http://www.clayworkselp.com/
-Socorro Independent School District - District Service Center,12440 Rojas Dr,El Paso,School district office,excluded_category,(915) 937-0000,http://www.sisd.net/
-Ysleta Independent School District,9600 Sims Dr,El Paso,School district office,excluded_category,(915) 434-0000,https://www.yisd.net/
-Southwest University Lounge,12703 Montana Ave Ste B1 and B2,El Paso,School center,excluded_category,,https://southwestuniversity.edu/
-scolarships,14323 N Cave Dr,El Paso,School center,excluded_category,(334) 861-1085,
-University Library,1900 Wiggins Rd,El Paso,University library,excluded_category,(915) 747-5672,http://www.utep.edu/library
-Campbell Building,"Health Sciences Bldg, 1101 N Campbell St",El Paso,University lab room,unmapped_category,(915) 747-7280,https://www.utep.edu/chs/pt/about/facilities.html
-Bright Kids Academy,10710 Gateway N Blvd,El Paso,School center,excluded_category,(915) 313-5771,
-The Online Trade School,11450 Rojas Dr Suite D18-11,El Paso,School center,excluded_category,(915) 201-2742,https://theonlinetradeschool.com/
-Eastview Cottages,1637 Leroy Bonse Dr,El Paso,School administration office,excluded_category,(915) 937-0000,https://www.sisd.net/
-Sandy Creek Cottages,11400 Long John Dr,El Paso,School administration office,excluded_category,(915) 937-0000,https://www.sisd.net/
-El Paso ISD Purchasing,4900 Woodrow Bean Transmountain,El Paso,School district office,excluded_category,(915) 230-3120,https://www.episd.org/page/warehouse-services
-EPISD Fine Arts Office,4864 Doniphan Dr,El Paso,School district office,excluded_category,(915) 230-3500,https://www.episd.org/o/episd/page/fine-arts
-El Paso Isd,3700 Thomason Ave,El Paso,School district office,excluded_category,(214) 214-3100,
-Chapin JROTC Building,4220 Ellerthorpe Ave,El Paso,School center,excluded_category,,
-Chapin Fine Arts Building,7000 Dyer St,El Paso,School center,excluded_category,,
-SISD Technology Services Center,12440 Rojas Dr Suite B,El Paso,School district office,excluded_category,(915) 937-1111,https://www.sisd.net/page/technology-services
-SISD Department of Transportation,12460 Rojas Dr,El Paso,School bus service,excluded_category,(915) 937-0600,https://www.sisd.net/page/transportation
-Lone Star Real Estate School,"Single Story Building, 9440 Viscount Blvd Unit B",El Paso,Real estate school,unmapped_category,(915) 209-2001,https://www.lonestarrealestateschool.com/
-"Math Tutoring in El Paso, Tx",1114 E Rio Grande Ave #5,El Paso,Mathematics school,unmapped_category,(915) 270-2256,https://www.wyzant.com/Tutors/DavidYB
-Epcc Learning Emporium,918 N Oregon St,El Paso,School center,excluded_category,,
-Administration Building,,El Paso,School center,excluded_category,,
-YISD Transportation,7944 Yermoland Dr,El Paso,School bus service,excluded_category,(915) 434-1740,http://www.yisd.net/
+Lhakhang Temple,Lhakhang Building,El Paso,Shrine,no_physical_address,(915) 747-8994,https://www.utep.edu/centennial-museum/lhakhang/index.html
+Steel Temple,,El Paso,Religious institution,no_physical_address,,
+University Medical Center of El Paso,4815 Alameda Ave,El Paso,University hospital,dropped_category:University hospital,(915) 544-1200,https://www.umcelpaso.org/
+William Wallace Smith Bliss El,,Fort Bliss,Primary school,no_physical_address,,
+School,Hayes Ave,El Paso,Educational institution,no_physical_address,,
+Canutillo Independent School District,7965 Artcraft Rd,El Paso,School district office,dropped_category:School district office,(915) 877-7401,http://www.canutillo-isd.org/
+Lee Ross Capshaw Fine Arts Center at Coronado High School,Cloudview Dr,El Paso,Educational institution,no_physical_address,,
+El Paso Independent School Dst,4400 Elm St,El Paso,School district office,dropped_category:School district office,(915) 565-1158,https://www.episd.org/
+Assumption Church Hall,Byron St,El Paso,Church,no_physical_address,,
+Cole Church,,El Paso,Church,no_physical_address,,
+Grace Church,,El Paso,Church,no_physical_address,,
+Good Shephard Lutheran Church,,El Paso,Church,no_physical_address,,
+Life Worth Living Church,,El Paso,Religious institution,no_physical_address,,
+Pentecostal Holiness Church,,El Paso,Pentecostal church,no_physical_address,,
+Mission Apostolic Church,,El Paso,Church,no_physical_address,,
+Southwest University Lounge,701 N Americas Ave Ste 101,El Paso,School center,dropped_category:School center,,https://southwestuniversity.edu/
+Light House Ministries,,El Paso,Church,no_physical_address,,
+Congregación Primicias De Dios,,El Paso,Church,no_physical_address,,
+EPCC LITTLE TEMPLE,,El Paso,Religious institution,no_physical_address,,
+Academic & Education Center,Alberta Ave,El Paso,University,no_physical_address,,
+El Paso Independent School District,1100 N Stanton St,El Paso,School district office,dropped_category:School district office,(915) 230-2000,https://www.episd.org/
+El Paso Holiness Church,,El Paso,Church,no_physical_address,,
+San Juan School,,El Paso,General education school,no_physical_address,,
+Carl Hertzog Building,,El Paso,Educational institution,no_physical_address,,
+Olga Roderick Middle School,,El Paso,Middle school,no_physical_address,,
+El Paso Independent School District - Delta Operations Center,1905 Delta Dr,El Paso,School district office,dropped_category:School district office,(915) 230-2420,https://www.episd.org/page/operations-support-services
+School,Glory Rd,El Paso,Educational institution,no_physical_address,,
+El Paso Independent School Dst,3200 Wheeling Ave,El Paso,School district office,dropped_category:School district office,(915) 566-0921,https://www.episd.org/
+Ysleta Independent School District,7615 Mimosa Ave,El Paso,School district office,dropped_category:School district office,(915) 434-7310,https://www.yisd.net/
+El Paso Independent School District Administrative Office,1014 N Stanton St,El Paso,School district office,dropped_category:School district office,(915) 230-2000,http://episd.org/
+Clayworks Pottery School,2323 Alameda Ave B,El Paso,School center,dropped_category:School center,(915) 222-8055,http://www.clayworkselp.com/
+Socorro Independent School District - District Service Center,12440 Rojas Dr,El Paso,School district office,dropped_category:School district office,(915) 937-0000,http://www.sisd.net/
+Ysleta Independent School District,9600 Sims Dr,El Paso,School district office,dropped_category:School district office,(915) 434-0000,https://www.yisd.net/
+Purposeful Life Fellowship Church,,El Paso,Religious institution,no_physical_address,,
+El Paso Latin Foursquare Church,,El Paso,Foursquare church,no_physical_address,,
+Apostolic Faith Bible Fellowship Church,,El Paso,Church,no_physical_address,,
+Restoration Community Church,,El Paso,Religious institution,no_physical_address,,
+Tigua Baptist Church,,El Paso,Church,no_physical_address,,
+Christian Life Center Scotsdale Baptist Church,Cork Dr,El Paso,Religious institution,no_physical_address,,
+Southwest University Lounge,12703 Montana Ave Ste B1 and B2,El Paso,School center,dropped_category:School center,,https://southwestuniversity.edu/
+scolarships,14323 N Cave Dr,El Paso,School center,dropped_category:School center,(334) 861-1085,
+Worship Center,George Dieter Dr,El Paso,Religious institution,no_physical_address,,
+Kingdom Hall,Holmsley Trail,El Paso,Religious destination,no_physical_address,,
+La Vid Verdadera,,El Paso,Church,no_physical_address,,
+Jesus Mural,,El Paso,Church,no_physical_address,,
+Saint Patricks Mission,,El Paso,Church,no_physical_address,,
+Bafilo,,El Paso,Parsi temple,no_physical_address,,
+University Library,1900 Wiggins Rd,El Paso,University library,dropped_category:University library,(915) 747-5672,http://www.utep.edu/library
+Liberal Arts Park,Hawthorne St,El Paso,Public university,no_physical_address,,
+Advanced Manufacturing and Aerospace Center,,El Paso,University,no_physical_address,,
+Campbell Building,"Health Sciences Bldg, 1101 N Campbell St",El Paso,University lab room,dropped_category:University lab room,(915) 747-7280,https://www.utep.edu/chs/pt/about/facilities.html
+EPCC Valle Verde Campus- Firetech Building,,El Paso,Fire fighters academy,no_physical_address,,
+ICM Caminando Juntas,Isaac Dr,El Paso,Hispanic church,no_physical_address,+1 811-043-6080,https://visitmccchurch.com/
+Bright Kids Academy,10710 Gateway N Blvd,El Paso,School center,dropped_category:School center,(915) 313-5771,
+Rotation Trip,,El Paso,University,no_physical_address,,
+Su Yolanda Arriola Nursing School,,El Paso,Nursing school,no_physical_address,,
+Schuster 1,,El Paso,University,no_physical_address,,
+Templo La Hermosa Church,,El Paso,Church,no_physical_address,,
+Templo La Potenica De Dios,,El Paso,Church,no_physical_address,,
+Christfor Mexico Mission,,El Paso,Church,no_physical_address,(915) 598-7146,
+Iglesia Cristiana Interdenominacional Emmanuel,Poplar St,El Paso,Christian church,no_physical_address,,http://www.iglesiaemanueliciar.org/
+The Online Trade School,11450 Rojas Dr Suite D18-11,El Paso,School center,dropped_category:School center,(915) 201-2742,https://theonlinetradeschool.com/
+Eastview Cottages,1637 Leroy Bonse Dr,El Paso,School administration office,dropped_category:School administration office,(915) 937-0000,https://www.sisd.net/
+BRIGHTER EXPECTATIONS,,El Paso,After school program,no_physical_address,(915) 526-7176,
+Socorro Aft,,El Paso,After school program,no_physical_address,(915) 593-2801,
+Sandy Creek Cottages,11400 Long John Dr,El Paso,School administration office,dropped_category:School administration office,(915) 937-0000,https://www.sisd.net/
+The Castle at Hanks,"Montwood, Lee Trevino Dr",El Paso,High school,no_physical_address,(915) 434-5000,https://www.yisd.net/hanks
+Camión Karina,E Glen Dr,El Paso,Educational institution,no_physical_address,,
+Front Sight Firearms & LTC Training,Tierra Cecil Pl,El Paso,Firearms academy,no_physical_address,(915) 276-3100,http://www.frontsightfirearmsltctraining.com/
+Abbyero Aviation,,El Paso,Flight school,no_physical_address,(915) 999-5352,https://abbyeroaviation.com/
+Excalibur Stadium at Hanks High School,,El Paso,High school,no_physical_address,(915) 434-5000,
+Knights of Columbus HUT #7563 Assembly #2968,Zanzibar Rd,El Paso,Catholic church,no_physical_address,,
+El Paso ISD Purchasing,4900 Woodrow Bean Transmountain,El Paso,School district office,dropped_category:School district office,(915) 230-3120,https://www.episd.org/page/warehouse-services
+EPISD Fine Arts Office,4864 Doniphan Dr,El Paso,School district office,dropped_category:School district office,(915) 230-3500,https://www.episd.org/o/episd/page/fine-arts
+Dance Palace,,El Paso,Dance school,no_physical_address,(575) 494-6835,https://usavistalab.top/details/dance-palace-ChIJyzx
+El Paso Isd,3700 Thomason Ave,El Paso,School district office,dropped_category:School district office,(214) 214-3100,
+Family Child Care Fort Bliss,,El Paso,Military school,no_physical_address,,
+Chapin JROTC Building,4220 Ellerthorpe Ave,El Paso,School center,dropped_category:School center,,
+Chapin Fine Arts Building,7000 Dyer St,El Paso,School center,dropped_category:School center,,
+The Y Child Development Center,,El Paso,Preschool,no_physical_address,,
+SISD Technology Services Center,12440 Rojas Dr Suite B,El Paso,School district office,dropped_category:School district office,(915) 937-1111,https://www.sisd.net/page/technology-services
+Aladdin Daycare Center,,El Paso,After school program,no_physical_address,,https://aladdindaycareep.com/
+SISD Department of Transportation,12460 Rojas Dr,El Paso,School bus service,dropped_category:School bus service,(915) 937-0600,https://www.sisd.net/page/transportation
+Escuela para adultos,Padres Dr,El Paso,Adult education school,no_physical_address,,
+बोंगाईगांव,,El Paso,Church,no_physical_address,,
+World Of Colors Learning Center,Suncrest Dr,El Paso,Preschool,no_physical_address,(918) 275-3453,
+Musical Lessons,,El Paso,Music school,no_physical_address,,
+Feira de ciências da nikolle,,El Paso,Church,no_physical_address,,
+Roca & Potencia,E Delta Dr,El Paso,Religious institution,no_physical_address,,
+Harli Lotts,,El Paso,Church,no_physical_address,,
+Epcc Learning Emporium,918 N Oregon St,El Paso,School center,dropped_category:School center,,
+Administration Building,,El Paso,School center,no_physical_address,,
+El Paso License to Carry,"At a private range in the, Upper Valley Rd",El Paso,Adult education school,no_physical_address,(915) 222-1840,https://www.elpasolicensetocarry.com/el-paso-firearms-classes/
+YISD Transportation,7944 Yermoland Dr,El Paso,School bus service,dropped_category:School bus service,(915) 434-1740,http://www.yisd.net/

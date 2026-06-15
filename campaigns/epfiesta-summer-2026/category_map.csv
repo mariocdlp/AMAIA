@@ -1,128 +1,128 @@
-category,count_in_source,status,segment,use_case_en,use_case_es
-Church,249,included,church,"your summer festivals, outdoor services and family gatherings","los festivales de verano, servicios al aire libre y convivencias familiares"
-Elementary school,104,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-High school,56,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-University,48,included,higher_ed,"your orientation, alumni receptions, college fairs and commencement","la orientación, recepciones de exalumnos, ferias universitarias y graduación"
-Christian church,44,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Catholic church,42,included,church,"your parish kermés, first communions, confirmaciones and outdoor masses","la kermés parroquial, primeras comuniones, confirmaciones y misas al aire libre"
-Baptist church,40,included,church,"your Vacation Bible School, summer revivals, homecomings and outdoor baptisms","la Escuela Bíblica de Vacaciones, campañas de verano, aniversarios y bautizos al aire libre"
-Educational institution,37,included,school_k12,"your community events, registration drives and outdoor ceremonies","los eventos comunitarios, jornadas de inscripción y ceremonias al aire libre"
-Preschool,33,included,school_k12,"your family days, parent appreciation events and Pre-K graduation","los días familiares, eventos de agradecimiento a padres y la graduación de Pre-K"
-Middle school,31,included,school_k12,"your back-to-school night, fall festival, dances and sports tournaments","la noche de regreso a clases, festival de otoño, bailes y torneos deportivos"
-Martial arts school,25,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-Driving school,21,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-After school program,20,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Private educational institution,17,included,school_k12,"your open houses, fundraising galas, family days and graduations","los open houses, galas de recaudación, días familiares y graduaciones"
-College,16,included,higher_ed,"your open houses, registration events and graduation receptions","los open houses, eventos de inscripción y recepciones de graduación"
-Religious institution,15,included,church,"your summer festivals, outdoor services and family gatherings","los festivales de verano, servicios al aire libre y convivencias familiares"
-Trade school,15,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Music school,14,included,sports,"your recitals, student showcases and outdoor performances","los recitales, presentaciones de alumnos y muestras al aire libre"
-School district office,13,excluded_by_rule,,,
-Religious organization,13,included,church,"your summer festivals, outdoor services and family gatherings","los festivales de verano, servicios al aire libre y convivencias familiares"
-Presbyterian church,12,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Dance school,11,included,sports,"your recitals, student showcases and outdoor performances","los recitales, presentaciones de alumnos y muestras al aire libre"
-Montessori school,10,included,school_k12,"your outdoor learning days, family picnics and community open houses","los días de aprendizaje al aire libre, días de campo familiares y open houses comunitarios"
-Church of Christ,10,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-United Methodist church,10,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-School center,10,excluded_by_rule,,,
-General education school,9,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Lutheran church,9,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Apostolic church,9,included,church,"your kermés, conferencias, aniversarios and bautizos","la kermés, conferencias, aniversarios y bautizos"
-Beauty school,9,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Research institute,9,included,higher_ed,"your community events, registration drives and outdoor ceremonies","los eventos comunitarios, jornadas de inscripción y ceremonias al aire libre"
-Non-denominational church,8,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Pentecostal church,8,included,church,"your kermés, conferencias, aniversarios and bautizos","la kermés, conferencias, aniversarios y bautizos"
-Seventh-day Adventist church,8,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Charter school,7,included,school_k12,"your back-to-school events, family nights and end-of-year celebrations","los eventos de regreso a clases, noches familiares y celebraciones de fin de año"
-Truck driving school,7,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Adult education school,7,included,other,"your community events, registration drives and outdoor ceremonies","los eventos comunitarios, jornadas de inscripción y ceremonias al aire libre"
-Community college,6,included,higher_ed,"your open houses, registration events and graduation receptions","los open houses, eventos de inscripción y recepciones de graduación"
-Barber school,6,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Assemblies of God church,6,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Catholic school,5,included,school_k12,"your school masses, family events, fundraisers and graduations","las misas escolares, eventos familiares, recaudaciones y graduaciones"
-Special education school,5,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Calvary Chapel church,5,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Technical school,5,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Religious destination,5,included,church,"your summer festivals, outdoor services and family gatherings","los festivales de verano, servicios al aire libre y convivencias familiares"
-Church of the Nazarene,5,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Buddhist temple,4,included,church,"your cultural festivals, holiday celebrations and community pujas","los festivales culturales, celebraciones de festividades y eventos comunitarios"
-Nursing school,4,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Episcopal church,4,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Language school,4,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Medical school,4,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Massage school,4,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Synagogue,3,included,church,"your outdoor services, Sukkot gatherings and community celebrations","los servicios al aire libre, celebraciones de Sukkot y eventos comunitarios"
-Shrine,3,included,church,"your cultural festivals, holiday celebrations and community pujas","los festivales culturales, celebraciones de festividades y eventos comunitarios"
-Public educational institution,3,included,school_k12,"your community events, registration drives and outdoor ceremonies","los eventos comunitarios, jornadas de inscripción y ceremonias al aire libre"
-Public university,3,included,higher_ed,"your orientation, alumni receptions, college fairs and commencement","la orientación, recepciones de exalumnos, ferias universitarias y graduación"
-Religious school,3,included,school_k12,"your school masses, family events, fundraisers and graduations","las misas escolares, eventos familiares, recaudaciones y graduaciones"
-Karate school,3,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-Anglican church,3,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Foursquare church,3,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Korean church,3,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Evangelical church,3,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Computer training school,3,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Emergency training school,3,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Vocational school,3,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Ballet school,3,included,sports,"your recitals, student showcases and outdoor performances","los recitales, presentaciones de alumnos y muestras al aire libre"
-Hindu temple,2,included,church,"your cultural festivals, holiday celebrations and community pujas","los festivales culturales, celebraciones de festividades y eventos comunitarios"
-Institute of technology,2,included,higher_ed,"your open houses, registration events and graduation receptions","los open houses, eventos de inscripción y recepciones de graduación"
-Jujitsu school,2,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-Mosque,2,included,church,"your Eid celebrations, community iftars and outdoor gatherings","las celebraciones de Eid, iftares comunitarios y eventos al aire libre"
-Hispanic church,2,included,church,"your kermés, conferencias, aniversarios and bautizos","la kermés, conferencias, aniversarios y bautizos"
-Methodist church,2,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Flight school,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Fire fighters academy,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-School administration office,2,excluded_by_rule,,,
-Dental school,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Firearms academy,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Taekwondo school,2,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-English language school,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-School bus service,2,excluded_by_rule,,,
-Police academy,2,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Sports school,2,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-University hospital,1,excluded_by_rule,,,
-Primary school,1,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-K-12 school,1,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Eastern Orthodox Church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Orthodox synagogue,1,included,church,"your outdoor services, Sukkot gatherings and community celebrations","los servicios al aire libre, celebraciones de Sukkot y eventos comunitarios"
-Conservative synagogue,1,included,church,"your outdoor services, Sukkot gatherings and community celebrations","los servicios al aire libre, celebraciones de Sukkot y eventos comunitarios"
-Messianic synagogue,1,included,church,"your outdoor services, Sukkot gatherings and community celebrations","los servicios al aire libre, celebraciones de Sukkot y eventos comunitarios"
-Unitarian Universalist Church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Church of Jesus Christ of Latter-day Saints,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Greek Orthodox church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Engineering school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Girls' high school,1,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-Unity church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Gospel church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Preparatory school,1,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-Co-ed school,1,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-Graduate school,1,included,higher_ed,"your open houses, registration events and graduation receptions","los open houses, eventos de inscripción y recepciones de graduación"
-International school,1,included,school_k12,"your open houses, fundraising galas, family days and graduations","los open houses, galas de recaudación, días familiares y graduaciones"
-Religious goods store,1,included,other,your outdoor events and community gatherings,los eventos al aire libre y reuniones comunitarias
-Protestant church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Parsi temple,1,included,church,"your cultural festivals, holiday celebrations and community pujas","los festivales culturales, celebraciones de festividades y eventos comunitarios"
-Gymnasium school,1,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-University library,1,excluded_by_rule,,,
-Culinary school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-University lab room,1,unmapped,,,
-Architecture school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Christian college,1,included,higher_ed,"your orientation, alumni receptions, college fairs and commencement","la orientación, recepciones de exalumnos, ferias universitarias y graduación"
-Cooking school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-United Church of Christ,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Disciples of Christ Church,1,included,church,"your outreach events, summer worship nights and family fun days","los eventos de alcance, noches de adoración al aire libre y días familiares"
-Art school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Parish,1,included,church,"your parish kermés, first communions, confirmaciones and outdoor masses","la kermés parroquial, primeras comuniones, confirmaciones y misas al aire libre"
-Self defense school,1,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-Tai chi school,1,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-Military school,1,included,school_k12,"your graduation, homecoming, prom afterparties and outdoor sports tournaments","la graduación, homecoming, after-party de prom y torneos deportivos al aire libre"
-Montessori preschool,1,included,school_k12,"your family days, parent appreciation events and Pre-K graduation","los días familiares, eventos de agradecimiento a padres y la graduación de Pre-K"
-Real estate school,1,unmapped,,,
-Kindergarten,1,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Aviation training institute,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Mathematics school,1,unmapped,,,
-Handicraft school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Wrestling school,1,included,vocational,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
-School house,1,included,school_k12,"your field day, fall carnival, back-to-school night and end-of-year celebration","el field day, el carnaval de otoño, la noche de regreso a clases y la celebración de fin de año"
-Bartending school,1,included,vocational,"your open houses, recruitment events and graduation ceremonies","los open houses, eventos de reclutamiento y ceremonias de graduación"
-Horse riding school,1,included,sports,"your tournaments, belt ceremonies and student showcase events","los torneos, ceremonias de cinta y demostraciones de alumnos"
+category,count_in_source,group_key_assigned
+Church,249,generic_church
+Elementary school,104,elementary
+High school,56,high_school
+University,48,higher_ed
+Christian church,44,evangelical
+Catholic church,42,catholic
+Baptist church,40,baptist
+Educational institution,37,elementary
+Preschool,33,preschool
+Middle school,31,middle_school
+Martial arts school,25,martial_arts
+Driving school,21,vocational
+After school program,20,elementary
+Private educational institution,17,private_k12
+College,16,higher_ed
+Religious institution,15,generic_church
+Trade school,15,vocational
+Music school,14,dance_music
+School district office,13,DROPPED
+Religious organization,13,generic_church
+Presbyterian church,12,mainline_protestant
+Dance school,11,dance_music
+Montessori school,10,preschool
+Church of Christ,10,mainline_protestant
+United Methodist church,10,mainline_protestant
+School center,10,DROPPED
+General education school,9,elementary
+Lutheran church,9,mainline_protestant
+Apostolic church,9,pentecostal
+Beauty school,9,vocational
+Research institute,9,higher_ed
+Non-denominational church,8,evangelical
+Pentecostal church,8,pentecostal
+Seventh-day Adventist church,8,evangelical
+Charter school,7,private_k12
+Truck driving school,7,vocational
+Adult education school,7,vocational
+Community college,6,higher_ed
+Barber school,6,vocational
+Assemblies of God church,6,pentecostal
+Catholic school,5,catholic
+Special education school,5,elementary
+Calvary Chapel church,5,evangelical
+Technical school,5,vocational
+Religious destination,5,generic_church
+Church of the Nazarene,5,mainline_protestant
+Buddhist temple,4,generic_church
+Nursing school,4,vocational
+Episcopal church,4,mainline_protestant
+Language school,4,vocational
+Medical school,4,vocational
+Massage school,4,vocational
+Synagogue,3,generic_church
+Shrine,3,generic_church
+Public educational institution,3,elementary
+Public university,3,higher_ed
+Religious school,3,private_k12
+Karate school,3,martial_arts
+Anglican church,3,mainline_protestant
+Foursquare church,3,pentecostal
+Korean church,3,evangelical
+Evangelical church,3,evangelical
+Computer training school,3,vocational
+Emergency training school,3,vocational
+Vocational school,3,vocational
+Ballet school,3,dance_music
+Hindu temple,2,generic_church
+Institute of technology,2,higher_ed
+Jujitsu school,2,martial_arts
+Mosque,2,generic_church
+Hispanic church,2,pentecostal
+Methodist church,2,mainline_protestant
+Flight school,2,vocational
+Fire fighters academy,2,vocational
+School administration office,2,DROPPED
+Dental school,2,vocational
+Firearms academy,2,vocational
+Taekwondo school,2,martial_arts
+English language school,2,vocational
+School bus service,2,DROPPED
+Police academy,2,vocational
+Sports school,2,martial_arts
+University hospital,1,DROPPED
+Primary school,1,elementary
+K-12 school,1,elementary
+Eastern Orthodox Church,1,mainline_protestant
+Orthodox synagogue,1,generic_church
+Conservative synagogue,1,generic_church
+Messianic synagogue,1,generic_church
+Unitarian Universalist Church,1,evangelical
+Church of Jesus Christ of Latter-day Saints,1,mainline_protestant
+Greek Orthodox church,1,mainline_protestant
+Engineering school,1,vocational
+Girls' high school,1,high_school
+Unity church,1,evangelical
+Gospel church,1,evangelical
+Preparatory school,1,high_school
+Co-ed school,1,high_school
+Graduate school,1,higher_ed
+International school,1,high_school
+Religious goods store,1,generic_church
+Protestant church,1,mainline_protestant
+Parsi temple,1,generic_church
+Gymnasium school,1,high_school
+University library,1,DROPPED
+Culinary school,1,vocational
+University lab room,1,DROPPED
+Architecture school,1,vocational
+Christian college,1,higher_ed
+Cooking school,1,vocational
+United Church of Christ,1,mainline_protestant
+Disciples of Christ Church,1,mainline_protestant
+Art school,1,vocational
+Parish,1,catholic
+Self defense school,1,martial_arts
+Tai chi school,1,martial_arts
+Military school,1,high_school
+Montessori preschool,1,preschool
+Real estate school,1,vocational
+Kindergarten,1,elementary
+Aviation training institute,1,vocational
+Mathematics school,1,vocational
+Handicraft school,1,vocational
+Wrestling school,1,martial_arts
+School house,1,elementary
+Bartending school,1,vocational
+Horse riding school,1,martial_arts
