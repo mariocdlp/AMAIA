@@ -100,8 +100,7 @@ Quote lines for extras are labeled per size, e.g. **"String Lights (10×20) — 
 
 | Action | Behavior |
 |---|---|
-| **Duplicate** | Clone the table only (no chairs/properties), offset placement next to original |
-| **Duplicate w/ properties** | Clone table **including** chair count, chair type, and tablecloth |
+| **Duplicate** | Clone the table **with all its properties** — chair count, chair type, and tablecloth — offset placement next to original |
 | **Properties ▸** | Submenu: |
 | — Add MIN chairs | Snap the table's MIN chair count around it (replaces current chairs) |
 | — Add MAX chairs | Snap the table's MAX chair count around it (replaces current chairs) |
@@ -116,8 +115,7 @@ Quote lines for extras are labeled per size, e.g. **"String Lights (10×20) — 
 
 | Action | Behavior |
 |---|---|
-| **Duplicate** | Clone the tent only, no extras |
-| **Duplicate w/ properties** | Clone tent including all selected extras |
+| **Duplicate** | Clone the tent **with all its properties** — every selected extra carries over |
 | **Properties ▸** | Checkable toggles (each adds/removes a size-specific quote line): |
 | — Bistro/String Lights | Visual: string-light overlay inside tent footprint. Quote: String Lights at the tent's size price |
 | — Walls / Windows | 10×10 & 10×20 → single "Wall Kit" toggle. 20×20 → two independent toggles: "Side Walls" and "Windows". Visual: wall outline on tent perimeter |
@@ -235,7 +233,7 @@ Key invariants encoded in the model, not the UI:
 | Phase | Scope | Est. |
 |---|---|---|
 | **P1 — Canvas core** | Venue setup, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, fixed z-layers, autosave | 2–3 wk |
-| **P2 — Context menus & props** | Long-press menus per §4: duplicate ×2, chair add/type (procedural snap layout around each table shape), tablecloths, tent extras w/ visuals | 2 wk |
+| **P2 — Context menus & props** | Long-press menus per §4: duplicate (carries all properties), chair add/type (procedural snap layout around each table shape), tablecloths, tent extras w/ visuals | 2 wk |
 | **P3 — Quote engine** | Catalog JSON, live quote bar, itemized sheet w/ size-specific extra labels, "Request this quote" handoff, PNG/PDF export | 1–1.5 wk |
 | **P4 — Auto-arrange** | 4-question sheet, tent auto-pick, grid placement algorithm, overflow handling | 1.5–2 wk |
 | **P5 — Polish & ship** | Onboarding (3-screen), empty states, haptics, App Store assets, TestFlight beta → release | 1–1.5 wk |
