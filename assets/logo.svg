@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="120 60 1025 1005" width="1024" height="1004">
+  <g id="x-mark">
+    <!-- blue bar: top-right -> bottom-left -->
+    <path d="M 840,600 L 1000,600 L 480,1025 L 345,1025 Z" fill="#1479C4"/>
+    <!-- red bar: top-left -> bottom-right (over, with white gap) -->
+    <path d="M 355,600 L 515,600 L 855,1025 L 700,1025 Z" fill="#E30613"
+          stroke="#ffffff" stroke-width="26"/>
+  </g>
+
+  <g id="tire">
+    <defs>
+      <path id="tire-body" d="
+        M 160,585
+        L 618,585
+        C 636,652 660,698 690,718
+        C 700,596 722,436 770,330
+        C 787,296 800,286 816,284
+        C 892,278 946,330 972,420
+        C 1000,516 1010,560 1014,585
+        L 1105,585
+        C 1105,240 892,95 640,95
+        C 388,95 160,240 160,585
+        Z"/>
+      <clipPath id="tire-clip"><use href="#tire-body"/></clipPath>
+    </defs>
+
+    <!-- tire body: dome, flat bottom, open crescent notch on the right -->
+    <use href="#tire-body" fill="#000000"/>
+
+    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round"
+       clip-path="url(#tire-clip)">
+      <!-- longitudinal groove: outer shoulder blocks vs centre tread -->
+      <path d="M 316,585 C 322,372 396,232 528,182 C 606,152 676,168 716,232" stroke-width="24"/>
+      <!-- lateral grooves on the shoulder -->
+      <path d="M 164,505 C 226,494 276,490 320,490" stroke-width="24"/>
+      <path d="M 176,395 C 234,378 286,366 332,360" stroke-width="24"/>
+      <path d="M 212,296 C 264,268 312,248 358,236" stroke-width="24"/>
+      <path d="M 282,208 C 330,176 376,154 424,138" stroke-width="24"/>
+
+      <!-- directional chevron grooves on the centre tread -->
+      <path d="M 330,556 C 430,500 512,432 566,352 C 606,392 634,452 650,530" stroke-width="26"/>
+      <path d="M 340,436 C 442,384 526,318 582,240 C 620,290 646,354 662,428" stroke-width="26"/>
+      <path d="M 372,314 C 470,262 552,204 608,140 C 640,190 666,250 682,320" stroke-width="26"/>
+      <path d="M 440,196 C 526,150 596,106 640,60" stroke-width="26"/>
+
+      <!-- groove between tread face and sidewall -->
+      <path d="M 700,660 C 712,470 748,352 800,300 C 862,240 934,282 972,392" stroke-width="24"/>
+      <!-- bead line inside the sidewall -->
+      <path d="M 1064,580 C 1054,382 998,242 900,190" stroke-width="18"/>
+    </g>
+  </g>
+</svg>
