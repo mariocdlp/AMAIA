@@ -5,7 +5,7 @@ Search store attached to an OpenAI prompt.
 
 ## Flow
 
-1. **Trigger** — every Tuesday at 06:00 in the script's timezone.
+1. **Trigger** — every Tuesday and Friday at 06:00 in the script's timezone.
 2. **Read** — opens the spreadsheet, takes the **leftmost** sheet tab
    (convention: newest tab on the left), reads the data range with the first
    row as headers.

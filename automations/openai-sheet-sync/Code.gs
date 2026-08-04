@@ -25,12 +25,14 @@ function installTrigger() {
     .filter(t => t.getHandlerFunction() === 'syncSheetToOpenAI')
     .forEach(t => ScriptApp.deleteTrigger(t));
 
-  ScriptApp.newTrigger('syncSheetToOpenAI')
-    .timeBased()
-    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
-    .atHour(6)
-    .inTimezone(Session.getScriptTimeZone())
-    .create();
+  [ScriptApp.WeekDay.TUESDAY, ScriptApp.WeekDay.FRIDAY].forEach(day => {
+    ScriptApp.newTrigger('syncSheetToOpenAI')
+      .timeBased()
+      .onWeekDay(day)
+      .atHour(6)
+      .inTimezone(Session.getScriptTimeZone())
+      .create();
+  });
 }
 
 function syncSheetToOpenAI() {
