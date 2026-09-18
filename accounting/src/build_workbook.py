@@ -3,6 +3,9 @@ import json, csv, os, collections, datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_fleet_register import CATEGORIES, CODE_TO_CAT
 
 BASE = os.path.join(os.path.dirname(__file__), "..")
 OUT = os.path.join(BASE, "out")
@@ -61,6 +64,65 @@ def main():
 
     wb = Workbook(); wb.remove(wb.active)
     rev = st["revenue"]
+    raw_src = {t["txn_id"]: t["account"] for t in json.load(open(os.path.join(OUT, "ledger_raw.json")))}
+
+    # ───────────────────────── Fleet Register (editable) ─────────────────────────
+    ws = wb.create_sheet("Fleet Register")
+    title(ws, "Rental Fleet Register",
+          "Type in columns A-H only. Columns I-M calculate themselves. Category must match the reference list in R:T.")
+    reg_cols = ["Item / description", "Category", "Qty", "Unit cost", "Total cost", "Purchase date",
+                "Vendor", "Paid with", "Useful life (mo)", "Months in service", "Monthly depreciation",
+                "Accumulated depreciation", "Net book value", "Status", "Notes"]
+    header(ws, 4, reg_cols, [40, 26, 7, 12, 13, 13, 24, 20, 14, 15, 17, 19, 15, 12, 46])
+    src_short = {"Capital One Savor 5198": "Capital One Savor", "Apple Card": "Apple Card",
+                 "Chase Checking 5784": "Chase Checking"}
+    fleet_codes = {c for _, _, c in CATEGORIES}
+    identified = sorted([t for t in led if t["account_code"] in fleet_codes], key=lambda t: t["date"])
+    confirm = sorted([t for t in led if t["amount"] <= -100
+                      and t["account_code"] in {"5080", "5070", "5050", "6990"}
+                      and "CAPITAL ONE" not in t["description"].upper()], key=lambda t: t["amount"])
+    r = 5
+    def regrow(r, item, cat, qty, unit, date, vendor, paid, status, note, warn=False):
+        vals = [item, cat, qty, unit, f"=IF(C{r}*D{r}=0,\"\",C{r}*D{r})", date, vendor, paid,
+                f"=IFERROR(VLOOKUP(B{r},$R$4:$S$11,2,0),\"\")",
+                f"=IF(F{r}=\"\",\"\",MAX(0,DATEDIF(F{r},TODAY(),\"M\")))",
+                f"=IFERROR(E{r}/I{r},\"\")",
+                f"=IF(E{r}=\"\",\"\",IFERROR(MIN(E{r},K{r}*J{r}),\"\"))",
+                f"=IF(E{r}=\"\",\"\",IFERROR(E{r}-L{r},\"\"))", status, note]
+        for i, v in enumerate(vals, 1):
+            c = ws.cell(row=r, column=i, value=v)
+            if i in (4, 5, 11, 12, 13):
+                c.number_format = M
+            if warn and i <= 15:
+                c.fill = WARN
+    for t in identified:
+        regrow(r, t["note"].split(" - ")[0][:56], CODE_TO_CAT[t["account_code"]], 1,
+               round(-t["amount"], 2), t["date"], t["description"][:24],
+               src_short.get(raw_src[t["txn_id"]], raw_src[t["txn_id"]]), "In service",
+               "From statements - correct if wrong")
+        r += 1
+    for t in confirm:
+        regrow(r, "", "", 1, round(-t["amount"], 2), t["date"], t["description"][:24],
+               src_short.get(raw_src[t["txn_id"]], raw_src[t["txn_id"]]), "CONFIRM",
+               "Name it and pick a category, or delete the row", warn=True)
+        r += 1
+    for _ in range(25):
+        regrow(r, None, None, None, None, None, None, None, None, None)
+        r += 1
+    last = r - 1
+    for col, lbl in ((1, "TOTALS"),):
+        c = ws.cell(row=3, column=col, value=lbl); c.font = Font(bold=True, color=INK)
+    for col in (5, 11, 12, 13):
+        L = get_column_letter(col)
+        c = ws.cell(row=3, column=col, value=f"=SUM({L}5:{L}{last})")
+        c.number_format = M; c.font = Font(bold=True, color=INK); c.fill = TOTAL
+    ws.cell(row=3, column=18, value="CATEGORY REFERENCE").font = Font(bold=True, size=10, color=ACCENT)
+    for i, (n, mo, code) in enumerate(CATEGORIES):
+        ws.cell(row=4 + i, column=18, value=n).font = Font(size=9)
+        ws.cell(row=4 + i, column=19, value=mo).font = Font(size=9)
+        ws.cell(row=4 + i, column=20, value=code).font = Font(size=9)
+    for col, w in ((18, 26), (19, 15), (20, 9)):
+        ws.column_dimensions[get_column_letter(col)].width = w
 
     # ───────────────────────── Dashboard ─────────────────────────
     ws = wb.create_sheet("Dashboard")
@@ -98,6 +160,16 @@ def main():
         c = ws.cell(row=r, column=2, value=amt); c.number_format = M; c.font = Font(size=10)
         b = ws.cell(row=r, column=3, value=f'=REPT("■",ROUND({amt/top*30},0))')
         b.font = Font(color=ACCENT, size=9)
+        r += 1
+    r += 1
+    r = line(ws, r, "WHICH ACCOUNT THE MONEY MOVED THROUGH", None, bold=True, money=False, fill=TOTAL)
+    for acct in sorted({raw_src[t["txn_id"]] for t in led}):
+        rows_ = [t for t in led if raw_src[t["txn_id"]] == acct and t["account_code"] != "9010"]
+        spent = round(-sum(t["amount"] for t in rows_ if t["amount"] < 0), 2)
+        got = round(sum(t["amount"] for t in rows_ if t["amount"] > 0), 2)
+        ws.cell(row=r, column=1, value="    " + acct).font = Font(size=10, color=INK)
+        c = ws.cell(row=r, column=2, value=spent); c.number_format = M; c.font = Font(size=10)
+        ws.cell(row=r, column=3, value=f"{len(rows_)} transactions, {got:,.2f} in").font = Font(size=9, italic=True, color=MUTED)
         r += 1
     r += 1
     ws.cell(row=r, column=1, value="Read the 'Data Gaps' tab before relying on the balance sheet.").font = Font(size=10, bold=True, color="B45309")
@@ -228,23 +300,6 @@ def main():
     c = ws.cell(row=r, column=5, value=st["deferred_revenue"])
     c.number_format = M; c.font = Font(bold=True); c.fill = TOTAL
 
-    # ───────────────────────── Depreciation ─────────────────────────
-    ws = wb.create_sheet("Fleet & Depreciation")
-    title(ws, "Rental Fleet and Depreciation", "Straight line. Fleet is capitalized, not expensed on purchase.")
-    header(ws, 4, ["Placed in service", "Asset", "Account", "Cost", "Life (mo)", "Months held", "Depreciation", "Net book value"],
-           [16, 42, 10, 13, 11, 13, 14, 15])
-    r = 5
-    for d in sorted(st["depreciation_schedule"], key=lambda x: x["date"]):
-        ws.cell(row=r, column=1, value=d["date"]); ws.cell(row=r, column=2, value=d["asset"])
-        ws.cell(row=r, column=3, value=d["code"])
-        for col, key in ((4, "cost"), (7, "depreciation"), (8, "net_book_value")):
-            c = ws.cell(row=r, column=col, value=d[key]); c.number_format = M
-        ws.cell(row=r, column=5, value=d["life_months"]); ws.cell(row=r, column=6, value=d["months_held"])
-        r += 1
-    ws.cell(row=r, column=3, value="TOTAL").font = Font(bold=True)
-    for col, val in ((4, st["fleet_cost"]), (7, st["accumulated_depreciation"]), (8, st["fleet_nbv"])):
-        c = ws.cell(row=r, column=col, value=val); c.number_format = M; c.font = Font(bold=True); c.fill = TOTAL
-
     # ───────────────────────── Needs Review ─────────────────────────
     ws = wb.create_sheet("Needs Review")
     title(ws, "Transactions To Confirm",
@@ -257,7 +312,7 @@ def main():
         ws.cell(row=r, column=3, value=t["description"][:60])
         c = ws.cell(row=r, column=4, value=t["amount"]); c.number_format = M
         ws.cell(row=r, column=5, value=f'{t["account_code"]} {names.get(t["account_code"],"")}')
-        ws.cell(row=r, column=6, value=t["note"])
+        ws.cell(row=r, column=6, value=t["note"][:46])
         if r % 2 == 0:
             for col in range(1, 7):
                 ws.cell(row=r, column=col).fill = BAND
@@ -265,22 +320,21 @@ def main():
 
     # ───────────────────────── Transactions ─────────────────────────
     ws = wb.create_sheet("Transactions")
-    title(ws, "All Transactions", "Every row from the three statements, coded. This is the source of every number above.")
-    header(ws, 4, ["ID", "Date", "Source account", "Description", "Amount", "Code", "Account", "Confidence", "Note"],
-           [8, 12, 22, 52, 13, 8, 34, 12, 48])
+    title(ws, "All Transactions", "Every row from the three statements. Column C is the bank or card it came from. Code maps to the Chart of Accounts tab.")
+    header(ws, 4, ["ID", "Date", "Source account", "Description", "Amount", "Code", "Confidence", "Note"],
+           [8, 12, 22, 52, 13, 8, 12, 44])
     r = 5
     for t in led:
         ws.cell(row=r, column=1, value=t["txn_id"]); ws.cell(row=r, column=2, value=t["date"])
         ws.cell(row=r, column=3, value=t["account"]); ws.cell(row=r, column=4, value=t["description"][:90])
         c = ws.cell(row=r, column=5, value=t["amount"]); c.number_format = M
         ws.cell(row=r, column=6, value=t["account_code"])
-        ws.cell(row=r, column=7, value=names.get(t["account_code"], ""))
-        cf = ws.cell(row=r, column=8, value=t["confidence"])
+        cf = ws.cell(row=r, column=7, value=t["confidence"])
         if t["confidence"] == "review":
             cf.fill = WARN
-        ws.cell(row=r, column=9, value=t["note"][:70])
+        ws.cell(row=r, column=8, value=t["note"][:40])
         r += 1
-    ws.auto_filter.ref = f"A4:I{r-1}"
+    ws.auto_filter.ref = f"A4:H{r-1}"
 
     # ───────────────────────── Data Gaps ─────────────────────────
     ws = wb.create_sheet("Data Gaps")
