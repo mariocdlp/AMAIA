@@ -207,6 +207,27 @@ The unit that matters is the **lane**: the clear floor left between whatever occ
 
 **When the request exceeds what fits**, the app never shrinks the spacing past the floor. It places what fits inside, puts the remainder outside the tent at proper spacing, and says so with the real number: *"1 table placed outside the tent — it doesn't fit inside with proper aisles. A 20×20 seats about 32 at 5 ft round tables."* On an open canvas with no tent, it grows the canvas instead. This is an honest upsell: the customer sees exactly why they need the bigger tent.
 
+### 5d. Arrangements and shuffle
+
+A **shuffle** button beside the prompt box re-lays the tables inside their tent. Same tables, same chairs, same quote — a different arrangement. It's the "show me another option" move a planner makes in front of a client, and it's what turns the app from a drawing tool into something that gives advice.
+
+**Named arrangements** — each press moves to the next one that fits, and the read-back names it so the customer learns the vocabulary:
+
+| Arrangement | What it is | When it shows |
+|---|---|---|
+| **Banquet grid** | even rows and columns | always, when anything fits |
+| **Staggered rows** | alternate rows offset half a pitch, for sightlines | 2+ rows |
+| **Open centre** | seating rings the tent, middle left clear for dancing | enough tables to ring the space |
+| **Centre aisle** | two blocks with a 4 ft processional lane between | 4+ tables, room for the lane |
+| **Feasting table** | banquet tables joined end to end, family style | rectangular tables at MIN seating |
+| **U-shape** | head table with two arms, everyone facing in | 3+ rectangular tables |
+
+**How it decides what to offer.** Every pattern is *generated, then validated* — bounds-checked against the tent interior and collision-checked table by table, including chairs, against each other and against anything staying put. A pattern that can't be laid out cleanly is simply never offered, so shuffle can't produce a bad plan. Patterns whose tables are meant to meet (a feasting run, a U-shape) are validated at zero clearance — touching is fine, overlapping never is, because the collision box already includes each chair's depth.
+
+**Scope.** Shuffle works inside tents. Tables outside a tent stay where they are and become fixed obstacles the new arrangement has to clear, so re-arranging a tent can never throw a table on top of something already placed. With no tent, the whole canvas is the area. Every shuffle is one undo step.
+
+> **Known gap for v1:** chairs currently ring every table, so a U-shape is drawn with chairs on the inside faces too. A true U-shape seats guests only on the outer edge. Doing that properly needs per-side chair control on a table, which is a data-model change — it's a v2 candidate, not a shuffle fix.
+
 ### Algorithm (v1 — deterministic grid, good enough beats clever)
 
 ```
@@ -319,13 +340,13 @@ Key invariants encoded in the model, not the UI:
 | **P1 — Canvas core** | Venue setup w/ presets, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, multi-select (lasso + bulk duplicate/rotate/delete/group-move), fixed z-layers, undo/redo history, autosave | 3 wk |
 | **P2 — Context menus & props** | Long-press menus per §4: duplicate (carries all properties), chair add/type (procedural snap layout around each table shape), tablecloths, tent extras w/ visuals | 2 wk |
 | **P3 — Quote engine & export** | Catalog JSON, live quote bar, itemized sheet w/ size-specific extra labels, "Request this quote" handoff, save-as-image (scale bar + legend + total) | 1.5 wk |
-| **P4 — Auto layout** | Prompt-box parser + read-back + edit mode (§5a), guided auto-arrange sheet, tent auto-pick, grid placement algorithm, overflow and tight-fit handling | 2–2.5 wk |
+| **P4 — Auto layout** | Prompt-box parser + read-back + edit mode (§5a), guided auto-arrange sheet, named arrangements + shuffle (§5d), tent auto-pick, grid placement algorithm, overflow and tight-fit handling | 2.5–3 wk |
 | **P5 — Polish & ship** | Onboarding (3-screen), empty states, haptics, App Store assets, TestFlight beta → release | 1–1.5 wk |
 
 **Total: roughly 9–11 weeks** for a solo iOS dev to a shippable v1. P1–P3 alone is a demoable perk (~6.5 wk); P4 carries both headline features (the prompt box and auto-arrange) and is deliberately isolated so it can ship as a fast-follow update if needed.
 
 ### v2 candidates (explicitly out of v1)
-Free-standing chair rows (ceremonies), dance floor / DJ booth / bar as placeable "misc" items, guest-name seat assignment, iPad layout, iCloud sync & plan sharing links, in-app booking with date availability, an LLM fallback for prompts the rule-based parser can't read.
+Free-standing chair rows (ceremonies), **per-side chair control on a table** (so a U-shape seats only its outer edge), dance floor / DJ booth / bar as placeable "misc" items, guest-name seat assignment, iPad layout, iCloud sync & plan sharing links, in-app booking with date availability, an LLM fallback for prompts the rule-based parser can't read.
 
 ---
 

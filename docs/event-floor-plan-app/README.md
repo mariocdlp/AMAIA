@@ -26,6 +26,7 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 
 - **Prompt box** — "20×20 tent with 5 round tables, white tablecloths and 40 padded chairs" builds the plan and prices it. Property-only prompts ("add string lights and black tablecloths") edit what's already on the canvas.
 - **Accommodation guidelines** — generated layouts follow real event-planning clearances and never place one table's chairs on top of another's. When a request doesn't fit, the extra tables go outside the tent with a note naming the tent's real seated capacity, rather than being crammed in.
+- **Shuffle** — re-lays the tables inside their tent in a different named arrangement (banquet grid, staggered rows, open centre, centre aisle, feasting table, U-shape). Only arrangements that fit cleanly are offered.
 - **True scale, no resizing** — every item is its real footprint against a 1 ft grid.
 - **Fixed z-order** — tents always render behind tables and chairs.
 - **Long-press context menus** — duplicate (carries all properties), MIN/MAX chairs, chair type, tablecloths; tent extras priced per tent size.
@@ -40,3 +41,19 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 Prices live in the `CAT` and `CHAIRS` objects at the top of the prototype's `<script>`. In the real app this becomes a remote-refreshable `catalog.json` so prices change without an app release.
 
 Two items still need numbers from the owner: **ceiling liners** and **leg liners** show as "price on request", and **tablecloths** are quoted as included. See §9 of the plan for the full list of open questions.
+
+## Tests
+
+Two node scripts load the prototype's script block and check the layout engine's
+hard invariant — **no table's chairs may ever overlap another's**. Both use the
+same exact geometry checker (oriented-box SAT for chairs and banquet tables,
+circles for rounds) in `geom-check.js`, independent of the app's own maths.
+
+```
+node docs/event-floor-plan-app/test-overlap.js   # prompt-generated layouts
+node docs/event-floor-plan-app/test-shuffle.js   # every shuffle arrangement
+```
+
+`test-overlap.js` also prints the tent capacities the clearance rules produce,
+which should match standard rental capacity charts (10×10 seats 8, 10×20 seats
+16, 20×20 seats 32 on 5 ft rounds).

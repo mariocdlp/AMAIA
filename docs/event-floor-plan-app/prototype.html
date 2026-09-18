@@ -121,6 +121,12 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
 #prun{flex:0 0 auto; width:44px; height:44px; border-radius:99px; border:0; background:var(--pine);
   color:#f2efe4; font-size:18px; cursor:pointer;}
 #prun:active{background:var(--pine-2);}
+#shuffleBtn{flex:0 0 auto; width:44px; height:44px; border-radius:99px;
+  border:1px solid var(--line); background:var(--ground); color:var(--ink);
+  cursor:pointer; display:grid; place-items:center; padding:0;}
+#shuffleBtn svg{width:19px; height:19px; display:block;}
+#shuffleBtn:active{border-color:var(--accent); color:var(--accent-ink);}
+#shuffleBtn:disabled{opacity:.35; cursor:default;}
 
 #qbar{flex:0 0 auto; background:var(--pine); color:#f2efe4; display:flex; align-items:center; gap:12px;
   padding:9px 14px; cursor:pointer; z-index:5;}
@@ -260,6 +266,7 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
   </div>
 
   <div id="pbar">
+    <button id="shuffleBtn" aria-label="Shuffle the arrangement" disabled><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.8 4.2h2.4l6 7.6h3.6"/><path d="M1.8 11.8h2.4l2.3-2.9"/><path d="M9.4 5.6l2.4-1.4h2"/><path d="m12.2 2.2 1.8 2-1.8 2"/><path d="m12.2 9.8 1.8 2-1.8 2"/></svg></button>
     <input id="pin" type="text" autocomplete="off" autocapitalize="sentences" enterkeyhint="go"
            placeholder="Describe your event…" aria-label="Describe your event">
     <button id="prun" aria-label="Build the plan">✨</button>
@@ -454,6 +461,7 @@ function render(){
   gF.innerHTML = items.filter(i => CAT[i.k].cat==="table").map(tableSVG).join("");
   renderSel(); renderQuote();
   $("empty").style.display = items.length ? "none" : "block";
+  $("shuffleBtn").disabled = !items.some(i => CAT[i.k].cat === "table");
 }
 function itemBox(it){
   const c = CAT[it.k];
@@ -850,6 +858,81 @@ function exportImage(){
 }
 $("imgBtn").addEventListener("click", exportImage);
 
+/* ============ shuffle: try a different arrangement ============ */
+function areaOfTent(tent){
+  const c = CAT[tent.k], m = 2*SPACING.perim;
+  return {cx: tent.x, cy: tent.y, w: c.w - m, h: c.h - m};
+}
+function areaOfCanvas(){
+  const m = 2*SPACING.perimOpen;
+  return {cx: venue.w/2, cy: venue.h/2, w: venue.w - m, h: venue.h - m};
+}
+/* Which tent (if any) a table currently sits in. */
+function tentHolding(it, tents){
+  for (const t of tents){
+    const c = CAT[t.k];
+    if (Math.abs(it.x - t.x) <= c.w/2 && Math.abs(it.y - t.y) <= c.h/2) return t;
+  }
+  return null;
+}
+/* Every arrangement that can be laid out cleanly for the current plan. */
+function arrangementsFor(groups, fixed){
+  const ok = [];
+  for (const pat of PATTERNS){
+    const plan = [];
+    let usable = true;
+    for (const g of groups){
+      const f = latticeFor(g.area, g.list);
+      if (!f){ usable = false; break; }
+      const ctx = {same: f.same, key: g.list[0].k, chairs: g.list[0].props.chairs, list: g.list};
+      const pos = pat.gen(g.area, f, g.list.length, ctx);
+      if (!validArrangement(pos, g.list, g.area, fixed, pat.touch ? 0 : null)){ usable = false; break; }
+      plan.push({list: g.list, pos});
+    }
+    if (usable && plan.length) ok.push({pat, plan});
+  }
+  return ok;
+}
+let arrangeIdx = 0;
+function shuffleLayout(){
+  const tables = items.filter(i => CAT[i.k].cat === "table");
+  if (!tables.length) return toast("Nothing to rearrange yet — add some tables first.");
+  const tents = items.filter(i => CAT[i.k].cat === "tent");
+  const groups = [];
+  let staying = [];
+  if (tents.length){
+    /* shuffle happens inside the tents; anything outside stays where it is */
+    for (const t of tents){
+      const list = tables.filter(x => tentHolding(x, tents) === t);
+      if (list.length) groups.push({area: areaOfTent(t), list});
+    }
+    staying = tables.filter(x => !tentHolding(x, tents));
+    if (!groups.length)
+      return toast("These tables are outside the tents — drag them inside to rearrange them.", {ms:4200});
+  } else {
+    groups.push({area: areaOfCanvas(), list: tables});
+  }
+  const fixed = staying.map(it => occupancy(it.k, it.props.chairs, {x:it.x, y:it.y, rot:it.rot}));
+
+  const options = arrangementsFor(groups, fixed);
+  if (!options.length)
+    return toast("No other arrangement fits this space cleanly — try a bigger tent or fewer tables.", {ms:4200});
+  if (options.length === 1)
+    return toast(`Only one arrangement fits these tables at proper spacing — <b>${options[0].pat.name}</b>.`, {ms:3800});
+
+  arrangeIdx = (arrangeIdx + 1) % options.length;
+  const pick = options[arrangeIdx];
+  commit();
+  for (const {list, pos} of pick.plan)
+    list.forEach((it, i) => { it.x = pos[i].x; it.y = pos[i].y; it.rot = pos[i].rot; });
+  sel.clear(); render(); fitView(true);
+  toast(`<b>${pick.pat.name}</b> — ${pick.pat.blurb}` +
+        `<br><span style="color:#dcd8c4;font-weight:500">${options.length} arrangements fit this plan · tap again for the next` +
+        `${staying.length ? ` · ${staying.length} table${staying.length>1?"s":""} outside the tent left in place` : ""}</span>`,
+        {undo:true, ms:6000});
+}
+$("shuffleBtn").addEventListener("click", shuffleLayout);
+
 /* ============ help ============ */
 const EXAMPLES = [
   "20×20 tent with 5 round tables, white tablecloths and 40 padded chairs",
@@ -870,6 +953,13 @@ $("helpBtn").addEventListener("click", () => {
     <div class="exlist">${EXAMPLES.map(x => `<button data-act="tryex" data-ex="${x.replace(/"/g,"&quot;")}">${x}</button>`).join("")}
       <button data-act="tryex" data-ex="add string lights and black tablecloths">add string lights and black tablecloths <em style="color:var(--ink-2)">— edits what’s already on the canvas</em></button>
     </div>
+    <div class="seclbl">Arrangements</div>
+    <p class="sub">The <b>shuffle</b> button next to the prompt box re-lays the tables inside their tent. It only offers arrangements that fit cleanly, and names each one:</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      ${PATTERNS.map(p => `<div style="font-size:13px;line-height:1.45"><b>${p.name}</b> — <span style="color:var(--ink-2)">${p.blurb}</span></div>`).join("")}
+    </div>
+    <p class="sub" style="margin-top:9px">Which ones appear depends on the space and the tables: a feasting table and a U-shape need banquet tables, an open centre needs enough of them to ring the tent.</p>
+
     <div class="seclbl">Spacing guidelines</div>
     <p class="sub">Every generated layout follows real event-planning clearances, so nothing it produces puts chairs on top of each other:</p>
     <div style="display:flex;flex-direction:column">
@@ -953,6 +1043,210 @@ function placeGrid(cx, cy, fit, count){
   }
   return out;
 }
+
+/* ============ configuration guidelines ============
+   How a party planner lays a room out, encoded as arrangement patterns.
+   Principles, in priority order:
+     1. Nothing overlaps. Chair clearance (§SPACING) is never negotiable.
+     2. Centre the arrangement in its tent, so it reads as deliberate.
+     3. Keep the middle open when people will dance — ring the seating.
+     4. Give guests sightlines: offset rows beat dead-straight ones.
+     5. Aisles are continuous straight lanes, not leftover space.
+     6. Partial rows are centred, never left-aligned.
+     7. Long joined tables suit small groups; rounds suit large ones.
+   Every generated arrangement is validated against rule 1 before it is
+   offered, so a pattern that cannot be done cleanly is simply not shown. */
+
+function occupancy(key, chairs, pos){
+  const c = CAT[key], p = padsFor(key, chairs);
+  if (c.shape === "round") return {round:true, x:pos.x, y:pos.y, r: c.d/2 + p.x};
+  const rot = ((pos.rot % 180) + 180) % 180;
+  const swap = rot > 45 && rot < 135;
+  return {round:false, x:pos.x, y:pos.y,
+          hw: ((swap ? c.h : c.w) + 2*(swap ? p.y : p.x))/2,
+          hh: ((swap ? c.w : c.h) + 2*(swap ? p.x : p.y))/2};
+}
+function clearBetween(a, b){
+  if (a.round && b.round) return Math.hypot(a.x-b.x, a.y-b.y) - a.r - b.r;
+  const ah = a.round ? {hw:a.r, hh:a.r} : a, bh = b.round ? {hw:b.r, hh:b.r} : b;
+  return Math.max(Math.abs(a.x-b.x) - ah.hw - bh.hw,
+                  Math.abs(a.y-b.y) - ah.hh - bh.hh);
+}
+/* A candidate arrangement is valid only if every table sits inside the area,
+   no two are closer than the clearance floor, and none collides with an item
+   that is staying put (`fixed`). */
+function validArrangement(pos, list, area, fixed, minClear){
+  if (!pos || pos.length !== list.length) return false;
+  const occ = pos.map((p, i) => occupancy(list[i].k, list[i].props.chairs, p));
+  /* Default floor is the comfort lane. Patterns whose tables are MEANT to
+     meet (a feasting run, a U-shape) pass 0: touching is fine, overlapping
+     never is — the occupied box already includes each chair's depth. */
+  const floorLane = (minClear != null ? minClear
+                    : SPACING.seated.lanes[SPACING.seated.lanes.length-1]) - 0.05;
+  for (let i=0; i<occ.length; i++){
+    const a = occ[i], hw = a.round ? a.r : a.hw, hh = a.round ? a.r : a.hh;
+    if (a.x-hw < area.cx-area.w/2-0.05 || a.x+hw > area.cx+area.w/2+0.05) return false;
+    if (a.y-hh < area.cy-area.h/2-0.05 || a.y+hh > area.cy+area.h/2+0.05) return false;
+    for (let j=i+1; j<occ.length; j++)
+      if (clearBetween(a, occ[j]) < floorLane) return false;
+    for (const f of (fixed || []))
+      if (clearBetween(a, f) < floorLane) return false;
+  }
+  return true;
+}
+/* The lattice a pattern positions tables on. */
+function latticeFor(area, list){
+  const first = list[0];
+  const same = list.every(i => i.k === first.k && i.props.chairs === first.props.chairs);
+  if (same){
+    const fit = fitFor(area.w, area.h, first.k, list.length, first.props.chairs);
+    return fit.cap >= list.length ? Object.assign({same:true}, fit) : null;
+  }
+  let ow = 0, oh = 0;
+  for (const it of list){
+    const o = occupancy(it.k, it.props.chairs, {x:0, y:0, rot:0});
+    ow = Math.max(ow, o.round ? 2*o.r : 2*o.hw);
+    oh = Math.max(oh, o.round ? 2*o.r : 2*o.hh);
+  }
+  for (const lane of SPACING.seated.lanes){
+    const px = ow + lane, py = oh + lane;
+    const nx = Math.floor((area.w + lane)/px), ny = Math.floor((area.h + lane)/py);
+    if (nx >= 1 && ny >= 1 && nx*ny >= list.length)
+      return {nx, ny, px, py, rot:0, cap:nx*ny, lane, same:false};
+  }
+  return null;
+}
+const latticeSlot = (area, f, ix, iy) => ({
+  x: area.cx - (f.nx-1)*f.px/2 + ix*f.px,
+  y: area.cy - (f.ny-1)*f.py/2 + iy*f.py, rot: f.rot });
+
+/* ---- the patterns ---- */
+function patGrid(area, f, n){ return placeGrid(area.cx, area.cy, f, n); }
+
+function patStagger(area, f, n){
+  if (f.nx < 2) return null;
+  const rows = Math.ceil(n / f.nx);
+  if (rows < 2) return null;
+  const out = [];
+  let left = n;
+  for (let r = 0; r < rows && left > 0; r++){
+    const inRow = Math.min(f.nx, left);
+    const y = area.cy - (rows-1)*f.py/2 + r*f.py;
+    const off = (r % 2 ? 1 : -1) * f.px/4;
+    for (let i = 0; i < inRow; i++)
+      out.push({x: area.cx - (inRow-1)*f.px/2 + i*f.px + off, y, rot: f.rot});
+    left -= inRow;
+  }
+  return out;
+}
+
+function patPerimeter(area, f, n){
+  if (f.nx < 2 || f.ny < 2) return null;
+  const ring = [];
+  for (let ix=0; ix<f.nx; ix++)        ring.push(latticeSlot(area, f, ix, 0));
+  for (let iy=1; iy<f.ny; iy++)        ring.push(latticeSlot(area, f, f.nx-1, iy));
+  for (let ix=f.nx-2; ix>=0; ix--)     ring.push(latticeSlot(area, f, ix, f.ny-1));
+  for (let iy=f.ny-2; iy>=1; iy--)     ring.push(latticeSlot(area, f, 0, iy));
+  if (n > ring.length) return null;
+  const out = [];
+  for (let i=0; i<n; i++) out.push(ring[Math.floor(i*ring.length/n)]);
+  return out;
+}
+
+function patAisle(area, f, n, ctx){
+  if (n < 4) return null;
+  const aisle = 4;                       // a real processional lane
+  const half = (area.w - aisle)/2;
+  if (half < f.px) return null;
+  const nL = Math.ceil(n/2), nR = n - nL;
+  const build = (cx, count) => {
+    const sub = {cx, cy: area.cy, w: half, h: area.h};
+    const sf = ctx.same
+      ? fitFor(half, area.h, ctx.key, count, ctx.chairs)
+      : latticeFor(sub, ctx.list.slice(0, count));
+    if (!sf || sf.cap < count) return null;
+    return placeGrid(cx, area.cy, sf, count);
+  };
+  const L = build(area.cx - aisle/2 - half/2, nL);
+  const R = nR ? build(area.cx + aisle/2 + half/2, nR) : [];
+  return (L && R) ? L.concat(R) : null;
+}
+
+function patLong(area, f, n, ctx){       // tables joined end to end
+  if (!ctx.same) return null;
+  const c = CAT[ctx.key];
+  if (c.shape !== "rect" || c.standing) return null;
+  if (ctx.chairs > 2*Math.floor(c.w/2)) return null;   // end seats block the join
+  const horiz = area.w >= area.h;
+  const runs = [1, 2];                   // one long table, or two parallel runs
+  for (const lines of runs){
+    const per = Math.ceil(n / lines);
+    const runLen = per * c.w;
+    const out = [];
+    if (horiz){
+      if (runLen > area.w) continue;
+      const spanY = lines === 1 ? 0 : (c.h + 2*SPACING.chairDepth + SPACING.seated.ideal);
+      if ((lines-1)*spanY + c.h > area.h) continue;
+      let placed = 0;
+      for (let l = 0; l < lines; l++){
+        const y = area.cy - (lines-1)*spanY/2 + l*spanY;
+        const count = Math.min(per, n - placed);
+        for (let i = 0; i < count; i++)
+          out.push({x: area.cx - (count*c.w)/2 + c.w/2 + i*c.w, y, rot: 0});
+        placed += count;
+      }
+    } else {
+      if (runLen > area.h) continue;
+      const spanX = lines === 1 ? 0 : (c.h + 2*SPACING.chairDepth + SPACING.seated.ideal);
+      if ((lines-1)*spanX + c.h > area.w) continue;
+      let placed = 0;
+      for (let l = 0; l < lines; l++){
+        const x = area.cx - (lines-1)*spanX/2 + l*spanX;
+        const count = Math.min(per, n - placed);
+        for (let i = 0; i < count; i++)
+          out.push({x, y: area.cy - (count*c.w)/2 + c.w/2 + i*c.w, rot: 90});
+        placed += count;
+      }
+    }
+    if (out.length === n) return out;
+  }
+  return null;
+}
+
+function patU(area, f, n, ctx){           // head table with two arms
+  if (!ctx.same || n < 3) return null;
+  const c = CAT[ctx.key];
+  if (c.shape !== "rect" || c.standing) return null;
+  if (ctx.chairs > 2*Math.floor(c.w/2)) return null;
+  const maxHead = Math.floor(area.w / c.w);
+  for (let head = Math.min(maxHead, n-2); head >= 1; head--){
+    const arms = n - head, perArm = Math.ceil(arms/2);
+    const headW = head*c.w;
+    const topY = area.cy - area.h/2 + c.h/2 + SPACING.chairDepth;
+    const startY = topY + c.h/2 + SPACING.chairDepth + SPACING.seated.ideal + c.w/2;
+    if (startY + (perArm-1)*c.w + c.w/2 + SPACING.chairDepth > area.cy + area.h/2) continue;
+    const out = [];
+    for (let i=0; i<head; i++)
+      out.push({x: area.cx - headW/2 + c.w/2 + i*c.w, y: topY, rot: 0});
+    const lx = area.cx - headW/2 + c.h/2 + SPACING.chairDepth;
+    const rx = area.cx + headW/2 - c.h/2 - SPACING.chairDepth;
+    for (let i=0; i<arms; i++){
+      const idx = Math.floor(i/2);
+      out.push({x: i % 2 ? rx : lx, y: startY + idx*c.w, rot: 90});
+    }
+    return out;
+  }
+  return null;
+}
+
+const PATTERNS = [
+  {id:"grid",      name:"Banquet grid",   blurb:"even rows — the most seats in the space",          gen:patGrid},
+  {id:"stagger",   name:"Staggered rows", blurb:"offset rows open up sightlines",                   gen:patStagger},
+  {id:"perimeter", name:"Open centre",    blurb:"seating rings the tent, middle free for dancing",  gen:patPerimeter},
+  {id:"aisle",     name:"Centre aisle",   blurb:"two blocks with a processional lane between",      gen:patAisle},
+  {id:"long",      name:"Feasting table", blurb:"tables joined end to end, family style",           gen:patLong, touch:true},
+  {id:"ushape",    name:"U-shape",        blurb:"head table with two arms, everyone facing in",     gen:patU,    touch:true},
+];
 function distribute(total, n, cap){
   const out = Array(n).fill(0);
   let left = Math.min(total, n*cap), i = 0;

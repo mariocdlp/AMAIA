@@ -1,5 +1,5 @@
 const fs = require('fs');
-const html = fs.readFileSync('/tmp/claude-0/-home-user-AMAIA/464edf24-c932-58ed-8871-d89913aab2e6/scratchpad/floor-planner-demo.html','utf8');
+const html = fs.readFileSync(__dirname + '/prototype.html','utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>\s*$/)[1];
 function mkEl(id){
   return { id, style:{}, dataset:{}, classList:{add(){},remove(){},toggle(){},contains(){return false}},
@@ -25,33 +25,7 @@ const mod = {exports:{}};
 new Function('module','exports', script + probe)(mod, mod.exports);
 const A = mod.exports;
 
-const CHAIR = 1.4;            // chair is 1.4ft square
-// world-space AABB of every chair + every table top
-function occupants(){
-  const out = [];
-  for (const it of A.getItems()){
-    const c = A.CAT[it.k];
-    if (c.cat !== 'table') continue;
-    const rad = it.rot * Math.PI/180, cs = Math.cos(rad), sn = Math.sin(rad);
-    for (const sp of A.chairSpots(c, it.props.chairs)){
-      const x = it.x + sp.x*cs - sp.y*sn, y = it.y + sp.x*sn + sp.y*cs;
-      out.push({ kind:'chair', tid:it.id, x, y, r: CHAIR/2 });
-    }
-    out.push({ kind:'table', tid:it.id, x:it.x, y:it.y,
-               r: (c.shape==='round' ? c.d/2 : Math.max(c.w,c.h)/2) });
-  }
-  return out;
-}
-function overlaps(){
-  const o = occupants(), bad = [];
-  for (let i=0;i<o.length;i++) for (let j=i+1;j<o.length;j++){
-    if (o[i].tid === o[j].tid) continue;           // same table's own chairs are fine
-    const d = Math.hypot(o[i].x-o[j].x, o[i].y-o[j].y);
-    const need = o[i].r + o[j].r;
-    if (d < need - 0.02) bad.push(`${o[i].kind}#${o[i].tid} ↔ ${o[j].kind}#${o[j].tid} (gap ${(d-need).toFixed(2)}ft)`);
-  }
-  return bad;
-}
+const { overlaps } = require('./geom-check')(A);
 
 const CASES = [
   "20x20 tent with 5 round tables, white tablecloths and 40 padded chairs",
