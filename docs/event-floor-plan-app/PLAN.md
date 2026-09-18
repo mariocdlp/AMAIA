@@ -68,7 +68,7 @@ Bundled as a versioned JSON catalog (`catalog.json`) so prices can be updated wi
 | 10×20 | String Lights $35 · Wall Kit $15 |
 | 20×20 | String Lights $55 · Side Walls $25 · Windows $35 |
 
-Quote lines for extras are labeled per size, e.g. **"String Lights (10×20) — $35"**, never a generic "String Lights".
+Quote lines for extras are labeled per size, e.g. **"String Lights (10×20) — $35"**, never a generic "String Lights". Wall and window prices above are for a full set of four sides; partial sets are billed per panel (§4a).
 
 > **Open pricing items (need owner input before v1 ships):**
 > - **Ceiling liners** and **leg liners** appear in the tent properties menu but have no price in the extras table → shown in the menu, added to the quote as **"price on request"** until priced.
@@ -122,11 +122,33 @@ Anything beyond these numbers is placed outside the tent rather than squeezed in
 | **Duplicate** | Clone the tent **with all its properties** — every selected extra carries over |
 | **Properties ▸** | Checkable toggles (each adds/removes a size-specific quote line): |
 | — Bistro/String Lights | Visual: string-light overlay inside tent footprint. Quote: String Lights at the tent's size price |
-| — Walls / Windows | 10×10 & 10×20 → single "Wall Kit" toggle. 20×20 → two independent toggles: "Side Walls" and "Windows". Visual: wall outline on tent perimeter |
+| — Walls / Windows | Chosen **per side**, not all-or-nothing — see §4a. 10×10 & 10×20 offer "Wall Kit"; 20×20 offers "Side Walls" and "Windows" independently. Visual: only the selected edges are drawn, and they turn with the tent |
 | — Ceiling liner | Visual: liner tint on tent canopy. Quote: "price on request" until priced |
 | — Leg liners | Visual: accent on the 4/6 corner posts. Quote: "price on request" until priced |
 | **Rotate 90°** | Tents rotate in 90° steps only (rectangular footprints) |
 | **Delete** | Remove tent (contents stay — furniture is never parented to the tent) |
+
+### 4a. Per-side walls and windows
+
+Walls are almost never wanted on all four sides. A tent gets walled on the windward side, or across the back, or three sides with the view left open — so walls and windows are chosen **per side**, not as a single enclosure toggle.
+
+- **Model.** Each per-side extra stores a set of four sides in the tent's *own* frame (`sides: {walls: {n,e,s,w}, windows: {…}}`), so rotating the tent carries the walls with it.
+- **Control.** The tent's context menu shows a picker shaped like the tent itself — a rectangle in the tent's real proportions with a tappable bar on each edge — plus **All 4 sides** and **None** shortcuts. It reads at a glance which sides are closed, and it matches what's drawn on the canvas.
+- **Drawing.** Only the selected edges are drawn: walls as a solid edge, windows as a dashed one. A side with both shows the window dashes over the wall.
+- **Windows** are independent of walls on the 20×20, since a window panel replaces a wall panel on that side in practice.
+
+**Pricing.** A full set of four is billed at the listed kit price, exactly as the price list reads. A partial set is billed per panel at a quarter of the kit:
+
+| Tent | Extra | All four | Per panel |
+|---|---|---|---|
+| 10×10 | Wall Kit | $15.00 | $3.75 |
+| 10×20 | Wall Kit | $15.00 | $3.75 |
+| 20×20 | Side Walls | $25.00 | $6.25 |
+| 20×20 | Windows | $35.00 | $8.75 |
+
+The quote line says which it is — "Side Walls (20×20) — all 4 sides $25.00" versus "2 × Side wall panel (20×20) $12.50".
+
+> **Open question:** the quarter-of-a-kit per-panel price is an assumption, not a quoted rate. Confirm how partial wall sets are actually billed — per panel, per side at a flat rate, or kit-only with no partial option — before this ships. The full-set price matches the supplied list exactly either way.
 
 ### Chairs
 No context menu of their own in v1 — chairs are managed entirely through their parent table.
@@ -315,15 +337,19 @@ Plan        { id, name, venueSize: Size(ft), items: [PlacedItem], createdAt }
 PlacedItem  { id, catalogID, position: Point(ft), rotation: Degrees,
               layer: .background | .foreground,          // derived from category
               tableProps:  { chairCount, chairType, tablecloth }?,   // tables only
-              tentProps:   { stringLights, wallKit, sideWalls,
-                             windows, ceilingLiner, legLiners }?      // tents only
+              tentProps:   { stringLights, ceilingLiner, legLiners,  // tents only
+                             sides: [ExtraID: SideSet] }?            // per-side walls
             }
+SideSet     { n: Bool, e: Bool, s: Bool, w: Bool }   // in the TENT's own frame,
+                                                     // so it rotates with the tent
 CatalogItem { id, name, category: .table | .tent | .chair,
               footprint: Size(inches), price: Decimal,
               seating: { min, max }?,                     // tables
-              extras: [Extra { id, label, price?, sizeLabel }]?       // tents
+              extras: [Extra { id, label, price?, perSide, sideLabel }]?  // tents
             }
 Quote       // pure function: (Plan, Catalog) -> [QuoteLine] + total
+            // a perSide extra bills as the kit price at 4 sides, else
+            // price/4 per selected panel
 ```
 
 Key invariants encoded in the model, not the UI:
@@ -354,6 +380,7 @@ Free-standing chair rows (ceremonies), **per-side chair control on a table** (so
 
 1. **Ceiling liner & leg liner pricing** — in the menu but unpriced; need numbers or confirm "price on request" is acceptable at launch.
 2. **Tablecloth pricing** — spandex white/black currently quoted at $0; confirm whether linens are billed.
+3. **Partial wall pricing** — walls and windows are now chosen per side (§4a). A full set of four bills at your listed kit price; a partial set currently bills at a quarter of it per panel. Confirm how you actually charge for a two- or three-sided job.
 3. **Multi-tent auto-arrange** — v1 handles "choose for me" by combining tents in a row (e.g. 2 × 20×20 for 70 guests); confirm combinations you actually stock/install.
 4. **Cocktail tables & chairs** — assumed standing-only (no chair options); confirm.
 5. **Quote handoff channel** — email, WhatsApp, or a booking form URL? Determines the "Request this quote" CTA integration.

@@ -29,7 +29,7 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 - **Shuffle** — re-lays the tables inside their tent in a different named arrangement (banquet grid, staggered rows, open centre, centre aisle, feasting table, U-shape). Only arrangements that fit cleanly are offered.
 - **True scale, no resizing** — every item is its real footprint against a 1 ft grid.
 - **Fixed z-order** — tents always render behind tables and chairs.
-- **Long-press context menus** — duplicate (carries all properties), MIN/MAX chairs, chair type, tablecloths; tent extras priced per tent size.
+- **Long-press context menus** — duplicate (carries all properties), MIN/MAX chairs, chair type, tablecloths; tent extras priced per tent size, with walls and windows chosen **per side** on a picker shaped like the tent.
 - **Multi-select** — lasso or tap to select (hold Shift or ⌘ on a keyboard), then bulk duplicate, rotate, delete, or move as a group.
 - **Undo / redo** — a full history stack over every change, with ⌘Z / ⌘⇧Z on a keyboard.
 - **Live quote** — every item priced from the catalog, with an itemized sheet and a "Request this quote" handoff.
@@ -40,7 +40,7 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 
 Prices live in the `CAT` and `CHAIRS` objects at the top of the prototype's `<script>`. In the real app this becomes a remote-refreshable `catalog.json` so prices change without an app release.
 
-Two items still need numbers from the owner: **ceiling liners** and **leg liners** show as "price on request", and **tablecloths** are quoted as included. See §9 of the plan for the full list of open questions.
+Some prices still need confirming from the owner: **ceiling liners** and **leg liners** show as "price on request", **tablecloths** are quoted as included, and **partial wall sets** are billed at a quarter of the kit price per panel. See §9 of the plan for the full list of open questions.
 
 ## Tests
 

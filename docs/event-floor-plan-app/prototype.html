@@ -204,6 +204,22 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
 .helpstep .n{flex:0 0 auto; width:22px; height:22px; border-radius:99px; background:var(--pine);
   color:#f2efe4; font-size:12px; font-weight:800; display:grid; place-items:center; margin-top:1px;}
 .exlist{display:flex; flex-direction:column; gap:7px;}
+.exhead{display:flex; align-items:baseline; gap:8px; font-size:14px; font-weight:600;
+  margin:12px 0 5px;}
+.exhead .pr{margin-left:auto; font-size:11.5px; color:var(--ink-2); font-weight:600;
+  font-variant-numeric:tabular-nums;}
+.sidepick{display:grid; gap:5px; justify-content:center; margin:2px 0 8px;
+  grid-template-columns:16px var(--tw) 16px;
+  grid-template-rows:16px var(--th) 16px;
+  grid-template-areas:". n ." "w mid e" ". s .";}
+.sidepick .mid{grid-area:mid; border:1px dashed var(--line); border-radius:6px;
+  display:grid; place-items:center; font-size:11px; color:var(--ink-2);
+  font-variant-numeric:tabular-nums;}
+.sidepick .sb{border:1px solid var(--line); background:var(--ground); border-radius:5px;
+  width:100%; height:100%; padding:0; cursor:pointer;}
+.sidepick .sb.on{background:var(--wall); border-color:var(--wall);}
+.sidepick .sb.windows.on{background:var(--window); border-color:var(--window);}
+.sidepick .sb:active{border-color:var(--accent);}
 .exlist button{border:1px solid var(--line); background:var(--ground); color:var(--ink); border-radius:12px;
   padding:11px 13px; font-size:13px; line-height:1.4; text-align:left; cursor:pointer; font-family:inherit;}
 button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid var(--sel); outline-offset:2px;}
@@ -297,21 +313,32 @@ const CAT = {
   ck:{name:"Cocktail table", short:"cocktail", cat:"table", shape:"round", d:2.5, price:12, min:0, max:0, standing:true},
   tt1010:{name:"10×10 tent", size:"10×10", cat:"tent", w:10, h:10, price:75, extras:[
     {id:"lights", label:"String Lights", price:25},
-    {id:"walls",  label:"Wall Kit",      price:15},
+    {id:"walls",  label:"Wall Kit",      price:15, perSide:true, sideLabel:"Wall panel"},
     {id:"ceil",   label:"Ceiling liner", price:null},
     {id:"legs",   label:"Leg liners",    price:null}]},
   tt1020:{name:"10×20 tent", size:"10×20", cat:"tent", w:20, h:10, price:150, extras:[
     {id:"lights", label:"String Lights", price:35},
-    {id:"walls",  label:"Wall Kit",      price:15},
+    {id:"walls",  label:"Wall Kit",      price:15, perSide:true, sideLabel:"Wall panel"},
     {id:"ceil",   label:"Ceiling liner", price:null},
     {id:"legs",   label:"Leg liners",    price:null}]},
   tt2020:{name:"20×20 tent", size:"20×20", cat:"tent", w:20, h:20, price:350, extras:[
-    {id:"lights", label:"String Lights", price:55},
-    {id:"sidewalls", label:"Side Walls", price:25},
-    {id:"windows",   label:"Windows",    price:35},
-    {id:"ceil",   label:"Ceiling liner", price:null},
-    {id:"legs",   label:"Leg liners",    price:null}]},
+    {id:"lights",  label:"String Lights", price:55},
+    {id:"walls",   label:"Side Walls",    price:25, perSide:true, sideLabel:"Side wall panel"},
+    {id:"windows", label:"Windows",       price:35, perSide:true, sideLabel:"Window panel"},
+    {id:"ceil",    label:"Ceiling liner", price:null},
+    {id:"legs",    label:"Leg liners",    price:null}]},
 };
+/* Walls and windows are chosen per side, in the tent's own frame, so they
+   rotate with it. A full set of four is billed as the listed kit price; a
+   partial set is billed per panel at a quarter of it. */
+const SIDES = ["n", "e", "s", "w"];
+const sideSetOf = (it, id) => (it.props.sides && it.props.sides[id]) || {};
+const sideCount = (it, id) => SIDES.filter(s => sideSetOf(it, id)[s]).length;
+function setAllSides(it, id, on){
+  if (!it.props.sides) it.props.sides = {};
+  if (!it.props.sides[id]) it.props.sides[id] = {};
+  SIDES.forEach(s => { it.props.sides[id][s] = on; });
+}
 const TRAY = ["r5","t6","t8","ck","tt1010","tt1020","tt2020"];
 const TENTS = ["tt1010","tt1020","tt2020"];
 
@@ -331,7 +358,14 @@ const deg = r => r*180/Math.PI;
 
 function newItem(k, x, y){
   const c = CAT[k];
-  const props = c.cat==="table" ? {chairs:0, ctype:"basic", cloth:"none"} : {extras:{}};
+  let props;
+  if (c.cat === "table") props = {chairs:0, ctype:"basic", cloth:"none"};
+  else {
+    props = {extras:{}, sides:{}};
+    c.extras.filter(e => e.perSide).forEach(e => {
+      props.sides[e.id] = {n:false, e:false, s:false, w:false};
+    });
+  }
   return {id:seq++, k, x, y, rot:0, props};
 }
 /* ============ history (undo / redo) ============
@@ -438,8 +472,21 @@ function tentSVG(it){
                  M${-q} 0 L${q} 0" stroke="var(--tent-edge)" stroke-width=".07" opacity=".45" fill="none"/>`;
   }
   if (ex.ceil) s += `<rect x="${-hw+.55}" y="${-hh+.55}" width="${c.w-1.1}" height="${c.h-1.1}" rx=".2" fill="var(--cloth-w)" opacity=".35"/>`;
-  if (ex.walls || ex.sidewalls) s += `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".25" fill="none" stroke="var(--wall)" stroke-width=".38"/>`;
-  if (ex.windows) s += `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".25" fill="none" stroke="var(--window)" stroke-width=".26" stroke-dasharray="1.3 1.7"/>`;
+  /* per-side walls and windows, in the tent's own frame */
+  const edges = {
+    n: [-hw, -hh,  hw, -hh],
+    e: [ hw, -hh,  hw,  hh],
+    s: [-hw,  hh,  hw,  hh],
+    w: [-hw, -hh, -hw,  hh],
+  };
+  const walls = sideSetOf(it, "walls"), wins = sideSetOf(it, "windows");
+  for (const sd of SIDES){
+    const [x1,y1,x2,y2] = edges[sd];
+    if (walls[sd])
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--wall)" stroke-width=".42" stroke-linecap="square"/>`;
+    if (wins[sd])
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--window)" stroke-width="${walls[sd] ? .24 : .3}" stroke-dasharray="1.3 1.7" stroke-linecap="butt"/>`;
+  }
   if (ex.lights) s += `<rect x="${-hw+1.1}" y="${-hh+1.1}" width="${c.w-2.2}" height="${c.h-2.2}" rx=".3" fill="none" stroke="var(--lights)" stroke-width=".2" stroke-dasharray=".01 .85" stroke-linecap="round"/>`;
   if (ex.legs){
     const pts = c.w===c.h ? [[-hw,-hh],[hw,-hh],[-hw,hh],[hw,hh]]
@@ -554,8 +601,15 @@ function quoteLines(){
     const c = CAT[it.k];
     if (c.cat === "tent"){
       push("Tents", c.name, c.price);
-      for (const ex of c.extras) if (it.props.extras[ex.id])
-        push("Tent extras", `${ex.label} (${c.size})`, ex.price);
+      for (const ex of c.extras){
+        if (ex.perSide){
+          const n = sideCount(it, ex.id);
+          if (n === 4) push("Tent extras", `${ex.label} (${c.size}) — all 4 sides`, ex.price);
+          else if (n > 0) push("Tent extras", `${ex.sideLabel} (${c.size})`, ex.price/4, n);
+        } else if (it.props.extras[ex.id]){
+          push("Tent extras", `${ex.label} (${c.size})`, ex.price);
+        }
+      }
     } else {
       push("Tables", c.name, c.price);
       if (it.props.chairs && !c.standing)
@@ -642,16 +696,42 @@ function tableMenuHTML(it, c){
     </div>`;
   return s;
 }
+function sidePickerHTML(it, ex, c){
+  const set = sideSetOf(it, ex.id), n = sideCount(it, ex.id);
+  const unit = ex.price == null ? null : ex.price/4;
+  const price = n === 0 ? `${money(ex.price)} for all 4`
+              : n === 4 ? money(ex.price)
+              : `${n} × ${money(unit)} = ${money(unit*n)}`;
+  const long = c.w >= c.h;
+  const bar = sd => {
+    const on = !!set[sd];
+    const vertical = sd === "e" || sd === "w";
+    return `<button class="sb ${on?"on":""} ${ex.id}" data-act="side" data-val="${ex.id}:${sd}"
+      style="grid-area:${sd}" aria-label="${ex.label} on this side" aria-pressed="${on}"></button>`;
+  };
+  return `<div class="exhead"><b>${ex.label}</b><span class="pr">${n} of 4 · ${price}</span></div>
+    <div class="sidepick" style="--tw:${long?110:70}px;--th:${long?70:110}px">
+      ${bar("n")}${bar("w")}
+      <div class="mid">${c.size}</div>
+      ${bar("e")}${bar("s")}
+    </div>
+    <div class="seg" style="margin-bottom:10px">
+      <button class="mrow" data-act="sideAll" data-val="${ex.id}:1"><span class="tick"></span>All 4 sides</button>
+      <button class="mrow" data-act="sideAll" data-val="${ex.id}:0"><span class="tick"></span>None</button>
+    </div>`;
+}
 function tentMenuHTML(it, c){
   const ex = it.props.extras;
   let s = `<h3>${c.name} <small>${money(c.price)}</small></h3>
-    <p class="sub">Tents always sit behind tables and chairs — real ${c.size} ft footprint.</p>
+    <p class="sub">Tents always sit behind tables and chairs — real ${c.size} ft footprint. Walls and windows go on the sides you pick, and turn with the tent.</p>
     <button class="mrow" data-act="dup"><span class="tick"></span>⧉ Duplicate <span class="pr">copies all properties</span></button>
     <div class="seclbl">Extras (priced for ${c.size})</div>`;
-  for (const e of c.extras)
+  for (const e of c.extras){
+    if (e.perSide){ s += sidePickerHTML(it, e, c); continue; }
     s += `<button class="mrow ${ex[e.id]?"on":""}" data-act="extra" data-val="${e.id}">
       <span class="tick">✓</span>${e.label}
       <span class="pr">${e.price==null ? "price on request" : money(e.price)}</span></button>`;
+  }
   s += `<div class="grid2" style="margin-top:12px">
       <button class="mrow" data-act="rot"><span class="tick"></span>⟳ Rotate 90°</button>
       <button class="mrow danger" data-act="del"><span class="tick"></span>✕ Delete</button>
@@ -674,6 +754,16 @@ $("sheetBody").addEventListener("click", e => {
                         else { it.props.ctype = val; if (!it.props.chairs) it.props.chairs = c.min; } }
     if (act==="cloth"){ it.props.cloth = val; }
     if (act==="extra"){ it.props.extras[val] = !it.props.extras[val]; }
+    if (act==="side"){
+      const [id, sd] = val.split(":");
+      if (!it.props.sides) it.props.sides = {};
+      if (!it.props.sides[id]) it.props.sides[id] = {};
+      it.props.sides[id][sd] = !it.props.sides[id][sd];
+    }
+    if (act==="sideAll"){
+      const [id, on] = val.split(":");
+      setAllSides(it, id, on === "1");
+    }
     render();
     $("sheetBody").innerHTML = c.cat==="table" ? tableMenuHTML(it,c) : tentMenuHTML(it,c);
     return;
@@ -1396,6 +1486,16 @@ function isModifyOnly(spec){
       && spec.guests == null && spec.venue == null
       && (Object.keys(spec.extras).length || spec.cloth || spec.chairType || spec.chairs != null);
 }
+/* Apply a prompt-level extra to a tent. Per-side extras go on all four sides;
+   the side picker is how you pare them back. */
+function applyExtraToTent(tent, key){
+  const c = CAT[tent.k];
+  const ex = c.extras.find(e => e.id === key);
+  if (!ex) return false;
+  if (ex.perSide) setAllSides(tent, key, true);
+  else tent.props.extras[key] = true;
+  return true;
+}
 function applyModify(spec){
   commit();
   const said = [];
@@ -1403,13 +1503,11 @@ function applyModify(spec){
   const tables = items.filter(i => CAT[i.k].cat==="table" && !CAT[i.k].standing);
   for (const key in spec.extras){
     let hit = 0;
-    for (const t of tents){
-      const c = CAT[t.k];
-      let id = key;
-      if (key==="walls") id = c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls";
-      if (c.extras.some(e => e.id===id)){ t.props.extras[id] = true; hit++; }
+    for (const t of tents) if (applyExtraToTent(t, key)) hit++;
+    if (hit){
+      const ex = CAT[tents[0].k].extras.find(e => e.id === key);
+      said.push(ex ? (ex.perSide ? `${ex.label} on all 4 sides` : ex.label) : key);
     }
-    if (hit) said.push(CAT[tents[0].k].extras.find(e => e.id===key || (key==="walls" && e.id==="sidewalls"))?.label || key);
   }
   if (spec.cloth){ tables.forEach(t => t.props.cloth = spec.cloth); if (tables.length) said.push(`spandex ${spec.cloth} linens`); }
   if (spec.chairType){ tables.forEach(t => { t.props.ctype = spec.chairType; if (!t.props.chairs) t.props.chairs = CAT[t.k].min; });
@@ -1519,11 +1617,7 @@ function applySpec(spec){
         const c = CAT[k];
         const cx = x + c.w/2, cy = y + packH[r]/2;
         const tent = newItem(k, cx, cy);
-        for (const key in spec.extras){
-          const id = key==="walls"
-            ? (c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls") : key;
-          if (c.extras.some(e => e.id===id)) tent.props.extras[id] = true;
-        }
+        for (const key in spec.extras) applyExtraToTent(tent, key);
         items.push(tent);
         placedTents++;
         if (remaining > 0){
