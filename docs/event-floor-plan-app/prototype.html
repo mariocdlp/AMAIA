@@ -10,6 +10,7 @@
   --chair-pad:#fbfaf6; --chair-pad-back:#d8d4c6; --chair-edge:#8f8b7c;
   --cloth-w:#faf9f4; --cloth-b:#2a2a2e; --grid1:rgba(60,70,50,.07); --grid5:rgba(60,70,50,.14);
   --danger:#b3402e; --sel:#d99a2b; --dim:#8b8f7e; --lights:#dfae3f;
+  --floor:#e7d9c2; --floor-edge:#9a7f5c;
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#14170f; --ground:#1e221a; --paper:#262b21; --ink:#ece9dd; --ink-2:#a3a794;
@@ -19,6 +20,7 @@
   --chair-pad:#e8e5da; --chair-pad-back:#b9b5a6; --chair-edge:#6f7462;
   --cloth-w:#e9e7de; --cloth-b:#191a1d; --grid1:rgba(220,230,200,.06); --grid5:rgba(220,230,200,.12);
   --sel:#e6ad45; --accent:#e2a93f; --accent-ink:#f4d089; --danger:#e06a56; --dim:#7d8270; --lights:#e6b84e;
+  --floor:#453a2b; --floor-edge:#b6996f;
 }}
 :root[data-theme="dark"]{
   --bg:#14170f; --ground:#1e221a; --paper:#262b21; --ink:#ece9dd; --ink-2:#a3a794;
@@ -28,6 +30,7 @@
   --chair-pad:#e8e5da; --chair-pad-back:#b9b5a6; --chair-edge:#6f7462;
   --cloth-w:#e9e7de; --cloth-b:#191a1d; --grid1:rgba(220,230,200,.06); --grid5:rgba(220,230,200,.12);
   --sel:#e6ad45; --accent:#e2a93f; --accent-ink:#f4d089; --danger:#e06a56; --dim:#7d8270; --lights:#e6b84e;
+  --floor:#453a2b; --floor-edge:#b6996f;
 }
 :root[data-theme="light"]{
   --pine:#24382b; --pine-2:#2e4636; --accent:#d99a2b; --accent-ink:#7a5210;
@@ -38,6 +41,7 @@
   --chair-pad:#fbfaf6; --chair-pad-back:#d8d4c6; --chair-edge:#8f8b7c;
   --cloth-w:#faf9f4; --cloth-b:#2a2a2e; --grid1:rgba(60,70,50,.07); --grid5:rgba(60,70,50,.14);
   --danger:#b3402e; --sel:#d99a2b; --dim:#8b8f7e; --lights:#dfae3f;
+  --floor:#e7d9c2; --floor-edge:#9a7f5c;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -204,6 +208,12 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
 .helpstep .n{flex:0 0 auto; width:22px; height:22px; border-radius:99px; background:var(--pine);
   color:#f2efe4; font-size:12px; font-weight:800; display:grid; place-items:center; margin-top:1px;}
 .exlist{display:flex; flex-direction:column; gap:7px;}
+.mrow.radio{align-items:center;}
+.mrow.radio .tick{color:var(--ink-2); font-size:15px; width:18px;}
+.mrow.radio.on{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--ground));}
+.mrow.radio.on .tick{color:var(--accent-ink);}
+.badge{font-style:normal; background:var(--accent); color:#241a05; font-size:9.5px; font-weight:800;
+  padding:2px 6px; border-radius:99px; letter-spacing:.3px; text-transform:uppercase; margin-left:5px;}
 .exhead{display:flex; align-items:baseline; gap:8px; font-size:14px; font-weight:600;
   margin:12px 0 5px;}
 .exhead .pr{margin-left:auto; font-size:11.5px; color:var(--ink-2); font-weight:600;
@@ -245,6 +255,7 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
       </defs>
       <g id="gVenue"></g>
       <g id="gTents"></g>
+      <g id="gFloor"></g>
       <g id="gFurn"></g>
       <g id="gSel"></g>
     </svg>
@@ -332,6 +343,25 @@ const CAT = {
    rotate with it. A full set of four is billed as the listed kit price; a
    partial set is billed per panel at a quarter of it. */
 const SIDES = ["n", "e", "s", "w"];
+/* ---- dance floors ----
+   Rental floors are built from 3 ft panels, so stocked sizes are multiples
+   of 3. Sizing rule used across the industry, and the one this app follows:
+   half the guests dance at once, each needing 3 sq ft. */
+const DANCE = {share: 0.5, sqftPerDancer: 3};
+const FLOOR_SIZES = [[9,12], [12,12], [12,15], [15,15], [18,18], [21,21]];
+const FLOOR_KEYS = FLOOR_SIZES.map(([w,h]) => `df${w}x${h}`);
+FLOOR_SIZES.forEach(([w,h]) => {
+  CAT[`df${w}x${h}`] = {name:`${w}×${h} dance floor`, size:`${w}×${h}`, short:`${w}×${h} floor`,
+                        cat:"floor", shape:"rect", w, h, price:null};
+});
+const floorArea = key => CAT[key].w * CAT[key].h;
+const floorDancers = key => Math.floor(floorArea(key) / DANCE.sqftPerDancer);
+const danceAreaFor = guests => Math.ceil(guests * DANCE.share * DANCE.sqftPerDancer);
+function recommendFloor(guests){
+  if (!guests) return null;
+  const need = danceAreaFor(guests);
+  return FLOOR_KEYS.find(k => floorArea(k) >= need) || FLOOR_KEYS[FLOOR_KEYS.length-1];
+}
 const sideSetOf = (it, id) => (it.props.sides && it.props.sides[id]) || {};
 const sideCount = (it, id) => SIDES.filter(s => sideSetOf(it, id)[s]).length;
 function setAllSides(it, id, on){
@@ -339,7 +369,7 @@ function setAllSides(it, id, on){
   if (!it.props.sides[id]) it.props.sides[id] = {};
   SIDES.forEach(s => { it.props.sides[id][s] = on; });
 }
-const TRAY = ["r5","t6","t8","ck","tt1010","tt1020","tt2020"];
+const TRAY = ["r5","t6","t8","ck","dfPick","tt1010","tt1020","tt2020"];
 const TENTS = ["tt1010","tt1020","tt2020"];
 
 /* ============ state ============ */
@@ -351,16 +381,16 @@ let selectMode = false;
 let view = {x:-4, y:-4, w:48};
 
 const $ = id => document.getElementById(id);
-const cv = $("cv"), gT = $("gTents"), gF = $("gFurn"), gS = $("gSel"), gV = $("gVenue");
+const cv = $("cv"), gT = $("gTents"), gD = $("gFloor"), gF = $("gFurn"), gS = $("gSel"), gV = $("gVenue");
 const money = v => "$" + (Math.round(v*100)/100).toLocaleString("en-US",
   {minimumFractionDigits:(Math.round(v*100)%100 ? 2 : 0), maximumFractionDigits:2});
 const deg = r => r*180/Math.PI;
 
 function newItem(k, x, y){
   const c = CAT[k];
-  let props;
+  let props = {};
   if (c.cat === "table") props = {chairs:0, ctype:"basic", cloth:"none"};
-  else {
+  else if (c.cat === "tent"){
     props = {extras:{}, sides:{}};
     c.extras.filter(e => e.perSide).forEach(e => {
       props.sides[e.id] = {n:false, e:false, s:false, w:false};
@@ -496,6 +526,17 @@ function tentSVG(it){
   s += `<text y="${hh-.7}" text-anchor="middle" font-size="1.1" fill="var(--tent-edge)" opacity=".8" style="pointer-events:none">${c.size}</text>`;
   return `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot})">${s}</g>`;
 }
+function floorSVG(it){
+  const c = CAT[it.k], hw = c.w/2, hh = c.h/2;
+  let s = `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".15"
+    fill="var(--floor)" stroke="var(--floor-edge)" stroke-width=".14"/>`;
+  for (let x = -hw+3; x < hw-0.01; x += 3)
+    s += `<line x1="${x}" y1="${-hh}" x2="${x}" y2="${hh}" stroke="var(--floor-edge)" stroke-width=".05" opacity=".55"/>`;
+  for (let y = -hh+3; y < hh-0.01; y += 3)
+    s += `<line x1="${-hw}" y1="${y}" x2="${hw}" y2="${y}" stroke="var(--floor-edge)" stroke-width=".05" opacity=".55"/>`;
+  s += `<text y=".45" text-anchor="middle" font-size="1.2" fill="var(--floor-edge)" opacity=".9" style="pointer-events:none">${c.size} dance floor</text>`;
+  return `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot})">${s}</g>`;
+}
 function render(){
   gV.innerHTML =
     `<rect width="${venue.w}" height="${venue.h}" fill="var(--ground)"/>
@@ -505,6 +546,7 @@ function render(){
      <text x="${venue.w/2}" y="-1" text-anchor="middle" font-size="1.5" fill="var(--dim)">${venue.w} ft</text>
      <text x="-1" y="${venue.h/2}" text-anchor="middle" font-size="1.5" fill="var(--dim)" transform="rotate(-90 -1 ${venue.h/2})">${venue.h} ft</text>`;
   gT.innerHTML = items.filter(i => CAT[i.k].cat==="tent").map(tentSVG).join("");
+  gD.innerHTML = items.filter(i => CAT[i.k].cat==="floor").map(floorSVG).join("");
   gF.innerHTML = items.filter(i => CAT[i.k].cat==="table").map(tableSVG).join("");
   renderSel(); renderQuote();
   $("empty").style.display = items.length ? "none" : "block";
@@ -592,14 +634,16 @@ function fitView(toContent){
 
 /* ============ quote ============ */
 function quoteLines(){
-  const cats = {Tents:[], "Tent extras":[], Tables:[], Chairs:[], Linens:[]};
+  const cats = {Tents:[], "Tent extras":[], "Dance floor":[], Tables:[], Chairs:[], Linens:[]};
   const push = (cat, label, unit, qty=1) => {
     const arr = cats[cat], f = arr.find(l => l.label===label && l.unit===unit);
     f ? f.qty += qty : arr.push({label, unit, qty});
   };
   for (const it of items){
     const c = CAT[it.k];
-    if (c.cat === "tent"){
+    if (c.cat === "floor"){
+      push("Dance floor", `${c.size} dance floor (${floorArea(it.k)} sq ft)`, c.price);
+    } else if (c.cat === "tent"){
       push("Tents", c.name, c.price);
       for (const ex of c.extras){
         if (ex.perSide){
@@ -662,10 +706,82 @@ function closeSheet(){
 }
 $("veil").addEventListener("click", closeSheet);
 
+/* ---- dance floor size picker (radio list, sized from the guest count) ---- */
+const seatTotal = () => items.reduce((n,i) => n + (CAT[i.k].cat==="table" ? i.props.chairs : 0), 0);
+let dfGuests = null;                     // sticky guest count for the picker
+function floorPickerHTML(mode, curKey){
+  const guests = dfGuests != null ? dfGuests : (seatTotal() || 0);
+  const rec = recommendFloor(guests);
+  const need = danceAreaFor(guests);
+  const rows = FLOOR_KEYS.map(k => {
+    const c = CAT[k], on = mode === "edit" ? k === curKey : k === rec;
+    return `<button class="mrow radio ${on?"on":""}" data-act="${mode==="edit"?"floorSize":"floorAdd"}" data-val="${k}">
+      <span class="tick">${on ? "◉" : "○"}</span>
+      <b style="font-weight:700">${c.size} ft</b>
+      <span class="pr">${floorArea(k)} sq ft · fits ${floorDancers(k)} dancers${k===rec?` <em class="badge">recommended</em>`:""}</span>
+    </button>`;
+  }).join("");
+  return `<h3>Dance floor ${mode==="edit" ? `<small>${CAT[curKey].size} ft</small>` : ""}</h3>
+    <p class="sub">Sized the way planners size it: <b>half your guests dancing at once</b>, at <b>3 sq ft each</b>.</p>
+    <div class="fld"><label>Guest count</label><input id="dfGuests" type="number" inputmode="numeric" value="${guests}"></div>
+    <p class="sub" style="margin:-2px 0 10px">${guests ? `${Math.round(guests*DANCE.share)} dancing × 3 sq ft = <b>${need} sq ft</b> — smallest floor that covers it is <b>${CAT[rec].size}</b>.`
+      : "Enter a guest count and the recommended size is marked below."}</p>
+    <div class="seclbl">Popular sizes</div>
+    ${rows}
+    <p class="sub" style="margin-top:10px">Dance floors are quoted on request — the size, area and capacity carry through to the estimate.</p>`;
+}
+function openFloorPicker(it){
+  openSheet(floorPickerHTML(it ? "edit" : "add", it && it.k), {type:"floor", id: it && it.id});
+}
+$("sheetBody").addEventListener("input", e => {
+  if (e.target.id !== "dfGuests" || !sheetMode || sheetMode.type !== "floor") return;
+  dfGuests = Math.max(0, +e.target.value || 0);
+  const it = items.find(i => i.id === sheetMode.id);
+  $("sheetBody").innerHTML = floorPickerHTML(it ? "edit" : "add", it && it.k);
+  const f = $("dfGuests");
+  if (f) f.focus();
+});
+
+/* Drop a new item where it does not land on what is already placed. */
+function findClearSpot(key, x0, y0){
+  const others = items.filter(i => CAT[i.k].cat !== "tent")
+    .map(i => occupancy(i.k, i.props.chairs || 0, {x:i.x, y:i.y, rot:i.rot}));
+  const clear = (x, y) => others.every(o => clearBetween(occupancy(key, 0, {x, y, rot:0}), o) >= 1);
+  if (clear(x0, y0)) return {x:x0, y:y0};
+  for (let r = 3; r <= 72; r += 3)
+    for (let a = 0; a < 12; a++){
+      const x = Math.round(x0 + r*Math.cos(a*Math.PI/6));
+      const y = Math.round(y0 + r*Math.sin(a*Math.PI/6));
+      if (clear(x, y)) return {x, y};
+    }
+  return {x:x0, y:y0};
+}
 function menuFor(id){
   const it = items.find(i => i.id===id); if (!it) return;
   const c = CAT[it.k];
+  if (c.cat === "floor") return openSheet(floorMenuHTML(it, c), {type:"floor", id, menu:true});
   openSheet(c.cat==="table" ? tableMenuHTML(it,c) : tentMenuHTML(it,c), {type:c.cat, id});
+}
+function floorMenuHTML(it, c){
+  const guests = dfGuests != null ? dfGuests : (seatTotal() || 0);
+  const rec = recommendFloor(guests);
+  const rows = FLOOR_KEYS.map(k => {
+    const on = k === it.k;
+    return `<button class="mrow radio ${on?"on":""}" data-act="floorSize" data-val="${k}">
+      <span class="tick">${on ? "◉" : "○"}</span>
+      <b style="font-weight:700">${CAT[k].size} ft</b>
+      <span class="pr">${floorArea(k)} sq ft · ${floorDancers(k)} dancers${k===rec?` <em class="badge">recommended</em>`:""}</span>
+    </button>`;
+  }).join("");
+  return `<h3>${c.name} <small>price on request</small></h3>
+    <p class="sub">${floorArea(it.k)} sq ft — room for about ${floorDancers(it.k)} dancers${guests ? `, from ${guests} guests at half dancing × 3 sq ft` : ""}.</p>
+    <button class="mrow" data-act="dup"><span class="tick"></span>⧉ Duplicate <span class="pr">copies all properties</span></button>
+    <div class="seclbl">Size</div>
+    ${rows}
+    <div class="grid2" style="margin-top:12px">
+      <button class="mrow" data-act="rot"><span class="tick"></span>⟳ Rotate 90°</button>
+      <button class="mrow danger" data-act="del"><span class="tick"></span>✕ Delete</button>
+    </div>`;
 }
 function tableMenuHTML(it, c){
   const p = it.props;
@@ -741,6 +857,26 @@ function tentMenuHTML(it, c){
 $("sheetBody").addEventListener("click", e => {
   const btn = e.target.closest("[data-act]"); if (!btn) return;
   const act = btn.dataset.act, val = btn.dataset.val;
+  if (act==="floorAdd"){
+    commit();
+    const at = findClearSpot(val, Math.round(view.x + view.w/2), Math.round(view.y + viewH()/2));
+    const it = newItem(val, at.x, at.y);
+    items.push(it); sel = new Set([it.id]); render(); closeSheet();
+    toast(`${CAT[val].size} dance floor added — ${floorArea(val)} sq ft, about ${floorDancers(val)} dancers`, {undo:true});
+    return;
+  }
+  if (act==="floorSize" && sheetMode && sheetMode.type==="floor"){
+    const it = items.find(i => i.id===sheetMode.id); if (!it) return closeSheet();
+    if (it.k !== val){ commit(); it.k = val; render(); }
+    $("sheetBody").innerHTML = sheetMode.menu ? floorMenuHTML(it, CAT[it.k]) : floorPickerHTML("edit", it.k);
+    return;
+  }
+  if (sheetMode && sheetMode.type==="floor" && sheetMode.menu){
+    const it = items.find(i => i.id===sheetMode.id); if (!it) return closeSheet();
+    if (act==="dup"){ duplicate(it); closeSheet(); return; }
+    if (act==="rot"){ commit(); it.rot = (it.rot + 90) % 360; render(); return; }
+    if (act==="del"){ commit(); items = items.filter(i => i!==it); sel.clear(); render(); closeSheet(); return; }
+  }
   if (sheetMode && (sheetMode.type==="table" || sheetMode.type==="tent")){
     const it = items.find(i => i.id===sheetMode.id); if (!it) return closeSheet();
     const c = CAT[it.k];
@@ -856,6 +992,7 @@ function planSVG(){
   const seats = items.reduce((n,i) => n + (CAT[i.k].cat==="table" ? i.props.chairs : 0), 0);
 
   const plan = items.filter(i => CAT[i.k].cat==="tent").map(tentSVG).join("")
+             + items.filter(i => CAT[i.k].cat==="floor").map(floorSVG).join("")
              + items.filter(i => CAT[i.k].cat==="table").map(tableSVG).join("");
   const legend = lines.map((txt, i) => {
     const c = i % cols, r = Math.floor(i/cols);
@@ -1002,7 +1139,9 @@ function shuffleLayout(){
   } else {
     groups.push({area: areaOfCanvas(), list: tables});
   }
-  const fixed = staying.map(it => occupancy(it.k, it.props.chairs, {x:it.x, y:it.y, rot:it.rot}));
+  const fixed = staying.map(it => occupancy(it.k, it.props.chairs, {x:it.x, y:it.y, rot:it.rot}))
+    .concat(items.filter(i => CAT[i.k].cat === "floor")
+                 .map(it => occupancy(it.k, 0, {x:it.x, y:it.y, rot:it.rot})));
 
   const options = arrangementsFor(groups, fixed);
   if (!options.length)
@@ -1049,6 +1188,13 @@ $("helpBtn").addEventListener("click", () => {
       ${PATTERNS.map(p => `<div style="font-size:13px;line-height:1.45"><b>${p.name}</b> — <span style="color:var(--ink-2)">${p.blurb}</span></div>`).join("")}
     </div>
     <p class="sub" style="margin-top:9px">Which ones appear depends on the space and the tables: a feasting table and a U-shape need banquet tables, an open centre needs enough of them to ring the tent.</p>
+
+    <div class="seclbl">Dance floor sizing</div>
+    <p class="sub">Half the guests dance at once, each needing 3 sq ft. Enter a guest count in the dance floor picker and the size that covers it is marked <b>recommended</b>:</p>
+    <div style="display:flex;flex-direction:column">
+      ${[60,100,150,200].map(g => `<div class="qline"><span class="qlab">${g} guests → ${Math.round(g*DANCE.share)} dancing → ${danceAreaFor(g)} sq ft</span><span class="qp">${CAT[recommendFloor(g)].size}</span></div>`).join("")}
+    </div>
+    <p class="sub" style="margin-top:9px">Stocked sizes: ${FLOOR_SIZES.map(s => s.join("×")).join(", ")} ft. A dance floor sits under the tables and chairs and above the tent, and layouts keep tables a foot clear of it.</p>
 
     <div class="seclbl">Spacing guidelines</div>
     <p class="sub">Every generated layout follows real event-planning clearances, so nothing it produces puts chairs on top of each other:</p>
@@ -1361,7 +1507,8 @@ function parsePrompt(raw){
     .replace(/\s+/g, " ") + " ";
 
   const spec = {venue:null, tents:[], tentSize:null, tentCount:0, tables:[], chairs:null,
-                chairType:null, cloth:null, extras:{}, guests:null, notes:[], any:false};
+                chairType:null, cloth:null, extras:{}, guests:null, floor:false, floorKey:null,
+                notes:[], any:false};
   const neg = i => /\b(no|without|skip|minus)\s+[\w\s]{0,12}$/.test(t.slice(Math.max(0,i-20), i));
 
   /* --- tent extras (stripped so they can't confuse table parsing) --- */
@@ -1381,6 +1528,24 @@ function parsePrompt(raw){
   /* --- venue --- */
   const vm = /(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?\s*(?:yard|backyard|lot|venue|space|area|patio|lawn|garden|driveway|room|hall|field|site)/.exec(t);
   if (vm){ spec.venue = {w:+vm[1], h:+vm[2]}; spec.any = true; strip(new RegExp(vm[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))); }
+
+  /* --- dance floor --- */
+  const dfm = /(?:(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?\s*)?\b(?:dance\s*floor|dancefloor|dancing\s*area)\b/.exec(t);
+  if (dfm && !neg(dfm.index)){
+    spec.any = true;
+    spec.floor = true;
+    if (dfm[1]){
+      const w = +dfm[1], h = +dfm[2];
+      const exact = FLOOR_KEYS.find(k => (CAT[k].w===w && CAT[k].h===h) || (CAT[k].w===h && CAT[k].h===w));
+      if (exact) spec.floorKey = exact;
+      else {
+        const need = w*h;
+        spec.floorKey = FLOOR_KEYS.find(k => floorArea(k) >= need) || FLOOR_KEYS[FLOOR_KEYS.length-1];
+        spec.notes.push(`We stock ${FLOOR_SIZES.map(s=>s.join("×")).join(", ")} — used ${CAT[spec.floorKey].size} for the ${w}×${h} you asked for.`);
+      }
+    }
+    t = t.replace(dfm[0], " ");
+  }
 
   /* --- tents --- */
   const addTent = (w, h, n) => {
@@ -1568,6 +1733,8 @@ function applySpec(spec){
         tents = Array(Math.max(want, Math.ceil(tableCount/capBig))).fill("tt2020");
       }
     }
+    /* a dance floor needs its own covered space — dining tent plus dancing tent */
+    if (spec.floor && tableCount) tents.push(tents[tents.length-1]);
   }
 
   /* pack tents into rows, then grow the canvas to hold them */
@@ -1605,32 +1772,72 @@ function applySpec(spec){
 
   items = []; seq = 1; sel.clear();
 
-  /* place tents, then tables inside them at proper clearance */
-  const slots = [];
-  let tight = false, overflow = 0;
+  /* where each tent lands */
+  const tentPos = [];
   if (tents.length){
-    let remaining = tableCount, placedTents = 0;
     let y = venue.h/2 - totalH/2;
     for (let r = 0; r < pack.length; r++){
       let x = venue.w/2 - pack[r].w/2;
       for (const k of pack[r].keys){
-        const c = CAT[k];
-        const cx = x + c.w/2, cy = y + packH[r]/2;
-        const tent = newItem(k, cx, cy);
-        for (const key in spec.extras) applyExtraToTent(tent, key);
-        items.push(tent);
-        placedTents++;
-        if (remaining > 0){
-          const share = Math.ceil(remaining / (tents.length - placedTents + 1));
-          const fit = fitInTent(k, tableKey, share, perTable);
-          const n = Math.min(share, fit.cap);
-          if (n && fit.lane < RULES.ideal) tight = true;
-          placeGrid(cx, cy, fit, n).forEach(p => slots.push(p));
-          remaining -= n;
-        }
-        x += c.w;
+        tentPos.push({k, cx: x + CAT[k].w/2, cy: y + packH[r]/2});
+        x += CAT[k].w;
       }
       y += packH[r];
+    }
+  }
+
+  /* the dance floor takes the last tent — the dancing tent — or the centre
+     of the canvas when there is no tent at all */
+  let floorItem = null, floorOcc = null;
+  const floorTentIdx = tents.length ? tents.length - 1 : -1;
+  if (spec.floor){
+    const guestsForFloor = spec.guests != null ? spec.guests
+                         : (spec.chairs != null ? spec.chairs
+                         : tableCount * (CAT[tableKey].min || 0));
+    const key = spec.floorKey || recommendFloor(guestsForFloor) || FLOOR_KEYS[1];
+    const at = floorTentIdx >= 0 ? tentPos[floorTentIdx] : {cx: venue.w/2, cy: venue.h/2};
+    floorItem = newItem(key, at.cx, at.cy);
+    floorOcc = occupancy(key, 0, {x:at.cx, y:at.cy, rot:0});
+    if (!spec.floorKey && guestsForFloor)
+      notes.push(`${CAT[key].size} dance floor sized for ${Math.round(guestsForFloor*DANCE.share)} dancers — half of ${guestsForFloor} at 3 sq ft each.`);
+  }
+
+  /* place tents, then tables inside them at proper clearance */
+  const slots = [];
+  let tight = false, overflow = 0;
+  if (tents.length){
+    /* with more than one tent, the dancing tent holds no tables */
+    const hostIdx = tentPos.map((_, i) => i)
+      .filter(i => !(spec.floor && i === floorTentIdx && tentPos.length > 1));
+    let remaining = tableCount, hostsDone = 0;
+    for (let i = 0; i < tentPos.length; i++){
+      const tp = tentPos[i], c = CAT[tp.k];
+      const tent = newItem(tp.k, tp.cx, tp.cy);
+      for (const key in spec.extras) applyExtraToTent(tent, key);
+      items.push(tent);
+      if (!hostIdx.includes(i)) continue;
+      hostsDone++;
+      if (remaining <= 0) continue;
+      const share = Math.ceil(remaining / (hostIdx.length - hostsDone + 1));
+      const fit = fitInTent(tp.k, tableKey, share, perTable);
+      const n = Math.min(share, fit.cap);
+      if (n && fit.lane < RULES.ideal) tight = true;
+      /* if the dance floor shares this tent, ring the tables around it */
+      const sharesFloor = floorOcc && Math.abs(floorOcc.x - tp.cx) < c.w/2
+                                   && Math.abs(floorOcc.y - tp.cy) < c.h/2;
+      let put = null;
+      if (sharesFloor){
+        const area = areaOfTent(tent);
+        for (const cand of [patPerimeter(area, fit, n), placeGrid(tp.cx, tp.cy, fit, n)]){
+          if (!cand) continue;
+          const keep = cand.filter(p => clearBetween(occupancy(tableKey, perTable, p), floorOcc) >= 1);
+          if (keep.length === n){ put = cand; break; }
+          if (!put || keep.length > put.length) put = keep;
+        }
+      }
+      put = put || placeGrid(tp.cx, tp.cy, fit, n);
+      put.forEach(p => slots.push(p));
+      remaining -= put.length;
     }
     /* whatever cannot be seated inside at proper clearance goes OUTSIDE,
        below the tents, rather than crowding chairs together */
@@ -1657,7 +1864,20 @@ function applySpec(spec){
       fit = fitFor(venue.w - m, venue.h - m, tableKey, tableCount, perTable);
     }
     if (fit.lane < RULES.ideal) tight = true;
-    placeGrid(venue.w/2, venue.h/2, fit, Math.min(tableCount, Math.max(fit.cap, 1))).forEach(p => slots.push(p));
+    const n = Math.min(tableCount, Math.max(fit.cap, 1));
+    let put = null;
+    if (floorOcc){
+      /* keep the open-air tables clear of the dance floor too */
+      const area = areaOfCanvas();
+      for (const cand of [patPerimeter(area, fit, n), placeGrid(venue.w/2, venue.h/2, fit, n)]){
+        if (!cand) continue;
+        const keep = cand.filter(p => clearBetween(occupancy(tableKey, perTable, p), floorOcc) >= 1);
+        if (keep.length === n){ put = cand; break; }
+        if (!put || keep.length > put.length) put = keep;
+      }
+    }
+    (put || placeGrid(venue.w/2, venue.h/2, fit, n)).forEach(p => slots.push(p));
+    overflow += Math.max(0, tableCount - slots.length);
   }
 
   /* chairs across the tables */
@@ -1677,6 +1897,7 @@ function applySpec(spec){
     seated += it.props.chairs;
     items.push(it);
   });
+  if (floorItem) items.push(floorItem);
 
   render(); fitView(true);
   $("venueChip").textContent = `${venue.w} × ${venue.h} ft ✎`;
@@ -1689,14 +1910,19 @@ function applySpec(spec){
     : k==="windows" ? "windows" : k==="ceil" ? "ceiling liner" : "leg liners");
   if (exNames.length && tents.length) readback.push(exNames.join(" + "));
   if (slots.length) readback.push(`${slots.length} × ${CAT[tableKey].short}`);
+  if (floorItem) readback.push(`${CAT[floorItem.k].size} dance floor`);
   if (seated) readback.push(`${seated} ${CHAIRS[spec.chairType || "basic"].name.toLowerCase()}s`);
   if (spec.cloth && slots.length) readback.push(`spandex ${spec.cloth}`);
 
   if (chairTotal > seated) notes.unshift(`Seated ${seated} of ${chairTotal} — add a table or a bigger tent for the rest.`);
   if (overflow && tents.length){
     const seatsIn = tentSeats(tents[0], tableKey);
-    notes.unshift(`${overflow} table${overflow>1?"s":""} placed outside the tent — ${overflow>1?"they don't":"it doesn't"} fit inside with proper aisles. ` +
-      (tents.length === 1 && seatsIn ? `A ${CAT[tents[0]].size} seats about ${seatsIn} at ${CAT[tableKey].short} tables.` : ""));
+    if (floorItem){
+      notes.unshift(`The ${CAT[floorItem.k].size} dance floor takes the middle of the ${CAT[tents[0]].size}, so ${overflow} of ${tableCount} table${tableCount>1?"s":""} ${overflow===1?"sits":"sit"} outside. A second tent would bring ${overflow===1?"it":"them"} under cover.`);
+    } else {
+      notes.unshift(`${overflow} table${overflow>1?"s":""} placed outside the tent — ${overflow>1?"they don't":"it doesn't"} fit inside with proper aisles. ` +
+        (tents.length === 1 && seatsIn ? `A ${CAT[tents[0]].size} seats about ${seatsIn} at ${CAT[tableKey].short} tables.` : ""));
+    }
   }
   if (tight && seated) notes.push(`Aisles are tighter than the ${SPACING.seated.ideal} ft of clear floor we'd normally leave between chairs — nothing overlaps, but it's snug.`);
 
@@ -1754,13 +1980,16 @@ function runAuto(){
 /* ============ tray ============ */
 function trayThumb(k){
   const c = CAT[k];
+  if (k === "dfPick") return `<svg viewBox="-11 -7 22 14"><rect x="-7" y="-4.5" width="14" height="9" rx=".6" fill="var(--floor)" stroke="var(--floor-edge)" stroke-width=".5"/><line x1="-2.3" y1="-4.5" x2="-2.3" y2="4.5" stroke="var(--floor-edge)" stroke-width=".3" opacity=".6"/><line x1="2.3" y1="-4.5" x2="2.3" y2="4.5" stroke="var(--floor-edge)" stroke-width=".3" opacity=".6"/><line x1="-7" y1="0" x2="7" y2="0" stroke="var(--floor-edge)" stroke-width=".3" opacity=".6"/></svg>`;
   if (c.cat==="tent") return `<svg viewBox="-11 -7 22 14"><rect x="${-c.w/4}" y="${-c.h/4}" width="${c.w/2}" height="${c.h/2}" rx=".4" fill="var(--tent-fill)" stroke="var(--tent-edge)" stroke-width=".5"/></svg>`;
   if (c.shape==="round") return `<svg viewBox="-5 -3 10 6"><circle r="${c.d/2*0.9}" fill="var(--wood)" stroke="var(--wood-edge)" stroke-width=".25" transform="scale(1 .85)"/></svg>`;
   return `<svg viewBox="-6 -3 12 6"><rect x="${-c.w/2*0.9}" y="-1.1" width="${c.w*0.9}" height="2.2" rx=".2" fill="var(--wood)" stroke="var(--wood-edge)" stroke-width=".22"/></svg>`;
 }
-$("trayRow").innerHTML = TRAY.map(k =>
-  `<button class="titem" data-add="${k}">${trayThumb(k)}<b>${CAT[k].name}</b><span>${money(CAT[k].price)}</span></button>`).join("");
+$("trayRow").innerHTML = TRAY.map(k => k === "dfPick"
+  ? `<button class="titem" data-pick="floor">${trayThumb(k)}<b>Dance floor</b><span>pick size</span></button>`
+  : `<button class="titem" data-add="${k}">${trayThumb(k)}<b>${CAT[k].name}</b><span>${money(CAT[k].price)}</span></button>`).join("");
 $("trayRow").addEventListener("click", e => {
+  if (e.target.closest("[data-pick='floor']")) return openFloorPicker(null);
   const b = e.target.closest("[data-add]"); if (!b) return;
   commit();
   const it = newItem(b.dataset.add, Math.round(view.x + view.w/2), Math.round(view.y + viewH()/2));

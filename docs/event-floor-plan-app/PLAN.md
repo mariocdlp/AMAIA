@@ -16,7 +16,7 @@ A lightweight "Social Tables"-style floor planner for iPhone, offered as a **fre
 ### Core loop
 1. User sets their space (lot/venue dimensions, e.g. 40 ft × 60 ft backyard).
 2. Drags inventory items from a tray onto a scaled canvas.
-3. Long-presses items for a context menu (duplicate, properties, chairs, tablecloths, tent extras).
+3. Long-presses items for a context menu (duplicate, properties, chairs, tablecloths, tent extras, dance floor size).
 4. Sees a running quote (items × prices) at all times.
 5. Exports/shares the plan (image + itemized quote) — this is the lead-capture moment.
 
@@ -27,7 +27,7 @@ A lightweight "Social Tables"-style floor planner for iPhone, offered as a **fre
 These are product invariants, not preferences:
 
 1. **True scale, no resizing.** Tables, chairs, and tents render at their real-world footprint against the canvas scale. There are no resize handles by design. Users can only **move** and **rotate** items.
-2. **Z-order is fixed by category.** Tents always render on the background layer; tables and chairs always render on the foreground layer. Placing a table "inside" a tent is purely spatial — the tent never occludes it. Within a layer, later-placed items draw on top, but this never crosses the tent/furniture boundary.
+2. **Z-order is fixed by category.** Three layers, bottom to top: **tents**, then **dance floors**, then **tables and chairs**. Placing a table "inside" a tent is purely spatial — the tent never occludes it. Within a layer, later-placed items draw on top, but this never crosses the tent/furniture boundary.
 3. **"Right click" = long-press context menu.** iPhone has no right click; the equivalent interaction is a long-press that opens a native context menu (`UIContextMenuInteraction` / SwiftUI `.contextMenu`). Menu contents are per-item-type (§4).
 4. **Chairs belong to tables.** Chairs are not free-floating v1 objects — they attach to a parent table via the table's context menu, auto-snap around it, and move/rotate with it. (Free-floating chair rows, e.g. ceremony seating, is a v2 candidate.)
 
@@ -43,6 +43,7 @@ These are product invariants, not preferences:
 | 10×10 tent | 10 ft × 10 ft |
 | 10×20 tent | 10 ft × 20 ft |
 | 20×20 tent | 20 ft × 20 ft |
+| Dance floors | 9×12 · 12×12 · 12×15 · 15×15 · 18×18 · 21×21 ft (3 ft panels) |
 
 ---
 
@@ -149,6 +150,27 @@ Walls are almost never wanted on all four sides. A tent gets walled on the windw
 The quote line says which it is — "Side Walls (20×20) — all 4 sides $25.00" versus "2 × Side wall panel (20×20) $12.50".
 
 > **Open question:** the quarter-of-a-kit per-panel price is an assumption, not a quoted rate. Confirm how partial wall sets are actually billed — per panel, per side at a flat rate, or kit-only with no partial option — before this ships. The full-set price matches the supplied list exactly either way.
+
+### 4b. Dance floors
+
+A dance floor is a third item category, alongside tents and tables. It sits on its own layer — **above the tent, below tables and chairs** — so it reads as flooring rather than furniture.
+
+**Stocked sizes.** Rental floors are built from 3 ft panels, so every stocked size is a multiple of 3. Chosen from a radio list, never typed:
+
+| Size | Area | Dancers at 3 sq ft | Suits (at 50% dancing) |
+|---|---|---|---|
+| 9×12 | 108 sq ft | 36 | up to ~72 guests |
+| 12×12 | 144 sq ft | 48 | up to ~96 |
+| 12×15 | 180 sq ft | 60 | up to ~120 |
+| 15×15 | 225 sq ft | 75 | up to ~150 |
+| 18×18 | 324 sq ft | 108 | up to ~216 |
+| 21×21 | 441 sq ft | 147 | up to ~294 |
+
+**Sizing rule.** The recommendation is the industry one: **half the guests dance at once, each needing 3 sq ft.** So `area = guests × 0.5 × 3`, and the app marks the smallest stocked floor that covers it. The picker shows the arithmetic rather than just the answer — *"50 dancing × 3 sq ft = 150 sq ft — smallest floor that covers it is 12×15"* — and the guest count is pre-filled from the plan's own seat count but editable, so changing it moves the **recommended** badge live.
+
+**Placement.** A dance floor asked for in a prompt goes in the **last tent** — the dancing tent — and when tents are auto-picked the app adds one for it, since a floor of any usable size fills most of a 20×20. Tables are then rung around it (the open-centre pattern) and kept a foot clear. A floor added by hand lands in the nearest clear spot rather than on top of whatever is already placed, and shuffle treats it as a fixed obstacle.
+
+> **Open question:** dance floors are quoted **price on request** — the supplied inventory has no dance floor pricing. The size, area and dancer capacity carry through to the estimate, so only the rate is missing. Typically these are billed per panel or per square foot; send a rate and it becomes a live line.
 
 ### Chairs
 No context menu of their own in v1 — chairs are managed entirely through their parent table.
@@ -380,8 +402,9 @@ Free-standing chair rows (ceremonies), **per-side chair control on a table** (so
 
 1. **Ceiling liner & leg liner pricing** — in the menu but unpriced; need numbers or confirm "price on request" is acceptable at launch.
 2. **Tablecloth pricing** — spandex white/black currently quoted at $0; confirm whether linens are billed.
-3. **Partial wall pricing** — walls and windows are now chosen per side (§4a). A full set of four bills at your listed kit price; a partial set currently bills at a quarter of it per panel. Confirm how you actually charge for a two- or three-sided job.
-3. **Multi-tent auto-arrange** — v1 handles "choose for me" by combining tents in a row (e.g. 2 × 20×20 for 70 guests); confirm combinations you actually stock/install.
-4. **Cocktail tables & chairs** — assumed standing-only (no chair options); confirm.
-5. **Quote handoff channel** — email, WhatsApp, or a booking form URL? Determines the "Request this quote" CTA integration.
-6. **Android** — iPhone-only per brief; if Android demand appears, the model/quote logic ports but UI is a rewrite → revisit React Native/Flutter *only* if cross-platform becomes a requirement before build starts.
+3. **Dance floor pricing** — dance floors are in the app (§4b) but the supplied inventory has no rate, so they quote as "price on request". Send a per-panel or per-square-foot rate and every size prices itself.
+4. **Partial wall pricing** — walls and windows are now chosen per side (§4a). A full set of four bills at your listed kit price; a partial set currently bills at a quarter of it per panel. Confirm how you actually charge for a two- or three-sided job.
+5. **Multi-tent auto-arrange** — v1 handles "choose for me" by combining tents in a row (e.g. 2 × 20×20 for 70 guests); confirm combinations you actually stock/install.
+6. **Cocktail tables & chairs** — assumed standing-only (no chair options); confirm.
+7. **Quote handoff channel** — email, WhatsApp, or a booking form URL? Determines the "Request this quote" CTA integration.
+8. **Android** — iPhone-only per brief; if Android demand appears, the model/quote logic ports but UI is a rewrite → revisit React Native/Flutter *only* if cross-platform becomes a requirement before build starts.

@@ -41,8 +41,12 @@ function shapes(){
   const out = [];
   for (const it of A.getItems()){
     const c = A.CAT[it.k];
-    if (c.cat !== 'table') continue;
     const rad = it.rot*Math.PI/180, cs = Math.cos(rad), sn = Math.sin(rad);
+    if (c.cat === 'floor'){
+      out.push({kind:'floor', tid:'F'+it.id, x:it.x, y:it.y, hw:c.w/2, hh:c.h/2, a:rad});
+      continue;
+    }
+    if (c.cat !== 'table') continue;
     for (const sp of A.chairSpots(c, it.props.chairs))
       out.push({kind:'chair', tid:it.id,
                 x: it.x + sp.x*cs - sp.y*sn, y: it.y + sp.x*sn + sp.y*cs,

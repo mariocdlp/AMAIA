@@ -26,6 +26,7 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 
 - **Prompt box** — "20×20 tent with 5 round tables, white tablecloths and 40 padded chairs" builds the plan and prices it. Property-only prompts ("add string lights and black tablecloths") edit what's already on the canvas.
 - **Accommodation guidelines** — generated layouts follow real event-planning clearances and never place one table's chairs on top of another's. When a request doesn't fit, the extra tables go outside the tent with a note naming the tent's real seated capacity, rather than being crammed in.
+- **Dance floors** — six popular sizes on a radio list, recommended from the guest count at half dancing × 3 sq ft each. Sits above the tent and below the tables.
 - **Shuffle** — re-lays the tables inside their tent in a different named arrangement (banquet grid, staggered rows, open centre, centre aisle, feasting table, U-shape). Only arrangements that fit cleanly are offered.
 - **True scale, no resizing** — every item is its real footprint against a 1 ft grid.
 - **Fixed z-order** — tents always render behind tables and chairs.
@@ -52,6 +53,7 @@ circles for rounds) in `geom-check.js`, independent of the app's own maths.
 ```
 node docs/event-floor-plan-app/test-overlap.js   # prompt-generated layouts
 node docs/event-floor-plan-app/test-shuffle.js   # every shuffle arrangement
+node docs/event-floor-plan-app/test-floor.js     # dance floor sizing and clearance
 ```
 
 `test-overlap.js` also prints the tent capacities the clearance rules produce,
