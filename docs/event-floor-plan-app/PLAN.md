@@ -84,13 +84,17 @@ Quote lines for extras are labeled per size, e.g. **"String Lights (10×20) — 
 | 5 ft round | 8 | 10 |
 | Cocktail | 0 (standing) | 0 — chair options disabled/hidden |
 
-### Tent capacity (auto-arrange planning numbers, ~10–12 sq ft per seated guest)
+### Tent capacity
 
-| Tent | Area | Seated capacity (rounds) | Fits |
-|---|---|---|---|
-| 10×10 | 100 sq ft | ~8–10 | 1 × 5 ft round **or** 2 × 6 ft banquet |
-| 10×20 | 200 sq ft | ~16–20 | 2 × 5 ft round **or** 4 × 6 ft banquet |
-| 20×20 | 400 sq ft | ~32–40 | 4 × 5 ft round **or** 8 × 6 ft / 6 × 8 ft banquet |
+These fall out of the clearance rules in §5c rather than being typed in by hand, and they agree with standard rental capacity charts.
+
+| Tent | Area | 5 ft rounds | Seats | 8 ft banquet |
+|---|---|---|---|---|
+| 10×10 | 100 sq ft | 1 | 8 | 1 |
+| 10×20 | 200 sq ft | 2 | 16 | 2 |
+| 20×20 | 400 sq ft | 4 | 32 | 4 |
+
+Anything beyond these numbers is placed outside the tent rather than squeezed in — see §5c.
 
 ---
 
@@ -176,29 +180,60 @@ For users who'd rather tap than type, an **"Auto ✨"** button on the quote bar 
 
 It builds the same spec object the prompt parser produces and hands it to the same layout engine — one code path, two front doors.
 
+### 5c. Accommodation guidelines
+
+Generated layouts are held to real event-planning clearances. These are product rules, not tuning constants — **no generated layout may ever place one table's chairs on top of another's.** That is the hard invariant; everything below exists to satisfy it while still packing a space sensibly.
+
+The unit that matters is the **lane**: the clear floor left between whatever occupies the space — a chair back on one side, and a chair back or table edge on the other.
+
+| Clearance | Value | Reasoning |
+|---|---|---|
+| Chair depth behind a table | 1.72 ft | seat plus pull-back room |
+| Lane between chairs — ideal | 1.5 ft | with two chair backs this is the industry-standard 5 ft between round tables |
+| Lane between chairs — floor | 0.5 ft | chairs close but never touching; layouts at this lane are flagged "snug" |
+| Chair back to tent leg | 0.75 ft | perimeter clearance inside a tent |
+| Chair back to canvas edge | 2.5 ft | perimeter clearance with no tent |
+| Lane between cocktail tables | 2 ft ideal, 1 ft floor | mingling room, no chairs to clear |
+
+**Clearance is directional.** A banquet table only seats guests on its long sides unless it's set to MAX, so it needs no chair clearance at its ends and packs end to end the way it really does. Round tables need clearance on every side. The engine evaluates both orientations for rectangular tables and takes whichever fits the requested count at the most generous lane.
+
+**Resulting capacities at proper spacing** — these match standard rental capacity charts, which is the check that the constants are right:
+
+| Tent | Area | 5 ft rounds | Seats |
+|---|---|---|---|
+| 10×10 | 100 sq ft | 1 | 8 |
+| 10×20 | 200 sq ft | 2 | 16 |
+| 20×20 | 400 sq ft | 4 | 32 |
+
+**When the request exceeds what fits**, the app never shrinks the spacing past the floor. It places what fits inside, puts the remainder outside the tent at proper spacing, and says so with the real number: *"1 table placed outside the tent — it doesn't fit inside with proper aisles. A 20×20 seats about 32 at 5 ft round tables."* On an open canvas with no tent, it grows the canvas instead. This is an honest upsell: the customer sees exactly why they need the bigger tent.
+
 ### Algorithm (v1 — deterministic grid, good enough beats clever)
 
 ```
 tables_needed = ceil(guests / seats_per_table)
+chairs_per_table decides the clearance pads (ends only seat at MAX)
+
 if tent selected/auto:
     pack the requested tents edge to edge into rows (wrapping at the
     canvas width, rows centered) — sizes may be mixed, so each tent is
     packed by its own footprint; grow the canvas if the pack needs it
-    usable_area = each tent's interior with a 1 ft leg inset
+    usable_area = each tent's interior less the perimeter clearance
     tables are split evenly across the tents, capped by what each holds
 else:
-    usable_area = venue canvas with a 3 ft edge inset
+    usable_area = canvas less the open-air perimeter clearance
+    grow the canvas rather than tighten the lane below ideal
 
-grid-place tables in usable_area, trying gaps from 5 ft down to 1.5 ft
-and both orientations for rectangles; take the most generous spacing
+grid-place tables in usable_area, trying lanes from 3 ft down to the
+floor and both orientations for rectangles; take the most generous lane
 that still fits the requested count. Partial rows are centered.
-gap < 3 ft → flag "tight fit" in the read-back
+lane < ideal → flag "snug" in the read-back (never an overlap)
 
 chairs are distributed round-robin across the tables, capped at each
 table's MAX, so 40 across 5 rounds = 8 each and 43 = 9/9/9/8/8
 
-overflow: tables that don't fit inside the tent are placed outside it
-with a note; guests that can't be seated are reported in the read-back
+overflow: tables that don't fit inside the tent at proper clearance are
+placed outside it, below the tents, with a note naming the tent's real
+seated capacity; guests that can't be seated are reported in the read-back
 ```
 
 - Both doors **replace** the current layout, always behind a one-tap **Undo** in the read-back.
@@ -231,7 +266,7 @@ with a note; guests that can't be seated are reported in the read-back
 
 - **New plan flow:** name → venue dimensions (presets: 20×30, 30×50, 40×60, 50×100, 60×120, or custom) → blank canvas. The venue size is always one tap away from the canvas (the size chip in the header) and can also be set from the prompt box — "in a 30×50 backyard" — and it auto-grows when a layout needs more room than it has.
 - **Selection:** tap = select (shows rotate handle + price tag), drag = move with edge snapping (soft snap to 6″ increments and to alignment with nearby items), long-press = context menu.
-- **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. With a selection active, a floating action bar offers **Select all · Properties · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Properties is enabled only when exactly one item is selected, since the context menu edits a single item; long-press still opens it too. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
+- **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. On a keyboard, holding **Shift, ⌘ or Ctrl** does the same without entering select mode — drag to lasso an area, click to add or remove one item. With a selection active, a floating action bar offers **Select all · Properties · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Properties is enabled only when exactly one item is selected, since the context menu edits a single item; long-press still opens it too. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
 - **Reaching an item's properties** — three ways, so it is never a dead end: long-press the item, the ••• button on the single-select pill, or the ••• button in the multi-select bar. Transient banners never capture taps (`pointer-events: none` except on their own Undo button), and the canvas suppresses the iOS touch callout so a long-press is never stolen by the system.
 - **Quote sheet:** itemized list grouped Tents → Tent extras → Tables → Chairs → Linens, with quantities, unit prices, and total. CTA button: **"Request this quote"** → prefilled email/WhatsApp/booking-form handoff (this is the perk→lead conversion point).
 - **Save as image:** renders a print-quality PNG of the plan — title, venue size, item and seat counts, date, the total, the layout drawn to scale with a 10 ft scale bar, and the itemized estimate as a two-column legend. It's the artifact a customer texts to a partner or forwards to the rental team, so it carries the business's name. Always rendered on the light palette regardless of the viewer's theme, so it prints and forwards cleanly.

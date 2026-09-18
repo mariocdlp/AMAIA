@@ -831,30 +831,80 @@ $("helpBtn").addEventListener("click", () => {
     <div class="exlist">${EXAMPLES.map(x => `<button data-act="tryex" data-ex="${x.replace(/"/g,"&quot;")}">${x}</button>`).join("")}
       <button data-act="tryex" data-ex="add string lights and black tablecloths">add string lights and black tablecloths <em style="color:var(--ink-2)">— edits what’s already on the canvas</em></button>
     </div>
-    <p class="sub" style="margin-top:12px">By design: nothing can be resized — every item is its real-life size — and tents always render behind tables and chairs.</p>`,
+    <div class="seclbl">Spacing guidelines</div>
+    <p class="sub">Every generated layout follows real event-planning clearances, so nothing it produces puts chairs on top of each other:</p>
+    <div style="display:flex;flex-direction:column">
+      <div class="qline"><span class="qlab">Chair depth behind a table</span><span class="qp">${SPACING.chairDepth} ft</span></div>
+      <div class="qline"><span class="qlab">Clear floor between chairs (ideal)</span><span class="qp">${SPACING.seated.ideal} ft</span></div>
+      <div class="qline"><span class="qlab">Clear floor between chairs (floor)</span><span class="qp">${SPACING.seated.lanes[SPACING.seated.lanes.length-1]} ft</span></div>
+      <div class="qline"><span class="qlab">Chair back to tent leg</span><span class="qp">${SPACING.perim} ft</span></div>
+      <div class="qline"><span class="qlab">Between cocktail tables</span><span class="qp">${SPACING.standing.ideal} ft</span></div>
+    </div>
+    <p class="sub" style="margin-top:9px">Clearance is directional: a banquet table only needs chair room on its long sides unless it's set to MAX, so 8 ft tables pack end to end the way they really do. At that spacing a <b>10×10</b> seats ${tentSeats("tt1010","r5")}, a <b>10×20</b> seats ${tentSeats("tt1020","r5")} and a <b>20×20</b> seats ${tentSeats("tt2020","r5")} on 5 ft rounds. Ask for more than fits and the extra tables go outside the tent with a note — never stacked on top of each other.</p>
+    <p class="sub" style="margin-top:9px">By design: nothing can be resized — every item is its real-life size — and tents always render behind tables and chairs.</p>`,
     {type:"help"});
 });
 
-/* ============ packing ============ */
-const GAPS = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5];
-function fitFor(W, H, key, count){
+/* ============ accommodation guidelines ============
+   Real event-planning clearances, in feet. "lane" is the CLEAR FLOOR left
+   between whatever occupies the space — a chair back on one side and a chair
+   back or table edge on the other. Chairs are therefore never allowed to
+   overlap: the worst case the engine will produce is the smallest lane below.
+   Clearance is directional, because a banquet table only seats guests on its
+   long sides unless it is set to MAX. */
+const SPACING = {
+  chairDepth: 1.72,   // table edge → back of a pulled-out chair
+  perim:      0.75,   // tent leg line → nearest chair back / table edge
+  perimOpen:  2.5,    // canvas edge → nearest chair back, with no tent
+  seated:   { ideal: 1.5, lanes: [3, 2.5, 2, 1.5, 1, 0.75, 0.5] },
+  standing: { ideal: 2,   lanes: [3, 2.5, 2, 1.5, 1] },
+};
+const rulesFor = (key, chairs) => (CAT[key].standing || !chairs) ? SPACING.standing : SPACING.seated;
+/* Clearance a table needs beyond its own footprint, per axis, at rotation 0. */
+function padsFor(key, chairs){
   const c = CAT[key];
-  const dims = c.shape==="round" ? [{w:c.d, h:c.d, rot:0}]
-                                 : [{w:c.w, h:c.h, rot:0}, {w:c.h, h:c.w, rot:90}];
+  if (c.standing || !chairs) return {x:0, y:0};
+  if (c.shape === "round") return {x:SPACING.chairDepth, y:SPACING.chairDepth};
+  const ends = chairs > 2*Math.floor(c.w/2);      // MAX seating adds chairs at the ends
+  return {x: ends ? SPACING.chairDepth : 0, y: SPACING.chairDepth};
+}
+function halfExtent(key, chairs){
+  const c = CAT[key], p = padsFor(key, chairs);
+  const half = c.shape==="round" ? c.d/2 : Math.max(c.w, c.h)/2;
+  return half + Math.max(p.x, p.y);
+}
+
+/* ============ packing ============ */
+function fitFor(W, H, key, count, chairs){
+  const c = CAT[key], R = rulesFor(key, chairs), p = padsFor(key, chairs);
+  const dims = c.shape==="round"
+    ? [{w:c.d, h:c.d, px:p.x, py:p.y, rot:0}]
+    : [{w:c.w, h:c.h, px:p.x, py:p.y, rot:0},
+       {w:c.h, h:c.w, px:p.y, py:p.x, rot:90}];
   let best = null;
-  for (const gap of GAPS) for (const d of dims){
-    if (W < d.w || H < d.h) continue;
-    const px = d.w + gap, py = d.h + gap;
-    const nx = Math.floor((W - d.w)/px) + 1;
-    const ny = Math.floor((H - d.h)/py) + 1;
-    const cand = {nx, ny, px, py, rot:d.rot, cap:nx*ny, gap};
+  for (const lane of R.lanes) for (const d of dims){
+    const ow = d.w + 2*d.px, oh = d.h + 2*d.py;   // footprint including chairs
+    if (ow > W || oh > H) continue;
+    const nx = Math.floor((W + lane) / (ow + lane));
+    const ny = Math.floor((H + lane) / (oh + lane));
+    if (nx < 1 || ny < 1) continue;
+    const cand = {nx, ny, px: ow + lane, py: oh + lane, rot:d.rot, cap:nx*ny, lane};
     if (!best || cand.cap > best.cap) best = cand;
     if (cand.cap >= count) return cand;
   }
-  return best || {nx:1, ny:1, px:1, py:1, rot:0, cap:0, gap:0};
+  return best || {nx:0, ny:0, px:1, py:1, rot:0, cap:0, lane:R.lanes[R.lanes.length-1]};
+}
+function fitInTent(tentKey, tableKey, count, chairs){
+  const c = CAT[tentKey], m = 2*SPACING.perim;
+  return fitFor(c.w - m, c.h - m, tableKey, count, chairs);
+}
+/* Guests a tent seats at proper spacing — used for guidance copy. */
+function tentSeats(tentKey, tableKey){
+  const per = CAT[tableKey].min || 0;
+  return fitInTent(tentKey, tableKey, 999, per).cap * per;
 }
 function placeGrid(cx, cy, fit, count){
-  const out = [], rows = Math.max(1, Math.ceil(count/Math.max(1,fit.nx)));
+  const out = [], rows = Math.max(1, Math.ceil(count/Math.max(1, fit.nx)));
   for (let r=0; r<rows; r++){
     const inRow = Math.min(fit.nx, count - r*fit.nx);
     if (inRow <= 0) break;
@@ -1064,6 +1114,14 @@ function applySpec(spec){
     if (!tableCount && (spec.tents.length || spec.tentAuto)) tableCount = 0;
   }
 
+  /* chairs per table drives the clearance rules (banquet ends only seat at MAX) */
+  const estChairs = spec.chairs != null ? spec.chairs
+                  : spec.guests != null ? spec.guests
+                  : (spec.chairType ? tableCount * (CAT[tableKey].min || 0) : 0);
+  const perTable = CAT[tableKey].standing || !tableCount ? 0
+                 : Math.min(CAT[tableKey].max, Math.ceil(estChairs / tableCount));
+  const RULES = rulesFor(tableKey, perTable);
+
   /* tents */
   let tents = spec.tents.slice();
   if (!tents.length && spec.tentAuto){
@@ -1072,16 +1130,16 @@ function applySpec(spec){
       tents = Array(want).fill("tt1020");   // nothing to size against — neutral middle size
     } else {
       const per = Math.ceil(tableCount / want) || 1;
-      const pick = TENTS.find(k => fitFor(CAT[k].w-2, CAT[k].h-2, tableKey, per).cap >= per);
+      const pick = TENTS.find(k => fitInTent(k, tableKey, per, perTable).cap >= per);
       if (pick) tents = Array(want).fill(pick);
       else {
-        const capBig = Math.max(1, fitFor(18, 18, tableKey, tableCount).cap);
+        const capBig = Math.max(1, fitInTent("tt2020", tableKey, tableCount, perTable).cap);
         tents = Array(Math.max(want, Math.ceil(tableCount/capBig))).fill("tt2020");
       }
     }
   }
 
-  /* pack tents into rows, then grow the venue to hold them */
+  /* pack tents into rows, then grow the canvas to hold them */
   const rowsOf = (keys, maxW) => {
     const out = []; let row = [], w = 0;
     for (const k of keys){
@@ -1093,27 +1151,32 @@ function applySpec(spec){
     return out;
   };
   let pack = [], packH = [], totalW = 0, totalH = 0;
-  if (tents.length){
+  const repack = () => {
     pack = rowsOf(tents, venue.w);
     packH = pack.map(r => Math.max(...r.keys.map(k => CAT[k].h)));
     totalW = Math.max(...pack.map(r => r.w));
     totalH = packH.reduce((a,b) => a+b, 0);
-    const needW = totalW + 8, needH = totalH + 8;
-    if (needW > venue.w || needH > venue.h){
-      venue = {w: Math.max(venue.w, Math.ceil(needW/5)*5), h: Math.max(venue.h, Math.ceil(needH/5)*5)};
-      notes.push(`Canvas grown to ${venue.w}×${venue.h} ft to hold the tents.`);
-      pack = rowsOf(tents, venue.w);
-      packH = pack.map(r => Math.max(...r.keys.map(k => CAT[k].h)));
-      totalW = Math.max(...pack.map(r => r.w));
-      totalH = packH.reduce((a,b) => a+b, 0);
+  };
+  const growTo = (w, h, why) => {
+    const nw = Math.max(venue.w, Math.ceil(w/5)*5), nh = Math.max(venue.h, Math.ceil(h/5)*5);
+    if (nw !== venue.w || nh !== venue.h){
+      venue = {w:nw, h:nh};
+      if (why && !notes.some(n => n.startsWith("Canvas grown")))
+        notes.push(`Canvas grown to ${nw}×${nh} ft ${why}`);
+      return true;
     }
+    return false;
+  };
+  if (tents.length){
+    repack();
+    if (growTo(totalW + 8, totalH + 8, "to hold the tents.")) repack();
   }
 
   items = []; seq = 1; sel.clear();
 
-  /* place tents, then tables inside them */
+  /* place tents, then tables inside them at proper clearance */
   const slots = [];
-  let tight = false;
+  let tight = false, overflow = 0;
   if (tents.length){
     let remaining = tableCount, placedTents = 0;
     let y = venue.h/2 - totalH/2;
@@ -1132,9 +1195,9 @@ function applySpec(spec){
         placedTents++;
         if (remaining > 0){
           const share = Math.ceil(remaining / (tents.length - placedTents + 1));
-          const fit = fitFor(c.w-2, c.h-2, tableKey, share);
+          const fit = fitInTent(k, tableKey, share, perTable);
           const n = Math.min(share, fit.cap);
-          if (n && fit.gap && fit.gap < 3) tight = true;
+          if (n && fit.lane < RULES.ideal) tight = true;
           placeGrid(cx, cy, fit, n).forEach(p => slots.push(p));
           remaining -= n;
         }
@@ -1142,15 +1205,32 @@ function applySpec(spec){
       }
       y += packH[r];
     }
+    /* whatever cannot be seated inside at proper clearance goes OUTSIDE,
+       below the tents, rather than crowding chairs together */
     if (remaining > 0){
-      const fit = fitFor(venue.w-6, 12, tableKey, remaining);
-      placeGrid(venue.w/2, venue.h - 8, fit, remaining).forEach(p => slots.push(p));
-      notes.push(`${remaining} table${remaining>1?"s":""} placed outside the tent — not enough room inside.`);
+      overflow = remaining;
+      const half = halfExtent(tableKey, perTable);
+      const rowY = venue.h/2 + totalH/2 + half + 2;
+      const fit = fitFor(venue.w - 2*SPACING.perimOpen, half*2 + 0.1, tableKey, remaining, perTable);
+      const nx = Math.max(1, fit.nx);
+      const rows = Math.ceil(remaining / nx);
+      growTo(venue.w, rowY + (rows-1)*fit.py + half + SPACING.perimOpen, "to fit the extra tables.");
+      placeGrid(venue.w/2, rowY + (rows-1)*fit.py/2, fit, remaining).forEach(p => slots.push(p));
     }
   } else if (tableCount){
-    const fit = fitFor(venue.w-6, venue.h-6, tableKey, tableCount);
-    if (fit.gap && fit.gap < 3) tight = true;
-    placeGrid(venue.w/2, venue.h/2, fit, tableCount).forEach(p => slots.push(p));
+    /* open canvas: grow it if needed rather than squeezing the spacing */
+    const m = 2*SPACING.perimOpen;
+    let fit = fitFor(venue.w - m, venue.h - m, tableKey, tableCount, perTable);
+    if (fit.cap < tableCount){
+      const half = halfExtent(tableKey, perTable);
+      const step = 2*half + RULES.ideal;
+      const nx = Math.max(1, Math.round(Math.sqrt(tableCount * venue.w / venue.h)));
+      const ny = Math.ceil(tableCount / nx);
+      growTo(nx*step + m, ny*step + m, "so the tables have proper aisles.");
+      fit = fitFor(venue.w - m, venue.h - m, tableKey, tableCount, perTable);
+    }
+    if (fit.lane < RULES.ideal) tight = true;
+    placeGrid(venue.w/2, venue.h/2, fit, Math.min(tableCount, Math.max(fit.cap, 1))).forEach(p => slots.push(p));
   }
 
   /* chairs across the tables */
@@ -1186,7 +1266,12 @@ function applySpec(spec){
   if (spec.cloth && slots.length) readback.push(`spandex ${spec.cloth}`);
 
   if (chairTotal > seated) notes.unshift(`Seated ${seated} of ${chairTotal} — add a table or a bigger tent for the rest.`);
-  if (tight && seated) notes.push("Tight fit — chairs nearly touch. A bigger tent would breathe better.");
+  if (overflow && tents.length){
+    const seatsIn = tentSeats(tents[0], tableKey);
+    notes.unshift(`${overflow} table${overflow>1?"s":""} placed outside the tent — ${overflow>1?"they don't":"it doesn't"} fit inside with proper aisles. ` +
+      (tents.length === 1 && seatsIn ? `A ${CAT[tents[0]].size} seats about ${seatsIn} at ${CAT[tableKey].short} tables.` : ""));
+  }
+  if (tight && seated) notes.push(`Aisles are tighter than the ${SPACING.seated.ideal} ft of clear floor we'd normally leave between chairs — nothing overlaps, but it's snug.`);
 
   if (!readback.length){ doUndo(); return toast("I didn’t catch any items — try “20×20 tent with 5 round tables and 40 chairs”."); }
   const shown = notes.slice(0, 2);
@@ -1274,10 +1359,11 @@ cv.addEventListener("pointerdown", e => {
     return;
   }
   const hit = e.target.closest("[data-id]");
+  const additive = e.shiftKey || e.metaKey || e.ctrlKey;
   if (hit){
     const it = items.find(i => i.id === +hit.dataset.id);
     if (!it) return;
-    if (selectMode){
+    if (selectMode || additive){
       sel.has(it.id) ? sel.delete(it.id) : sel.add(it.id);
       renderSel();
       if (!sel.has(it.id)) { drag = null; return; }
@@ -1289,11 +1375,11 @@ cv.addEventListener("pointerdown", e => {
     items.filter(i => sel.has(i.id)).forEach(i => origins.set(i.id, {x:i.x, y:i.y}));
     drag = {type:"item", origins, sx:e.clientX, sy:e.clientY, moved:false};
     if (sel.size === 1) pressT = setTimeout(() => { drag = null; menuFor(it.id); }, 480);
-  } else if (selectMode){
+  } else if (selectMode || additive){
     const w = toWorld(e);
     drag = {type:"marquee", sx:e.clientX, sy:e.clientY, moved:false};
     marquee = {x0:w.x, y0:w.y, x1:w.x, y1:w.y};
-    if (!e.shiftKey) sel.clear();
+    if (!additive) sel.clear();
     renderSel();
   } else {
     drag = {type:"pan", sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y, moved:false};
@@ -1401,7 +1487,7 @@ $("selBtn").addEventListener("click", () => {
   $("selBtn").classList.toggle("on", selectMode);
   if (!selectMode) sel.clear();
   renderSel();
-  if (selectMode) toast("Tap items to select · drag across the canvas to lasso · two fingers to pan", {ms:4200});
+  if (selectMode) toast("Tap items to select · drag across the canvas to lasso · two fingers to pan<br><span style='color:#dcd8c4;font-weight:500'>On a keyboard, hold Shift or ⌘ and drag to lasso any time.</span>", {ms:5000});
 });
 $("multibar").addEventListener("click", e => {
   const b = e.target.closest("[data-m]"); if (!b) return;

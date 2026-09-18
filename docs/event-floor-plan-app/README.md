@@ -25,10 +25,11 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 ## What it demonstrates
 
 - **Prompt box** — "20×20 tent with 5 round tables, white tablecloths and 40 padded chairs" builds the plan and prices it. Property-only prompts ("add string lights and black tablecloths") edit what's already on the canvas.
+- **Accommodation guidelines** — generated layouts follow real event-planning clearances and never place one table's chairs on top of another's. When a request doesn't fit, the extra tables go outside the tent with a note naming the tent's real seated capacity, rather than being crammed in.
 - **True scale, no resizing** — every item is its real footprint against a 1 ft grid.
 - **Fixed z-order** — tents always render behind tables and chairs.
 - **Long-press context menus** — duplicate (carries all properties), MIN/MAX chairs, chair type, tablecloths; tent extras priced per tent size.
-- **Multi-select** — lasso or tap to select, then bulk duplicate, rotate, delete, or move as a group.
+- **Multi-select** — lasso or tap to select (hold Shift or ⌘ on a keyboard), then bulk duplicate, rotate, delete, or move as a group.
 - **Live quote** — every item priced from the catalog, with an itemized sheet and a "Request this quote" handoff.
 - **Auto arrange** — the guided four-question version of the prompt box.
 - **Save as image** — a to-scale PNG with a scale bar and the itemized estimate, ready to send.
