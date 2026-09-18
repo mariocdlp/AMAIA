@@ -74,5 +74,7 @@ code,account,type,subtype,statement,normal_balance,notes
 6950,Travel,Expense,Operating Expense,Income Statement,Debit,
 6990,Uncategorized - Ask My Accountant,Expense,Suspense,Income Statement,Debit,Holding bucket; must be zero before close
 7010,Gain or Loss on Asset Disposal,Other,Other Income Expense,Income Statement,Credit,Selling retired fleet
+7020,Other Income - Rewards & Bonuses,Other,Other Income Expense,Income Statement,Credit,Card cash back and bank account bonuses
+5090,Merchant Processing Fees - Derived,COGS,Direct Cost,Income Statement,Debit,Gross invoiced less net payout
 8010,Income Tax Expense,Other,Tax,Income Statement,Debit,
 9010,Transfer - Interaccount,Contra,Transfer,None,None,NOT income or expense; card payments and owner moves net to zero

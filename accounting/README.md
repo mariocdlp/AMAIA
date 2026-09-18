@@ -77,3 +77,36 @@ Bank CSVs alone **cannot** tell a deposit from earned revenue — a $500 credit 
 credit. Splitting 2210 from 4010 requires event dates. A booking export, invoice list, or even a
 calendar of event dates lets this be done properly; without it, all customer receipts are
 recognized on the date received and the deposit liability stays empty.
+
+## Running it
+
+```bash
+pip install openpyxl
+python3 src/normalize.py        # 3 bank exports -> one ledger
+python3 src/categorize.py       # apply rules, match interaccount transfers
+python3 src/build_statements.py # revenue recognition, depreciation, statements
+python3 src/build_workbook.py   # -> out/EP_Fiesta_Books_2026.xlsx
+```
+
+Put the three CSV exports in `data_raw/` as `savor.csv`, `applecard.csv` and `chase.csv`,
+and the HighLevel transactions payload as `ghl_transactions.json`. Both that folder and
+`out/` are gitignored: they carry account numbers and customer names.
+
+To correct a classification, edit `src/rules.py` and re-run. Every number in the workbook
+traces back to a row on the Transactions tab.
+
+## Results, inception through 2026-09-18
+
+| | |
+|---|---:|
+| Revenue recognized | $19,137.48 |
+| Gross profit | $10,921.71 (57.1%) |
+| Operating expenses | $9,133.17 |
+| Net income | $2,599.54 |
+| Cash in checking | $4,570.77 |
+| Customer deposits held (liability) | $3,228.99 |
+| Rental fleet at cost | $4,563.18 |
+
+Revenue is recognized on the **event date** parsed from the HighLevel invoice name
+(`YYYY-MM-DD Event`), not the date the money arrived. $3,228.99 of cash on hand belongs to
+eight events that had not happened as of 9/18 and is carried as a liability, not income.
