@@ -61,7 +61,8 @@ header .brand span{font-size:10px; text-transform:uppercase; letter-spacing:1.4p
   display:grid; place-items:center; font-weight:700; flex:0 0 auto;}
 
 #cvwrap{flex:1 1 auto; position:relative; overflow:hidden; touch-action:none; min-height:120px;}
-svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:none;}
+svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:none;
+  -webkit-user-select:none; -webkit-touch-callout:none;}
 #zoomctl{position:absolute; right:10px; top:10px; display:flex; flex-direction:column; gap:6px;}
 #zoomctl button, #tools button{width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
   background:var(--paper); color:var(--ink); font-size:16px; font-weight:700; cursor:pointer;
@@ -95,10 +96,11 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
   padding:10px 14px; border-radius:13px; width:calc(100% - 24px); max-width:400px;
   box-shadow:0 4px 16px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:.25s; z-index:30;
   display:flex; align-items:center; gap:10px;}
-#toast.on{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+#toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
 #toastMsg{flex:1;}
 #toastUndo{display:none; flex:0 0 auto; border:1px solid rgba(255,255,255,.35); background:transparent;
-  color:var(--accent); font-weight:800; font-size:12px; padding:6px 11px; border-radius:99px; cursor:pointer;}
+  color:var(--accent); font-weight:800; font-size:12px; padding:6px 11px; border-radius:99px; cursor:pointer;
+  pointer-events:auto;}
 
 #pill{position:absolute; display:none; gap:2px; background:var(--pine); border-radius:12px;
   padding:4px; box-shadow:0 4px 14px rgba(0,0,0,.3); z-index:8; transform:translate(-50%,-100%);}
@@ -244,6 +246,7 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
     <div id="multibar">
       <span id="mcount">Tap items to select</span>
       <button data-m="all">All</button>
+      <button data-m="props" aria-label="Properties">•••</button>
       <button data-m="dup" aria-label="Duplicate selection">⧉</button>
       <button data-m="rot" aria-label="Rotate selection">⟳</button>
       <button data-m="del" class="del" aria-label="Delete selection">✕</button>
@@ -452,7 +455,8 @@ function renderSel(){
     $("mcount").textContent = chosen.length
       ? `${chosen.length} selected` : "Tap items to select";
     mb.querySelectorAll("[data-m]").forEach(b => {
-      if (b.dataset.m !== "done" && b.dataset.m !== "all") b.disabled = !chosen.length;
+      if (b.dataset.m === "done" || b.dataset.m === "all") return;
+      b.disabled = b.dataset.m === "props" ? chosen.length !== 1 : !chosen.length;
     });
   }
 }
@@ -910,23 +914,37 @@ function parsePrompt(raw){
     const a = Math.max(w,h), b = Math.min(w,h);
     let key = a<=10 && b<=10 ? "tt1010" : (a<=20 && b<=10) ? "tt1020" : (a<=20 && b<=20) ? "tt2020" : null;
     if (!key){
-      const need = a*b, per = 400;
-      const n2 = Math.max(1, Math.round(need/per));
+      const n2 = Math.max(1, Math.round((a*b)/400)) * (n||1);
       spec.notes.push(`We stock 10×10, 10×20 and 20×20 — used ${n2} × 20×20 for the ${w}×${h} you asked for.`);
-      for (let i=0;i<n2;i++) spec.tents.push("tt2020");
+      for (let i=0; i<n2; i++) spec.tents.push("tt2020");
       return;
     }
     for (let i=0; i<(n||1); i++) spec.tents.push(key);
   };
-  let m, re = /(?:(\d+|[a-z]+)\s+)?(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?\s*(?:pop\s*up\s*|canopy\s*|frame\s*)?tents?\b/g;
-  while ((m = re.exec(t))){ addTent(+m[2], +m[3], num(m[1]) || 1); spec.any = true; }
-  if (!spec.tents.length){
-    re = /\btents?\b\s*(?:of\s*|size\s*|at\s*)?(\d+)\s*(?:ft)?\s*x\s*(\d+)/g;
-    while ((m = re.exec(t))){ addTent(+m[1], +m[2], 1); spec.any = true; }
+  const DIM = String.raw`(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?`;
+  const CNT = String.raw`(?:(\d+|an?)\s+)?`;
+  const collect = pattern => {
+    const rx = new RegExp(pattern, "g"), out = [];
+    let mm;
+    while ((mm = rx.exec(t))) out.push({txt:mm[0], n:num(mm[1]) || 1, w:+mm[2], h:+mm[3]});
+    out.forEach(o => { t = t.replace(o.txt, " "); });
+    return out;
+  };
+  const tRaw = t;
+  let hits = collect(CNT + DIM + String.raw`\s*(?:pop\s*up\s*|canopy\s*|frame\s*|party\s*)?tents?\b`)
+    .concat(collect(CNT + String.raw`tents?\b\s*(?:of\s*|sized?\s*|at\s*|-\s*)?` + DIM));
+  hits.forEach(h => addTent(h.w, h.h, h.n));
+  // trailing multiplier: "20x20 tent x 2"
+  const mult = /tents?\s*x\s*(\d+)\b/.exec(tRaw);
+  if (mult && spec.tents.length === 1){
+    const k = spec.tents[0];
+    for (let i = 1; i < +mult[1]; i++) spec.tents.push(k);
   }
-  if (!spec.tents.length && /\btents?\b|\bcanopy\b|\bcovered\b|\bunder cover\b/.test(t) && !neg(t.search(/\btents?\b/))){
+  if (spec.tents.length) spec.any = true;
+  // bare "a tent" / "2 tents" with no size given
+  if (!spec.tents.length && /\btents?\b|\bcanopy\b|\bcovered\b/.test(t) && !neg(t.search(/\btents?\b/))){
     spec.tentAuto = true; spec.any = true;
-    const tc = /(\d+|[a-z]+)\s+tents?\b/.exec(t);
+    const tc = /(\d+|an?)\s+tents?\b/.exec(t);
     spec.tentCount = num(tc && tc[1]) || 1;
   }
 
@@ -1049,27 +1067,45 @@ function applySpec(spec){
   /* tents */
   let tents = spec.tents.slice();
   if (!tents.length && spec.tentAuto){
-    const want = spec.tentCount || 1;
-    if (want > 1){ tents = Array(want).fill("tt2020"); }
-    else {
-      const pick = TENTS.find(k => fitFor(CAT[k].w-2, CAT[k].h-2, tableKey, tableCount).cap >= tableCount);
-      tents = [pick || "tt2020"];
-      if (!pick && tableCount){
-        const per = Math.max(1, fitFor(18,18,tableKey,tableCount).cap);
-        tents = Array(Math.ceil(tableCount/per)).fill("tt2020");
+    const want = Math.max(1, spec.tentCount || 1);
+    if (!tableCount){
+      tents = Array(want).fill("tt1020");   // nothing to size against — neutral middle size
+    } else {
+      const per = Math.ceil(tableCount / want) || 1;
+      const pick = TENTS.find(k => fitFor(CAT[k].w-2, CAT[k].h-2, tableKey, per).cap >= per);
+      if (pick) tents = Array(want).fill(pick);
+      else {
+        const capBig = Math.max(1, fitFor(18, 18, tableKey, tableCount).cap);
+        tents = Array(Math.max(want, Math.ceil(tableCount/capBig))).fill("tt2020");
       }
     }
   }
 
-  /* grow venue to hold the tents */
+  /* pack tents into rows, then grow the venue to hold them */
+  const rowsOf = (keys, maxW) => {
+    const out = []; let row = [], w = 0;
+    for (const k of keys){
+      const tw = CAT[k].w;
+      if (row.length && w + tw > maxW){ out.push({keys:row, w}); row = []; w = 0; }
+      row.push(k); w += tw;
+    }
+    if (row.length) out.push({keys:row, w});
+    return out;
+  };
+  let pack = [], packH = [], totalW = 0, totalH = 0;
   if (tents.length){
-    const tw = CAT[tents[0]].w, th = CAT[tents[0]].h;
-    const cols = Math.max(1, Math.min(tents.length, Math.floor(venue.w/tw) || 1));
-    const rows = Math.ceil(tents.length/cols);
-    const needW = cols*tw + 8, needH = rows*th + 8;
+    pack = rowsOf(tents, venue.w);
+    packH = pack.map(r => Math.max(...r.keys.map(k => CAT[k].h)));
+    totalW = Math.max(...pack.map(r => r.w));
+    totalH = packH.reduce((a,b) => a+b, 0);
+    const needW = totalW + 8, needH = totalH + 8;
     if (needW > venue.w || needH > venue.h){
       venue = {w: Math.max(venue.w, Math.ceil(needW/5)*5), h: Math.max(venue.h, Math.ceil(needH/5)*5)};
-      notes.push(`Venue grown to ${venue.w}×${venue.h} ft to hold the tents.`);
+      notes.push(`Canvas grown to ${venue.w}×${venue.h} ft to hold the tents.`);
+      pack = rowsOf(tents, venue.w);
+      packH = pack.map(r => Math.max(...r.keys.map(k => CAT[k].h)));
+      totalW = Math.max(...pack.map(r => r.w));
+      totalH = packH.reduce((a,b) => a+b, 0);
     }
   }
 
@@ -1077,31 +1113,34 @@ function applySpec(spec){
 
   /* place tents, then tables inside them */
   const slots = [];
-  let tight = false, placedTables = 0;
+  let tight = false;
   if (tents.length){
-    const tw = CAT[tents[0]].w, th = CAT[tents[0]].h;
-    const cols = Math.max(1, Math.min(tents.length, Math.floor(venue.w/tw) || 1));
-    const rows = Math.ceil(tents.length/cols);
-    let idx = 0, remaining = tableCount;
-    for (let r=0; r<rows; r++) for (let cI=0; cI<cols && idx<tents.length; cI++, idx++){
-      const cx = venue.w/2 - (cols-1)*tw/2 + cI*tw;
-      const cy = venue.h/2 - (rows-1)*th/2 + r*th;
-      const tent = newItem(tents[idx], cx, cy);
-      for (const k in spec.extras){
-        const c = CAT[tents[idx]];
-        let id = k;
-        if (k==="walls") id = c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls";
-        if (c.extras.some(e => e.id===id)) tent.props.extras[id] = true;
+    let remaining = tableCount, placedTents = 0;
+    let y = venue.h/2 - totalH/2;
+    for (let r = 0; r < pack.length; r++){
+      let x = venue.w/2 - pack[r].w/2;
+      for (const k of pack[r].keys){
+        const c = CAT[k];
+        const cx = x + c.w/2, cy = y + packH[r]/2;
+        const tent = newItem(k, cx, cy);
+        for (const key in spec.extras){
+          const id = key==="walls"
+            ? (c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls") : key;
+          if (c.extras.some(e => e.id===id)) tent.props.extras[id] = true;
+        }
+        items.push(tent);
+        placedTents++;
+        if (remaining > 0){
+          const share = Math.ceil(remaining / (tents.length - placedTents + 1));
+          const fit = fitFor(c.w-2, c.h-2, tableKey, share);
+          const n = Math.min(share, fit.cap);
+          if (n && fit.gap && fit.gap < 3) tight = true;
+          placeGrid(cx, cy, fit, n).forEach(p => slots.push(p));
+          remaining -= n;
+        }
+        x += c.w;
       }
-      items.push(tent);
-      if (remaining > 0){
-        const share = Math.ceil(remaining/(tents.length-idx));
-        const fit = fitFor(tw-2, th-2, tableKey, share);
-        if (fit.gap && fit.gap < 3) tight = true;
-        const put = placeGrid(cx, cy, fit, Math.min(share, Math.max(fit.cap, share)));
-        put.forEach(p => slots.push(p));
-        remaining -= put.length; placedTables += put.length;
-      }
+      y += packH[r];
     }
     if (remaining > 0){
       const fit = fitFor(venue.w-6, 12, tableKey, remaining);
@@ -1133,6 +1172,7 @@ function applySpec(spec){
   });
 
   render(); fitView(true);
+  $("venueChip").textContent = `${venue.w} × ${venue.h} ft ✎`;
 
   /* read-back */
   const tentCounts = {};
@@ -1367,6 +1407,7 @@ $("multibar").addEventListener("click", e => {
   const b = e.target.closest("[data-m]"); if (!b) return;
   const m = b.dataset.m;
   if (m === "all"){ sel = new Set(items.map(i => i.id)); renderSel(); return; }
+  if (m === "props"){ const l = selItems(); if (l.length === 1) menuFor(l[0].id); return; }
   if (m === "dup") return actDuplicate();
   if (m === "rot") return actRotate();
   if (m === "del") return actDelete();

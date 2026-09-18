@@ -146,7 +146,7 @@ A persistent input sits directly under the canvas: **"Describe your event…"** 
 
 | Input | Recognized |
 |---|---|
-| Tents | `20×20 tent`, `two 10×20 tents`, `a tent` (auto-picks the smallest that fits), off-catalog sizes (mapped to stocked sizes with a note) |
+| Tents | `20×20 tent`, `two 10×20 tents`, `3 tents of 10×10`, `20×20 tent x2`, mixed sizes in one sentence (`a 10×10 tent and a 20×20 tent`), `a tent` / `2 tents` with no size (auto-picks the smallest that fits the tables), off-catalog sizes (mapped to stocked sizes with a note) |
 | Tables | `5 round tables`, `8 ft tables`, `six foot tables`, `10 cocktail tables`, bare `6 tables` (defaults to 5 ft round) |
 | Chairs | `40 padded chairs`, `basic chairs`, `no chairs`, `seating for 50` |
 | Guests | `60 guests`, `for 24 people` — derives table count at standard seating (MIN per table) |
@@ -181,8 +181,11 @@ It builds the same spec object the prompt parser produces and hands it to the sa
 ```
 tables_needed = ceil(guests / seats_per_table)
 if tent selected/auto:
-    place tent(s) centered in the venue (row or grid of tents if multiple)
-    usable_area = tent interior with a 1 ft leg inset
+    pack the requested tents edge to edge into rows (wrapping at the
+    canvas width, rows centered) — sizes may be mixed, so each tent is
+    packed by its own footprint; grow the canvas if the pack needs it
+    usable_area = each tent's interior with a 1 ft leg inset
+    tables are split evenly across the tents, capped by what each holds
 else:
     usable_area = venue canvas with a 3 ft edge inset
 
@@ -228,7 +231,8 @@ with a note; guests that can't be seated are reported in the read-back
 
 - **New plan flow:** name → venue dimensions (presets: 20×30, 30×50, 40×60, 50×100, 60×120, or custom) → blank canvas. The venue size is always one tap away from the canvas (the size chip in the header) and can also be set from the prompt box — "in a 30×50 backyard" — and it auto-grows when a layout needs more room than it has.
 - **Selection:** tap = select (shows rotate handle + price tag), drag = move with edge snapping (soft snap to 6″ increments and to alignment with nearby items), long-press = context menu.
-- **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. With a selection active, a floating action bar offers **Select all · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
+- **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. With a selection active, a floating action bar offers **Select all · Properties · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Properties is enabled only when exactly one item is selected, since the context menu edits a single item; long-press still opens it too. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
+- **Reaching an item's properties** — three ways, so it is never a dead end: long-press the item, the ••• button on the single-select pill, or the ••• button in the multi-select bar. Transient banners never capture taps (`pointer-events: none` except on their own Undo button), and the canvas suppresses the iOS touch callout so a long-press is never stolen by the system.
 - **Quote sheet:** itemized list grouped Tents → Tent extras → Tables → Chairs → Linens, with quantities, unit prices, and total. CTA button: **"Request this quote"** → prefilled email/WhatsApp/booking-form handoff (this is the perk→lead conversion point).
 - **Save as image:** renders a print-quality PNG of the plan — title, venue size, item and seat counts, date, the total, the layout drawn to scale with a 10 ft scale bar, and the itemized estimate as a two-column legend. It's the artifact a customer texts to a partner or forwards to the rental team, so it carries the business's name. Always rendered on the light palette regardless of the viewer's theme, so it prints and forwards cleanly.
 - **Persistence:** plans autosave locally; multiple plans on a home screen ("My events").
