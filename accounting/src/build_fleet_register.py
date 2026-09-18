@@ -51,39 +51,26 @@ def pad(cells):
 
 
 def main():
-    led = json.load(open(os.path.join(OUT, "ledger_coded.json")))
-    # categorize.py overwrites "account" with the COA name, so recover the source
-    # bank/card account from the raw ledger by txn_id.
-    source = {t["txn_id"]: t["account"] for t in json.load(open(os.path.join(OUT, "ledger_raw.json")))}
-    fleet_codes = set(LIVES)
-
-    known = sorted([t for t in led if t["account_code"] in fleet_codes], key=lambda t: t["date"])
-    cand = sorted([t for t in led if t["amount"] <= -100
-                   and t["account_code"] in {"5080", "5070", "5050", "6990"}
-                   and "CAPITAL ONE" not in t["description"].upper()],
-                  key=lambda t: t["amount"])
-
-    src = {"Capital One Savor 5198": "Capital One Savor", "Apple Card": "Apple Card",
-           "Chase Checking 5784": "Chase Checking"}
-
+    import ers_catalog
     out, r = [], FIRST
-    for t in known:
-        out.append(row(r, item=t["note"].split(" - ")[0][:58] or t["description"][:58],
-                       cat=CODE_TO_CAT[t["account_code"]], qty=1, unit=round(-t["amount"], 2),
-                       date=t["date"], vendor=t["description"][:28],
-                       paid=src.get(source[t["txn_id"]], source[t["txn_id"]]), status="In service",
-                       notes="Identified from statements - correct the description if wrong"))
+    for ers_cat, name, unit, _labor in ers_catalog.assets():
+        code = ers_catalog.CATEGORY_MAP[ers_cat]
+        dup = ers_catalog.DUPLICATES.get((ers_cat, name))
+        if unit is None:
+            note = "NO PRICE IN ERS - enter what you paid per unit"
+        elif dup:
+            note = "DUPLICATE LISTING - " + dup
+        else:
+            note = "From ERS catalog - enter quantity and purchase date"
+        out.append(row(r, item=name, cat=CODE_TO_CAT[code], qty="",
+                       unit=unit if unit is not None else "", date="",
+                       vendor=f"ERS: {ers_cat}", paid="", status="", notes=note))
         r += 1
-    for t in cand:
-        out.append(row(r, item="", cat="", qty=1, unit=round(-t["amount"], 2),
-                       date=t["date"], vendor=t["description"][:28],
-                       paid=src.get(source[t["txn_id"]], source[t["txn_id"]]), status="CONFIRM",
-                       notes="Purchase I could not identify - name it and pick a category, or delete the row"))
-        r += 1
-    blanks = 45
+    blanks = 30
     for _ in range(blanks):
         out.append(row(r)); r += 1
     last = r - 1
+    known, cand = [], []
 
     path = os.path.join(OUT, "fleet_register.csv")
     with open(path, "w", newline="") as fh:
@@ -111,7 +98,7 @@ def main():
             w.writerow(c)
 
     print(f"wrote {path}  ({os.path.getsize(path)} bytes)")
-    print(f"  {len(known)} identified fleet rows, {len(cand)} to confirm, {blanks} blank")
+    print(f"  {len(out) - blanks} ERS catalog items, {blanks} blank rows")
     print(f"  data rows {FIRST}-{last}")
 
 

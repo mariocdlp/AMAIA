@@ -6,6 +6,7 @@ from openpyxl.utils import get_column_letter
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_fleet_register import CATEGORIES, CODE_TO_CAT
+import ers_catalog
 
 BASE = os.path.join(os.path.dirname(__file__), "..")
 OUT = os.path.join(BASE, "out")
@@ -69,20 +70,17 @@ def main():
     # ───────────────────────── Fleet Register (editable) ─────────────────────────
     ws = wb.create_sheet("Fleet Register")
     title(ws, "Rental Fleet Register",
-          "Type in columns A-H only. Columns I-M calculate themselves. Category must match the reference list in R:T.")
+          "Every product in your ERS catalog, priced per unit. Fill in QUANTITY (column C) and PURCHASE DATE (column F) "
+          "and the depreciation columns calculate themselves. Rows highlighted amber need a price or are duplicates.")
     reg_cols = ["Item / description", "Category", "Qty", "Unit cost", "Total cost", "Purchase date",
                 "Vendor", "Paid with", "Useful life (mo)", "Months in service", "Monthly depreciation",
                 "Accumulated depreciation", "Net book value", "Status", "Notes"]
     header(ws, 4, reg_cols, [40, 26, 7, 12, 13, 13, 24, 20, 14, 15, 17, 19, 15, 12, 46])
     src_short = {"Capital One Savor 5198": "Capital One Savor", "Apple Card": "Apple Card",
                  "Chase Checking 5784": "Chase Checking"}
-    fleet_codes = {c for _, _, c in CATEGORIES}
-    identified = sorted([t for t in led if t["account_code"] in fleet_codes], key=lambda t: t["date"])
-    confirm = sorted([t for t in led if t["amount"] <= -100
-                      and t["account_code"] in {"5080", "5070", "5050", "6990"}
-                      and "CAPITAL ONE" not in t["description"].upper()], key=lambda t: t["amount"])
     r = 5
-    def regrow(r, item, cat, qty, unit, date, vendor, paid, status, note, warn=False):
+
+    def regrow(r, item, cat, qty, unit, date, vendor, paid, status, note, fill=None):
         vals = [item, cat, qty, unit, f"=IF(C{r}*D{r}=0,\"\",C{r}*D{r})", date, vendor, paid,
                 f"=IFERROR(VLOOKUP(B{r},$R$4:$S$11,2,0),\"\")",
                 f"=IF(F{r}=\"\",\"\",MAX(0,DATEDIF(F{r},TODAY(),\"M\")))",
@@ -93,25 +91,28 @@ def main():
             c = ws.cell(row=r, column=i, value=v)
             if i in (4, 5, 11, 12, 13):
                 c.number_format = M
-            if warn and i <= 15:
-                c.fill = WARN
-    for t in identified:
-        regrow(r, t["note"].split(" - ")[0][:56], CODE_TO_CAT[t["account_code"]], 1,
-               round(-t["amount"], 2), t["date"], t["description"][:24],
-               src_short.get(raw_src[t["txn_id"]], raw_src[t["txn_id"]]), "In service",
-               "From statements - correct if wrong")
+            if fill and i <= 15:
+                c.fill = fill
+
+    # Every product in the ERS catalog, priced per unit. Quantity and purchase
+    # date are what only Mario can supply.
+    for ers_cat, name, unit, _labor in ers_catalog.assets():
+        code = ers_catalog.CATEGORY_MAP[ers_cat]
+        dup = ers_catalog.DUPLICATES.get((ers_cat, name))
+        if unit is None:
+            note, fill = "NO PRICE IN ERS - enter what you paid per unit", WARN
+        elif dup:
+            note, fill = "DUPLICATE LISTING - " + dup, WARN
+        else:
+            note, fill = "From ERS catalog - enter quantity and purchase date", None
+        regrow(r, name, CODE_TO_CAT[code], "", unit if unit is not None else "",
+               "", f"ERS: {ers_cat}", "", "", note, fill)
         r += 1
-    for t in confirm:
-        regrow(r, "", "", 1, round(-t["amount"], 2), t["date"], t["description"][:24],
-               src_short.get(raw_src[t["txn_id"]], raw_src[t["txn_id"]]), "CONFIRM",
-               "Name it and pick a category, or delete the row", warn=True)
-        r += 1
-    for _ in range(60):
+    for _ in range(30):
         regrow(r, None, None, None, None, None, None, None, None, None)
         r += 1
     last = r - 1
-    for col, lbl in ((1, "TOTALS"),):
-        c = ws.cell(row=3, column=col, value=lbl); c.font = Font(bold=True, color=INK)
+    ws.cell(row=3, column=1, value="TOTALS").font = Font(bold=True, color=INK)
     for col in (5, 11, 12, 13):
         L = get_column_letter(col)
         c = ws.cell(row=3, column=col, value=f"=SUM({L}5:{L}{last})")
@@ -409,6 +410,32 @@ def main():
     c = ws.cell(row=r, column=7, value=sum(cnt.values()))
     c.font = Font(bold=True); c.fill = TOTAL
     ws.cell(row=r, column=1, value="TOTAL").font = Font(bold=True)
+
+    # ───────────────────────── Purchases in Statements ─────────────────────────
+    ws = wb.create_sheet("Purchases in Statements")
+    title(ws, "Fleet Purchases Found in the Bank Statements",
+          "Cross-reference for dating the register. Do NOT retype these as register rows - the ERS catalog is the "
+          "inventory and these are the receipts behind it. Use them to find purchase dates and to spot anything the catalog is missing.")
+    header(ws, 4, ["Date", "Bank / card", "Description", "Amount", "How I coded it", "Note"],
+           [13, 22, 44, 13, 34, 60])
+    r = 5
+    fleet_codes = {c for _, _, c in CATEGORIES}
+    shown = sorted([t for t in led if t["account_code"] in fleet_codes
+                    or (t["amount"] <= -100 and t["account_code"] in {"5080", "5070", "5050", "6990"}
+                        and "CAPITAL ONE" not in t["description"].upper())],
+                   key=lambda t: t["date"])
+    for t in shown:
+        ws.cell(row=r, column=1, value=t["date"])
+        ws.cell(row=r, column=2, value=raw_src[t["txn_id"]])
+        ws.cell(row=r, column=3, value=t["description"])
+        c = ws.cell(row=r, column=4, value=-t["amount"]); c.number_format = M
+        ws.cell(row=r, column=5, value=names.get(t["account_code"], ""))
+        ws.cell(row=r, column=6, value=t["note"])
+        if t["account_code"] not in fleet_codes:
+            for col in range(1, 7):
+                ws.cell(row=r, column=col).fill = WARN
+        r += 1
+    ws.auto_filter.ref = f"A4:F{r-1}"
 
     # ───────────────────────── Data Gaps ─────────────────────────
     ws = wb.create_sheet("Data Gaps")
