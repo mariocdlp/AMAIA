@@ -236,7 +236,7 @@ placed outside it, below the tents, with a note naming the tent's real
 seated capacity; guests that can't be seated are reported in the read-back
 ```
 
-- Both doors **replace** the current layout, always behind a one-tap **Undo** in the read-back.
+- Both doors **replace** the current layout, always behind **Undo** — offered inline in the read-back and always available from the history controls.
 - Result is fully editable afterwards — it's a starting point, not a lock-in.
 - The view zooms to the generated plan rather than the whole lot, so the layout is legible on a phone without pinching.
 - Quote updates instantly, which makes this an **instant estimator**: "50 guests under a tent ≈ $X" in one sentence. This is the perk's biggest wow-moment; make it fast (< 0.5 s).
@@ -268,6 +268,7 @@ seated capacity; guests that can't be seated are reported in the read-back
 - **Selection:** tap = select (shows rotate handle + price tag), drag = move with edge snapping (soft snap to 6″ increments and to alignment with nearby items), long-press = context menu.
 - **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. On a keyboard, holding **Shift, ⌘ or Ctrl** does the same without entering select mode — drag to lasso an area, click to add or remove one item. With a selection active, a floating action bar offers **Select all · Properties · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Properties is enabled only when exactly one item is selected, since the context menu edits a single item; long-press still opens it too. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
 - **Reaching an item's properties** — three ways, so it is never a dead end: long-press the item, the ••• button on the single-select pill, or the ••• button in the multi-select bar. Transient banners never capture taps (`pointer-events: none` except on their own Undo button), and the canvas suppresses the iOS touch callout so a long-press is never stolen by the system.
+- **Undo / redo:** a full history stack, not a one-step revert. Every mutation — a prompt, an auto-arrange, a property toggle, a move, a rotate, a duplicate, a delete, a canvas resize — commits the pre-change state first, so each is individually reversible and replayable. Buttons sit on the canvas next to the select and save controls, ⌘Z / ⌘⇧Z (and Ctrl+Y) work on a keyboard, and a new action after an undo clears the redo branch, as expected. A drag is one entry, not one per frame. History depth is capped at 60 states; a prompt that parses nothing rolls back without leaving a redo step.
 - **Quote sheet:** itemized list grouped Tents → Tent extras → Tables → Chairs → Linens, with quantities, unit prices, and total. CTA button: **"Request this quote"** → prefilled email/WhatsApp/booking-form handoff (this is the perk→lead conversion point).
 - **Save as image:** renders a print-quality PNG of the plan — title, venue size, item and seat counts, date, the total, the layout drawn to scale with a 10 ft scale bar, and the itemized estimate as a two-column legend. It's the artifact a customer texts to a partner or forwards to the rental team, so it carries the business's name. Always rendered on the light palette regardless of the viewer's theme, so it prints and forwards cleanly.
 - **Persistence:** plans autosave locally; multiple plans on a home screen ("My events").
@@ -315,7 +316,7 @@ Key invariants encoded in the model, not the UI:
 
 | Phase | Scope | Est. |
 |---|---|---|
-| **P1 — Canvas core** | Venue setup w/ presets, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, multi-select (lasso + bulk duplicate/rotate/delete/group-move), fixed z-layers, undo, autosave | 3 wk |
+| **P1 — Canvas core** | Venue setup w/ presets, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, multi-select (lasso + bulk duplicate/rotate/delete/group-move), fixed z-layers, undo/redo history, autosave | 3 wk |
 | **P2 — Context menus & props** | Long-press menus per §4: duplicate (carries all properties), chair add/type (procedural snap layout around each table shape), tablecloths, tent extras w/ visuals | 2 wk |
 | **P3 — Quote engine & export** | Catalog JSON, live quote bar, itemized sheet w/ size-specific extra labels, "Request this quote" handoff, save-as-image (scale bar + legend + total) | 1.5 wk |
 | **P4 — Auto layout** | Prompt-box parser + read-back + edit mode (§5a), guided auto-arrange sheet, tent auto-pick, grid placement algorithm, overflow and tight-fit handling | 2–2.5 wk |

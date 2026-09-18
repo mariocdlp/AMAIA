@@ -30,6 +30,7 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 - **Fixed z-order** — tents always render behind tables and chairs.
 - **Long-press context menus** — duplicate (carries all properties), MIN/MAX chairs, chair type, tablecloths; tent extras priced per tent size.
 - **Multi-select** — lasso or tap to select (hold Shift or ⌘ on a keyboard), then bulk duplicate, rotate, delete, or move as a group.
+- **Undo / redo** — a full history stack over every change, with ⌘Z / ⌘⇧Z on a keyboard.
 - **Live quote** — every item priced from the catalog, with an itemized sheet and a "Request this quote" handoff.
 - **Auto arrange** — the guided four-question version of the prompt box.
 - **Save as image** — a to-scale PNG with a scale bar and the itemized estimate, ready to send.

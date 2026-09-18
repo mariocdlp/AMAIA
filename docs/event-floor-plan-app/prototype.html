@@ -67,9 +67,12 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
 #zoomctl button, #tools button{width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
   background:var(--paper); color:var(--ink); font-size:16px; font-weight:700; cursor:pointer;
   box-shadow:0 2px 6px rgba(0,0,0,.12); display:grid; place-items:center; padding:0;}
-#tools{position:absolute; left:10px; top:10px; display:flex; flex-direction:column; gap:6px;}
+#tools{position:absolute; left:10px; top:10px; display:grid;
+  grid-template-columns:34px 34px; gap:6px;}
 #tools button svg{width:17px; height:17px; display:block;}
 #tools button.on{background:var(--accent); color:#241a05; border-color:var(--accent);}
+#tools button:disabled{opacity:.35; cursor:default;}
+#undoBtn, #redoBtn{font-size:18px; line-height:1;}
 #multibar{position:absolute; left:50%; bottom:12px; transform:translateX(-50%) translateY(120%);
   display:flex; align-items:center; gap:4px; background:var(--pine); border-radius:14px;
   padding:6px 6px 6px 13px; box-shadow:0 5px 18px rgba(0,0,0,.32); z-index:9;
@@ -229,6 +232,8 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
       <button id="zfit" aria-label="Fit view" style="font-size:13px">⤢</button>
     </div>
     <div id="tools">
+      <button id="undoBtn" aria-label="Undo" disabled>↶</button>
+      <button id="redoBtn" aria-label="Redo" disabled>↷</button>
       <button id="selBtn" aria-label="Select multiple items"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.2"/></svg></button>
       <button id="imgBtn" aria-label="Save plan as image"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8v7.4"/><path d="m5 6.4 3 3 3-3"/><path d="M2.6 11.4v1.3a1.5 1.5 0 0 0 1.5 1.5h7.8a1.5 1.5 0 0 0 1.5-1.5v-1.3"/></svg></button>
     </div>
@@ -310,7 +315,6 @@ let seq = 1;
 let sel = new Set();
 let selectMode = false;
 let view = {x:-4, y:-4, w:48};
-let undoSnap = null;
 
 const $ = id => document.getElementById(id);
 const cv = $("cv"), gT = $("gTents"), gF = $("gFurn"), gS = $("gSel"), gV = $("gVenue");
@@ -323,14 +327,45 @@ function newItem(k, x, y){
   const props = c.cat==="table" ? {chairs:0, ctype:"basic", cloth:"none"} : {extras:{}};
   return {id:seq++, k, x, y, rot:0, props};
 }
-function snapshot(){ undoSnap = JSON.stringify({items, seq, venue}); }
-function doUndo(){
-  if (!undoSnap) return;
-  const s = JSON.parse(undoSnap);
-  items = s.items; seq = s.seq; venue = s.venue; sel.clear(); undoSnap = null;
+/* ============ history (undo / redo) ============
+   commit() is called BEFORE any mutation and stores the pre-change state. */
+const HISTORY_MAX = 60;
+let past = [], future = [];
+const snapState = () => JSON.stringify({items, seq, venue});
+function restore(s){
+  const o = JSON.parse(s);
+  const venueChanged = o.venue.w !== venue.w || o.venue.h !== venue.h;
+  items = o.items; seq = o.seq; venue = o.venue;
+  sel.clear();
   $("venueChip").textContent = `${venue.w} × ${venue.h} ft ✎`;
-  render(); fitView(true); toast("Reverted to your previous layout");
+  render();
+  if (venueChanged) fitView(items.length > 0);
+  historyUI();
 }
+function historyUI(){
+  $("undoBtn").disabled = !past.length;
+  $("redoBtn").disabled = !future.length;
+}
+function commit(){
+  past.push(snapState());
+  if (past.length > HISTORY_MAX) past.shift();
+  future.length = 0;
+  historyUI();
+}
+function undo(){
+  if (!past.length) return false;
+  future.push(snapState());
+  restore(past.pop());
+  return true;
+}
+function redo(){
+  if (!future.length) return false;
+  past.push(snapState());
+  restore(future.pop());
+  return true;
+}
+/* undo the last commit without leaving a redo step (used when an action aborts) */
+function rollback(){ if (past.length) restore(past.pop()); }
 
 /* ============ chair layout ============ */
 function chairSpots(c, n){
@@ -547,7 +582,10 @@ function toast(msg, opts={}){
   clearTimeout(toastT);
   toastT = setTimeout(() => t.classList.remove("on"), opts.ms || (opts.undo ? 7000 : 3600));
 }
-$("toastUndo").addEventListener("click", () => { $("toast").classList.remove("on"); doUndo(); });
+$("toastUndo").addEventListener("click", () => {
+  $("toast").classList.remove("on");
+  if (undo()) toast("Reverted — use ↷ to put it back", {ms:2600});
+});
 
 /* ============ sheets ============ */
 let sheetMode = null;
@@ -619,6 +657,7 @@ $("sheetBody").addEventListener("click", e => {
     const it = items.find(i => i.id===sheetMode.id); if (!it) return closeSheet();
     const c = CAT[it.k];
     if (act==="dup"){ duplicate(it); closeSheet(); return; }
+    commit();
     if (act==="rot"){ it.rot = (it.rot + (c.cat==="tent"?90:45)) % 360; render(); return; }
     if (act==="del"){ items = items.filter(i => i!==it); sel.clear(); render(); closeSheet(); return; }
     if (act==="chmin"){ it.props.chairs = c.min; if (it.props.ctype==="none") it.props.ctype="basic"; }
@@ -647,7 +686,7 @@ $("sheetBody").addEventListener("click", e => {
     btn.classList.add("on"); return;
   }
   if (act==="reqQuote"){ toast("In the real app this sends your layout + quote straight to the rental team 🎉", {ms:4200}); return; }
-  if (act==="clearAll"){ snapshot(); items=[]; sel.clear(); render(); closeSheet(); toast("Canvas cleared", {undo:true}); return; }
+  if (act==="clearAll"){ commit(); items=[]; sel.clear(); render(); closeSheet(); toast("Canvas cleared", {undo:true}); return; }
   if (act==="tryex"){ closeSheet(); runPrompt(btn.dataset.ex); return; }
 });
 
@@ -690,7 +729,7 @@ $("venueChip").addEventListener("click", () => {
     {type:"venue"});
 });
 function setVenue(w, h){
-  snapshot(); venue = {w, h};
+  commit(); venue = {w, h};
   $("venueChip").textContent = `${w} × ${h} ft ✎`;
   render(); fitView(items.length > 0); closeSheet();
   toast(`Canvas set to ${w} × ${h} ft`, {undo:true});
@@ -826,7 +865,7 @@ $("helpBtn").addEventListener("click", () => {
     <div class="helpstep"><span class="n">4</span><div><b>Select several at once</b> — the dashed-square button (top left), then tap items or drag a lasso across them. Duplicate or delete the whole group; drag any one of them to move them together.</div></div>
     <div class="helpstep"><span class="n">5</span><div><b>Tap the estimate bar</b> — itemized quote → “Request this quote”. That’s the lead.</div></div>
     <div class="helpstep"><span class="n">6</span><div><b>Save the image</b> — the download button (top left) renders a to-scale plan with the itemized estimate on it, ready to text or email.</div></div>
-    <p class="sub" style="margin-top:4px">Canvas too small? Tap <b>${venue.w} × ${venue.h} ft ✎</b> up top for presets or a custom size.</p>
+    <p class="sub" style="margin-top:4px">Every change is undoable — <b>↶ / ↷</b> at the top left, or ⌘Z / ⌘⇧Z on a keyboard. Canvas too small? Tap <b>${venue.w} × ${venue.h} ft ✎</b> up top for presets or a custom size.</p>
     <div class="seclbl">Prompts to try</div>
     <div class="exlist">${EXAMPLES.map(x => `<button data-act="tryex" data-ex="${x.replace(/"/g,"&quot;")}">${x}</button>`).join("")}
       <button data-act="tryex" data-ex="add string lights and black tablecloths">add string lights and black tablecloths <em style="color:var(--ink-2)">— edits what’s already on the canvas</em></button>
@@ -1064,7 +1103,7 @@ function isModifyOnly(spec){
       && (Object.keys(spec.extras).length || spec.cloth || spec.chairType || spec.chairs != null);
 }
 function applyModify(spec){
-  snapshot();
+  commit();
   const said = [];
   const tents = items.filter(i => CAT[i.k].cat==="tent");
   const tables = items.filter(i => CAT[i.k].cat==="table" && !CAT[i.k].standing);
@@ -1093,7 +1132,7 @@ function applyModify(spec){
 
 /* --- build a full plan from a spec --- */
 function applySpec(spec){
-  snapshot();
+  commit();
   const notes = spec.notes.slice();
   const readback = [];
 
@@ -1273,7 +1312,7 @@ function applySpec(spec){
   }
   if (tight && seated) notes.push(`Aisles are tighter than the ${SPACING.seated.ideal} ft of clear floor we'd normally leave between chairs — nothing overlaps, but it's snug.`);
 
-  if (!readback.length){ doUndo(); return toast("I didn’t catch any items — try “20×20 tent with 5 round tables and 40 chairs”."); }
+  if (!readback.length){ rollback(); return toast("I didn’t catch any items — try “20×20 tent with 5 round tables and 40 chairs”."); }
   const shown = notes.slice(0, 2);
   toast(`<b>${readback.join(" · ")}</b> — ${money(quoteLines().total)}` +
         (shown.length ? `<br><span style="color:#dcd8c4;font-weight:500">${shown.join(" ")}</span>` : ""),
@@ -1335,6 +1374,7 @@ $("trayRow").innerHTML = TRAY.map(k =>
   `<button class="titem" data-add="${k}">${trayThumb(k)}<b>${CAT[k].name}</b><span>${money(CAT[k].price)}</span></button>`).join("");
 $("trayRow").addEventListener("click", e => {
   const b = e.target.closest("[data-add]"); if (!b) return;
+  commit();
   const it = newItem(b.dataset.add, Math.round(view.x + view.w/2), Math.round(view.y + viewH()/2));
   items.push(it); sel = new Set([it.id]); render();
 });
@@ -1403,7 +1443,10 @@ cv.addEventListener("pointermove", e => {
   }
   if (!drag) return;
   const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-  if (!drag.moved && Math.hypot(dx,dy) > 7){ drag.moved = true; clearTimeout(pressT); pressT = null; }
+  if (!drag.moved && Math.hypot(dx,dy) > 7){
+    drag.moved = true; clearTimeout(pressT); pressT = null;
+    if (drag.type === "item") commit();   // one history entry per drag
+  }
   if (!drag.moved) return;
   const r = cv.getBoundingClientRect(), s = view.w / r.width;
   if (drag.type === "pan"){
@@ -1451,12 +1494,13 @@ cv.addEventListener("contextmenu", e => {
 const selItems = () => items.filter(i => sel.has(i.id));
 function actRotate(){
   const list = selItems(); if (!list.length) return;
+  commit();
   list.forEach(it => it.rot = (it.rot + (CAT[it.k].cat==="tent" ? 90 : 45)) % 360);
   render();
 }
 function actDuplicate(){
   const list = selItems(); if (!list.length) return;
-  snapshot();
+  commit();
   const made = [];
   for (const it of list){
     const n = newItem(it.k, it.x + 3, it.y + 3);
@@ -1469,7 +1513,7 @@ function actDuplicate(){
 }
 function actDelete(){
   const list = selItems(); if (!list.length) return;
-  snapshot();
+  commit();
   const n = list.length;
   items = items.filter(i => !sel.has(i.id));
   sel.clear(); render();
@@ -1512,6 +1556,23 @@ $("zin").addEventListener("click", () => zoomBy(1/1.35));
 $("zout").addEventListener("click", () => zoomBy(1.35));
 $("zfit").addEventListener("click", () => fitView(items.length > 0));
 window.addEventListener("resize", applyView);
+
+/* undo / redo */
+$("undoBtn").addEventListener("click", () => {
+  undo() ? toast("Undone" + (future.length > 1 ? ` · ${past.length} step${past.length===1?"":"s"} left` : ""), {ms:1800})
+         : toast("Nothing to undo", {ms:1600});
+});
+$("redoBtn").addEventListener("click", () => {
+  redo() ? toast("Redone", {ms:1800}) : toast("Nothing to redo", {ms:1600});
+});
+window.addEventListener("keydown", e => {
+  const tag = e.target && e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;    // let the prompt box own ⌘Z
+  if (!(e.metaKey || e.ctrlKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === "z"){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (k === "y"){ e.preventDefault(); redo(); }
+});
 
 /* keep the app inside the visible viewport when the keyboard opens */
 if (window.visualViewport){
