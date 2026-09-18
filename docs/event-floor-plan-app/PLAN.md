@@ -129,39 +129,79 @@ No context menu of their own in v1 — chairs are managed entirely through their
 
 ---
 
-## 5. Auto-arrange (the "NEXT" feature)
+## 5. Auto layout — prompt box + guided auto-arrange
 
-A toolbar button **"Auto arrange ✨"** opens a 4-step sheet:
+Two doors to the same layout engine: type a sentence, or answer four questions.
+
+### 5a. Prompt box (primary)
+
+A persistent input sits directly under the canvas: **"Describe your event…"** with a ✨ build button. One sentence produces a complete, to-scale, fully priced plan.
+
+> *"20×20 tent with 5 round tables, white tablecloths and 40 padded chairs."*
+> → 1 × 20×20 tent · 5 × 5 ft round · 40 padded white chairs · spandex white — **$520**
+
+**Why it matters:** it collapses the whole planning flow into the sentence a customer would say to a rental rep on the phone. It's the feature that makes the perk feel effortless, and it's the fastest path to a quote.
+
+**What it understands** (deterministic on-device parser — no network call, instant, works offline):
+
+| Input | Recognized |
+|---|---|
+| Tents | `20×20 tent`, `two 10×20 tents`, `a tent` (auto-picks the smallest that fits), off-catalog sizes (mapped to stocked sizes with a note) |
+| Tables | `5 round tables`, `8 ft tables`, `six foot tables`, `10 cocktail tables`, bare `6 tables` (defaults to 5 ft round) |
+| Chairs | `40 padded chairs`, `basic chairs`, `no chairs`, `seating for 50` |
+| Guests | `60 guests`, `for 24 people` — derives table count at standard seating (MIN per table) |
+| Linens | `white tablecloths`, `black spandex` |
+| Tent extras | `string lights` / `bistro lights`, `walls`, `windows`, `ceiling liner`, `leg liners` |
+| Venue | `in a 30×50 yard` — sets the canvas, and the venue auto-grows if the tents need more room |
+| Number words | `two`, `six`, `a dozen`, `a hundred` |
+
+**Read-back, not silence.** Every run answers with what it understood plus the price, and flags what the plan can't deliver — *"Seated 32 of 40 — add a table or a bigger tent for the rest"*, *"Tight fit — chairs nearly touch. A bigger tent would breathe better."* The tight-fit warning is an honest upsell: it fires when aisles drop under 3 ft.
+
+**Edit mode.** If the prompt only mentions properties and the canvas already has items — *"add string lights and black tablecloths"* — it edits what's there instead of rebuilding. Chairs, linens, and tent extras apply across every matching item at once.
+
+**Undo.** Every prompt snapshots the layout first; the read-back carries an **Undo** button, so a misread sentence is never destructive.
+
+**Fallback.** Unrecognized input never clears the canvas — it answers with an example prompt instead.
+
+> **v1 implementation note:** the parser is a rule-based, on-device matcher, chosen over an LLM call so results are instant, free, private, and identical every time — which is what a demo and a quote both need. An LLM fallback for genuinely unusual phrasing is a v2 candidate, not a v1 dependency.
+
+### 5b. Guided auto-arrange
+
+For users who'd rather tap than type, an **"Auto ✨"** button on the quote bar opens a 4-step sheet:
 
 1. **How many guests?** — numeric stepper/keypad.
 2. **Table type** — 5 ft round / 6 ft banquet / 8 ft banquet (cocktail excluded from seated auto-arrange; offered as an optional "add N cocktail tables" extra).
 3. **Tent?** — None / 10×10 / 10×20 / 20×20 / **"Choose for me"** (app picks the smallest tent — or combination — whose capacity covers the guest count).
 4. **Chair type** — Basic / Padded white.
 
+It builds the same spec object the prompt parser produces and hands it to the same layout engine — one code path, two front doors.
+
 ### Algorithm (v1 — deterministic grid, good enough beats clever)
 
 ```
-tables_needed = ceil(guests / MAX_capacity(table_type))
+tables_needed = ceil(guests / seats_per_table)
 if tent selected/auto:
-    place tent(s) centered in the venue (row of tents if multiple)
-    usable_area = tent interior with 2.5 ft perimeter aisle inset
+    place tent(s) centered in the venue (row or grid of tents if multiple)
+    usable_area = tent interior with a 1 ft leg inset
 else:
-    usable_area = venue canvas with 2.5 ft edge inset
+    usable_area = venue canvas with a 3 ft edge inset
 
-grid-place tables in usable_area:
-    rounds   → square grid, ≥ 5 ft table-edge-to-table-edge gap
-               (2 chairs back-to-back + walk space)
-    banquets → parallel rows, ≥ 4.5 ft between rows
-each table gets chairs = min(MAX, remaining_guests), chair type as chosen
+grid-place tables in usable_area, trying gaps from 5 ft down to 1.5 ft
+and both orientations for rectangles; take the most generous spacing
+that still fits the requested count. Partial rows are centered.
+gap < 3 ft → flag "tight fit" in the read-back
 
-overflow: if tables don't fit the tent/venue → banner
-    "Fits X of Y guests — try a bigger tent or venue"
-    with one-tap "Upgrade tent" action
+chairs are distributed round-robin across the tables, capped at each
+table's MAX, so 40 across 5 rounds = 8 each and 43 = 9/9/9/8/8
+
+overflow: tables that don't fit inside the tent are placed outside it
+with a note; guests that can't be seated are reported in the read-back
 ```
 
-- Auto-arrange **replaces** the current layout after a confirmation ("This clears your current plan — continue?"), with undo available.
+- Both doors **replace** the current layout, always behind a one-tap **Undo** in the read-back.
 - Result is fully editable afterwards — it's a starting point, not a lock-in.
-- Quote updates instantly to the generated layout, which doubles as an **instant estimator**: "50 guests under a tent ≈ $X" in four taps. This is the perk's biggest wow-moment; make it fast (< 0.5 s).
+- The view zooms to the generated plan rather than the whole lot, so the layout is legible on a phone without pinching.
+- Quote updates instantly, which makes this an **instant estimator**: "50 guests under a tent ≈ $X" in one sentence. This is the perk's biggest wow-moment; make it fast (< 0.5 s).
 
 ---
 
@@ -169,24 +209,28 @@ overflow: if tables don't fit the tent/venue → banner
 
 ```
 ┌──────────────────────────────┐
-│  My Backyard Party      ⋯    │   ← plan name, overflow (rename/venue size/export)
+│  Event Planner   40×60 ft ✎  ?│  ← venue size chip (tap to change), demo guide
 ├──────────────────────────────┤
+│ ⬚ ⤓                      + − ⤢│  ← select mode / save image · zoom
 │                              │
 │         CANVAS               │   ← pinch-zoom / pan, grid at 1 ft,
 │   (venue at chosen scale)    │     dimension labels on edges
-│                              │
+│      [3 selected ⧉ ⟳ ✕ Done] │   ← appears while multi-selecting
 ├──────────────────────────────┤
-│  Quote: $486   [Auto ✨]     │   ← persistent quote bar, tap → itemized sheet
+│ [ Describe your event…    ✨] │  ← prompt box (§5a)
+├──────────────────────────────┤
+│  Estimate: $520   [Auto ✨]   │  ← persistent quote bar, tap → itemized sheet
 ├──────────────────────────────┤
 │ [Tables ▾] [Tents ▾] [Misc]  │   ← item tray: thumbnails w/ price tags,
-│  ▢6ft $8  ▢8ft $10  ◯5ft $10 │     drag onto canvas to place
+│  ▢6ft $8  ▢8ft $10  ◯5ft $10 │     tap or drag onto canvas to place
 └──────────────────────────────┘
 ```
 
-- **New plan flow:** name → venue dimensions (presets: 20×30, 40×60, 50×100, custom) → blank canvas.
+- **New plan flow:** name → venue dimensions (presets: 20×30, 30×50, 40×60, 50×100, 60×120, or custom) → blank canvas. The venue size is always one tap away from the canvas (the size chip in the header) and can also be set from the prompt box — "in a 30×50 backyard" — and it auto-grows when a layout needs more room than it has.
 - **Selection:** tap = select (shows rotate handle + price tag), drag = move with edge snapping (soft snap to 6″ increments and to alignment with nearby items), long-press = context menu.
+- **Multi-select:** a select-mode toggle on the canvas turns tap into add-to-selection and drag into a lasso; two-finger drag still pans. With a selection active, a floating action bar offers **Select all · Duplicate · Rotate · Delete**, and dragging any selected item moves the whole group together. Duplicating a group clones every item with all of its properties, so a dressed table row copies in one tap.
 - **Quote sheet:** itemized list grouped Tents → Tent extras → Tables → Chairs → Linens, with quantities, unit prices, and total. CTA button: **"Request this quote"** → prefilled email/WhatsApp/booking-form handoff (this is the perk→lead conversion point).
-- **Export:** share sheet with (a) rendered plan image (PNG, with scale bar + item legend) and (b) itemized quote (PDF or text). Watermarked with the business name/logo.
+- **Save as image:** renders a print-quality PNG of the plan — title, venue size, item and seat counts, date, the total, the layout drawn to scale with a 10 ft scale bar, and the itemized estimate as a two-column legend. It's the artifact a customer texts to a partner or forwards to the rental team, so it carries the business's name. Always rendered on the light palette regardless of the viewer's theme, so it prints and forwards cleanly.
 - **Persistence:** plans autosave locally; multiple plans on a home screen ("My events").
 
 ---
@@ -232,16 +276,16 @@ Key invariants encoded in the model, not the UI:
 
 | Phase | Scope | Est. |
 |---|---|---|
-| **P1 — Canvas core** | Venue setup, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, fixed z-layers, autosave | 2–3 wk |
+| **P1 — Canvas core** | Venue setup w/ presets, scaled canvas w/ grid, item tray, drag-place/move/rotate/delete, multi-select (lasso + bulk duplicate/rotate/delete/group-move), fixed z-layers, undo, autosave | 3 wk |
 | **P2 — Context menus & props** | Long-press menus per §4: duplicate (carries all properties), chair add/type (procedural snap layout around each table shape), tablecloths, tent extras w/ visuals | 2 wk |
-| **P3 — Quote engine** | Catalog JSON, live quote bar, itemized sheet w/ size-specific extra labels, "Request this quote" handoff, PNG/PDF export | 1–1.5 wk |
-| **P4 — Auto-arrange** | 4-question sheet, tent auto-pick, grid placement algorithm, overflow handling | 1.5–2 wk |
+| **P3 — Quote engine & export** | Catalog JSON, live quote bar, itemized sheet w/ size-specific extra labels, "Request this quote" handoff, save-as-image (scale bar + legend + total) | 1.5 wk |
+| **P4 — Auto layout** | Prompt-box parser + read-back + edit mode (§5a), guided auto-arrange sheet, tent auto-pick, grid placement algorithm, overflow and tight-fit handling | 2–2.5 wk |
 | **P5 — Polish & ship** | Onboarding (3-screen), empty states, haptics, App Store assets, TestFlight beta → release | 1–1.5 wk |
 
-**Total: roughly 8–10 weeks** for a solo iOS dev to a shippable v1. P1–P3 alone is a demoable perk (~5–6 wk); P4 (auto-arrange) is the headline feature but is deliberately isolated so it can ship as a fast-follow update if needed.
+**Total: roughly 9–11 weeks** for a solo iOS dev to a shippable v1. P1–P3 alone is a demoable perk (~6.5 wk); P4 carries both headline features (the prompt box and auto-arrange) and is deliberately isolated so it can ship as a fast-follow update if needed.
 
 ### v2 candidates (explicitly out of v1)
-Free-standing chair rows (ceremonies), dance floor / DJ booth / bar as placeable "misc" items, guest-name seat assignment, iPad layout, iCloud sync & plan sharing links, in-app booking with date availability.
+Free-standing chair rows (ceremonies), dance floor / DJ booth / bar as placeable "misc" items, guest-name seat assignment, iPad layout, iCloud sync & plan sharing links, in-app booking with date availability, an LLM fallback for prompts the rule-based parser can't read.
 
 ---
 

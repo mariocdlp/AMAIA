@@ -1,0 +1,1398 @@
+<title>Event Floor Planner — Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+:root{
+  --pine:#24382b; --pine-2:#2e4636; --accent:#d99a2b; --accent-ink:#7a5210;
+  --bg:#e3ded0; --ground:#efebdd; --paper:#fbf9f1; --ink:#22271f; --ink-2:#6b6f60;
+  --line:#d5d0bf; --wood:#c79e6b; --wood-edge:#9c7746;
+  --tent-fill:#fffef8; --tent-edge:#8a9184; --wall:#5c6657; --window:#7fa8c9;
+  --chair-basic:#a58358; --chair-basic-back:#7d5f3a;
+  --chair-pad:#fbfaf6; --chair-pad-back:#d8d4c6; --chair-edge:#8f8b7c;
+  --cloth-w:#faf9f4; --cloth-b:#2a2a2e; --grid1:rgba(60,70,50,.07); --grid5:rgba(60,70,50,.14);
+  --danger:#b3402e; --sel:#d99a2b; --dim:#8b8f7e; --lights:#dfae3f;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#14170f; --ground:#1e221a; --paper:#262b21; --ink:#ece9dd; --ink-2:#a3a794;
+  --line:#3a4033; --wood:#8f6f47; --wood-edge:#bf9a68;
+  --tent-fill:#2c3126; --tent-edge:#79826f; --wall:#9aa48d; --window:#8fb6d6;
+  --chair-basic:#8a6c44; --chair-basic-back:#5f4a2e;
+  --chair-pad:#e8e5da; --chair-pad-back:#b9b5a6; --chair-edge:#6f7462;
+  --cloth-w:#e9e7de; --cloth-b:#191a1d; --grid1:rgba(220,230,200,.06); --grid5:rgba(220,230,200,.12);
+  --sel:#e6ad45; --accent:#e2a93f; --accent-ink:#f4d089; --danger:#e06a56; --dim:#7d8270; --lights:#e6b84e;
+}}
+:root[data-theme="dark"]{
+  --bg:#14170f; --ground:#1e221a; --paper:#262b21; --ink:#ece9dd; --ink-2:#a3a794;
+  --line:#3a4033; --wood:#8f6f47; --wood-edge:#bf9a68;
+  --tent-fill:#2c3126; --tent-edge:#79826f; --wall:#9aa48d; --window:#8fb6d6;
+  --chair-basic:#8a6c44; --chair-basic-back:#5f4a2e;
+  --chair-pad:#e8e5da; --chair-pad-back:#b9b5a6; --chair-edge:#6f7462;
+  --cloth-w:#e9e7de; --cloth-b:#191a1d; --grid1:rgba(220,230,200,.06); --grid5:rgba(220,230,200,.12);
+  --sel:#e6ad45; --accent:#e2a93f; --accent-ink:#f4d089; --danger:#e06a56; --dim:#7d8270; --lights:#e6b84e;
+}
+:root[data-theme="light"]{
+  --pine:#24382b; --pine-2:#2e4636; --accent:#d99a2b; --accent-ink:#7a5210;
+  --bg:#e3ded0; --ground:#efebdd; --paper:#fbf9f1; --ink:#22271f; --ink-2:#6b6f60;
+  --line:#d5d0bf; --wood:#c79e6b; --wood-edge:#9c7746;
+  --tent-fill:#fffef8; --tent-edge:#8a9184; --wall:#5c6657; --window:#7fa8c9;
+  --chair-basic:#a58358; --chair-basic-back:#7d5f3a;
+  --chair-pad:#fbfaf6; --chair-pad-back:#d8d4c6; --chair-edge:#8f8b7c;
+  --cloth-w:#faf9f4; --cloth-b:#2a2a2e; --grid1:rgba(60,70,50,.07); --grid5:rgba(60,70,50,.14);
+  --danger:#b3402e; --sel:#d99a2b; --dim:#8b8f7e; --lights:#dfae3f;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex; justify-content:center; overflow:hidden;}
+#app{width:100%; max-width:560px; height:100dvh; display:flex; flex-direction:column;
+  background:var(--ground); box-shadow:0 0 40px rgba(0,0,0,.18); position:relative; overflow:hidden;}
+
+header{background:var(--pine); color:#f2efe4; padding:10px 14px;
+  display:flex; align-items:center; gap:10px; z-index:5; flex:0 0 auto;}
+header .brand{display:flex; flex-direction:column; gap:1px; flex:1; min-width:0;}
+header .brand b{font-family:ui-rounded,-apple-system,sans-serif; font-size:16px; letter-spacing:.2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+header .brand span{font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:#c9c39f;}
+.chip{border:1px solid rgba(255,255,255,.28); color:#f2efe4; background:rgba(255,255,255,.08);
+  border-radius:99px; font-size:12px; padding:6px 11px; font-weight:600; cursor:pointer;
+  font-variant-numeric:tabular-nums;}
+.iconb{width:32px; height:32px; border-radius:99px; border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.08); color:#f2efe4; font-size:15px; line-height:1; cursor:pointer;
+  display:grid; place-items:center; font-weight:700; flex:0 0 auto;}
+
+#cvwrap{flex:1 1 auto; position:relative; overflow:hidden; touch-action:none; min-height:120px;}
+svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:none;}
+#zoomctl{position:absolute; right:10px; top:10px; display:flex; flex-direction:column; gap:6px;}
+#zoomctl button, #tools button{width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
+  background:var(--paper); color:var(--ink); font-size:16px; font-weight:700; cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.12); display:grid; place-items:center; padding:0;}
+#tools{position:absolute; left:10px; top:10px; display:flex; flex-direction:column; gap:6px;}
+#tools button svg{width:17px; height:17px; display:block;}
+#tools button.on{background:var(--accent); color:#241a05; border-color:var(--accent);}
+#multibar{position:absolute; left:50%; bottom:12px; transform:translateX(-50%) translateY(120%);
+  display:flex; align-items:center; gap:4px; background:var(--pine); border-radius:14px;
+  padding:6px 6px 6px 13px; box-shadow:0 5px 18px rgba(0,0,0,.32); z-index:9;
+  transition:transform .2s; max-width:calc(100% - 20px);}
+#multibar.on{transform:translateX(-50%) translateY(0);}
+#mcount{color:#f2efe4; font-size:12.5px; font-weight:700; margin-right:5px; white-space:nowrap;
+  font-variant-numeric:tabular-nums;}
+#multibar button{border:0; background:rgba(255,255,255,.1); color:#f2efe4; font-size:14px;
+  min-width:36px; height:34px; border-radius:9px; cursor:pointer; padding:0 9px; font-weight:700;}
+#multibar button:disabled{opacity:.35;}
+#multibar button.del{color:#f4a08f;}
+#multibar button.done{background:var(--accent); color:#241a05; font-size:12.5px;}
+#empty{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:90%; max-width:360px; text-align:center; pointer-events:none;}
+#empty p{font-size:13px; line-height:1.5; color:var(--ink-2); margin:0 0 11px;}
+#empty p b{color:var(--ink);}
+#empty .exs{display:flex; flex-direction:column; gap:6px; pointer-events:auto;}
+#empty .ex{border:1px solid var(--line); background:var(--paper); color:var(--ink);
+  border-radius:11px; padding:9px 12px; font-size:12.5px; line-height:1.35; cursor:pointer;
+  text-align:left; box-shadow:0 2px 6px rgba(0,0,0,.07);}
+#empty .ex b{color:var(--accent-ink); font-weight:700;}
+#toast{position:absolute; left:50%; top:12px; transform:translateX(-50%) translateY(-8px);
+  background:var(--pine); color:#f2efe4; font-size:12.5px; line-height:1.45; font-weight:600;
+  padding:10px 14px; border-radius:13px; width:calc(100% - 24px); max-width:400px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:.25s; z-index:30;
+  display:flex; align-items:center; gap:10px;}
+#toast.on{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+#toastMsg{flex:1;}
+#toastUndo{display:none; flex:0 0 auto; border:1px solid rgba(255,255,255,.35); background:transparent;
+  color:var(--accent); font-weight:800; font-size:12px; padding:6px 11px; border-radius:99px; cursor:pointer;}
+
+#pill{position:absolute; display:none; gap:2px; background:var(--pine); border-radius:12px;
+  padding:4px; box-shadow:0 4px 14px rgba(0,0,0,.3); z-index:8; transform:translate(-50%,-100%);}
+#pill button{border:0; background:transparent; color:#f2efe4; font-size:14px; width:38px; height:34px;
+  border-radius:9px; cursor:pointer; display:grid; place-items:center;}
+#pill button:active{background:rgba(255,255,255,.14);}
+#pill button.del{color:#f4a08f;}
+
+#pbar{flex:0 0 auto; display:flex; gap:8px; align-items:center; padding:8px 12px;
+  background:var(--paper); border-top:1px solid var(--line); z-index:5;}
+#pin{flex:1; min-width:0; border:1px solid var(--line); background:var(--ground); color:var(--ink);
+  border-radius:99px; padding:11px 15px; font-size:16px; outline:none; font-family:inherit;}
+#pin::placeholder{color:var(--ink-2);}
+#pin:focus{border-color:var(--accent); background:var(--paper);}
+#prun{flex:0 0 auto; width:44px; height:44px; border-radius:99px; border:0; background:var(--pine);
+  color:#f2efe4; font-size:18px; cursor:pointer;}
+#prun:active{background:var(--pine-2);}
+
+#qbar{flex:0 0 auto; background:var(--pine); color:#f2efe4; display:flex; align-items:center; gap:12px;
+  padding:9px 14px; cursor:pointer; z-index:5;}
+#qbar .ql{flex:1; min-width:0;}
+#qbar .ql small{display:block; font-size:10px; text-transform:uppercase; letter-spacing:1.3px; color:#c9c39f;}
+#qbar .ql b{font-size:20px; color:var(--accent); font-variant-numeric:tabular-nums;
+  font-family:ui-rounded,-apple-system,sans-serif;}
+#qbar .ql b em{font-style:normal; font-size:11.5px; color:#dcd8c4; font-weight:500; margin-left:8px;}
+#autob{flex:0 0 auto; border:0; border-radius:12px; background:var(--accent); color:#241a05; font-weight:800;
+  font-size:13.5px; padding:10px 14px; cursor:pointer;}
+
+#tray{flex:0 0 auto; background:var(--paper); border-top:1px solid var(--line);
+  padding:8px 0 max(8px,env(safe-area-inset-bottom)); z-index:5;}
+#tray .row{display:flex; gap:8px; overflow-x:auto; padding:2px 12px 4px; scrollbar-width:none;}
+#tray .row::-webkit-scrollbar{display:none;}
+#tray .cap{font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--ink-2);
+  padding:0 14px 5px; font-weight:700;}
+.titem{flex:0 0 auto; border:1px solid var(--line); background:var(--ground); border-radius:12px;
+  padding:7px 10px 6px; display:flex; flex-direction:column; align-items:center; gap:3px;
+  cursor:pointer; min-width:74px;}
+.titem:active{border-color:var(--accent);}
+.titem svg{width:44px; height:26px;}
+.titem b{font-size:11px; white-space:nowrap;}
+.titem span{font-size:10.5px; color:var(--accent-ink); font-weight:700; font-variant-numeric:tabular-nums;}
+
+#veil{position:absolute; inset:0; background:rgba(15,18,12,.45); opacity:0; pointer-events:none;
+  transition:.22s; z-index:18;}
+#veil.on{opacity:1; pointer-events:auto;}
+.sheet{position:absolute; left:0; right:0; bottom:0; background:var(--paper);
+  border-radius:18px 18px 0 0; transform:translateY(110%); visibility:hidden;
+  transition:transform .26s cubic-bezier(.3,.9,.3,1), visibility 0s .26s;
+  z-index:20; max-height:86%; display:flex; flex-direction:column; box-shadow:0 -8px 30px rgba(0,0,0,.25);}
+.sheet.on{transform:translateY(0); visibility:visible;
+  transition:transform .26s cubic-bezier(.3,.9,.3,1), visibility 0s;}
+.sheet .grab{width:38px; height:4px; border-radius:4px; background:var(--line); margin:9px auto 2px; flex:0 0 auto;}
+.sheet .body{overflow-y:auto; padding:8px 16px calc(16px + env(safe-area-inset-bottom));}
+.sheet h3{margin:6px 0 2px; font-size:17px; display:flex; align-items:baseline; gap:8px;}
+.sheet h3 small{font-size:12px; color:var(--accent-ink); font-weight:700;}
+.sheet .sub{font-size:12.5px; line-height:1.5; color:var(--ink-2); margin:0 0 10px;}
+.seclbl{font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--ink-2);
+  font-weight:700; margin:14px 0 6px;}
+.mrow{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid var(--line);
+  background:var(--ground); border-radius:12px; padding:11px 13px; font-size:14px; font-weight:600;
+  color:var(--ink); cursor:pointer; margin-bottom:7px;}
+.mrow .pr{margin-left:auto; font-size:11.5px; color:var(--ink-2); font-weight:600; font-variant-numeric:tabular-nums;}
+.mrow.on{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--ground));}
+.mrow.on .tick{color:var(--accent-ink); font-weight:800;}
+.mrow .tick{width:16px; flex:0 0 auto; color:transparent;}
+.mrow.danger{color:var(--danger);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+.grid2 .mrow{margin-bottom:0;}
+.seg{display:flex; gap:6px; flex-wrap:wrap;}
+.seg .mrow{flex:1 1 auto; width:auto; justify-content:center; padding:10px 8px; font-size:13px;}
+.seg .mrow .pr{margin-left:6px;}
+.fld{display:flex; align-items:center; gap:10px; border:1px solid var(--line); background:var(--ground);
+  border-radius:12px; padding:10px 13px; margin-bottom:7px; font-size:13px;}
+.fld label{font-size:13px; font-weight:600; flex:1;}
+.fld input{width:90px; border:0; background:transparent; color:var(--ink); font-size:16px; font-weight:700;
+  text-align:right; outline:none; font-variant-numeric:tabular-nums; font-family:inherit;}
+.cta{width:100%; border:0; border-radius:13px; background:var(--accent); color:#241a05; font-weight:800;
+  font-size:15px; padding:14px; cursor:pointer; margin-top:12px;}
+.ghost{width:100%; border:1px solid var(--line); border-radius:13px; background:transparent; color:var(--ink-2);
+  font-weight:700; font-size:13px; padding:11px; cursor:pointer; margin-top:8px;}
+.qline{display:flex; gap:8px; font-size:13.5px; padding:7px 0; border-bottom:1px dashed var(--line);
+  align-items:baseline;}
+.qline .qn{color:var(--ink-2); font-variant-numeric:tabular-nums; min-width:30px;}
+.qline .qlab{flex:1;}
+.qline .qp{font-variant-numeric:tabular-nums; font-weight:700;}
+.qline .qp.na{color:var(--ink-2); font-weight:500; font-size:11.5px;}
+.qtotal{display:flex; padding:12px 0 2px; font-size:16px; font-weight:800;}
+.qtotal span:last-child{margin-left:auto; color:var(--accent-ink); font-size:19px;
+  font-variant-numeric:tabular-nums;}
+.qcat{margin-top:10px;}
+.helpstep{display:flex; gap:11px; margin-bottom:12px; font-size:13.5px; line-height:1.5;}
+.helpstep .n{flex:0 0 auto; width:22px; height:22px; border-radius:99px; background:var(--pine);
+  color:#f2efe4; font-size:12px; font-weight:800; display:grid; place-items:center; margin-top:1px;}
+.exlist{display:flex; flex-direction:column; gap:7px;}
+.exlist button{border:1px solid var(--line); background:var(--ground); color:var(--ink); border-radius:12px;
+  padding:11px 13px; font-size:13px; line-height:1.4; text-align:left; cursor:pointer; font-family:inherit;}
+button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid var(--sel); outline-offset:2px;}
+@media (prefers-reduced-motion: reduce){ .sheet,#veil,#toast{transition:none;} }
+</style>
+
+<div id="app">
+  <header>
+    <div class="brand"><b>Event Floor Planner</b><span>Prototype demo</span></div>
+    <button class="chip" id="venueChip">40 × 60 ft ✎</button>
+    <button class="iconb" id="helpBtn" aria-label="Demo guide">?</button>
+  </header>
+
+  <div id="cvwrap">
+    <svg id="cv" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g1" width="1" height="1" patternUnits="userSpaceOnUse">
+          <path d="M1 0H0V1" fill="none" stroke="var(--grid1)" stroke-width=".04"/>
+        </pattern>
+        <pattern id="g5" width="5" height="5" patternUnits="userSpaceOnUse">
+          <path d="M5 0H0V5" fill="none" stroke="var(--grid5)" stroke-width=".07"/>
+        </pattern>
+      </defs>
+      <g id="gVenue"></g>
+      <g id="gTents"></g>
+      <g id="gFurn"></g>
+      <g id="gSel"></g>
+    </svg>
+    <div id="zoomctl">
+      <button id="zin" aria-label="Zoom in">+</button>
+      <button id="zout" aria-label="Zoom out">−</button>
+      <button id="zfit" aria-label="Fit view" style="font-size:13px">⤢</button>
+    </div>
+    <div id="tools">
+      <button id="selBtn" aria-label="Select multiple items"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.2"/></svg></button>
+      <button id="imgBtn" aria-label="Save plan as image"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8v7.4"/><path d="m5 6.4 3 3 3-3"/><path d="M2.6 11.4v1.3a1.5 1.5 0 0 0 1.5 1.5h7.8a1.5 1.5 0 0 0 1.5-1.5v-1.3"/></svg></button>
+    </div>
+    <div id="empty">
+      <p><b>Describe your event below</b> and the plan builds itself —<br>or tap an item in the tray to place it by hand.</p>
+      <div class="exs" id="exs"></div>
+    </div>
+    <div id="pill">
+      <button id="pRot" aria-label="Rotate">⟳</button>
+      <button id="pDup" aria-label="Duplicate">⧉</button>
+      <button id="pMenu" aria-label="Options">•••</button>
+      <button id="pDel" class="del" aria-label="Delete">✕</button>
+    </div>
+    <div id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+    <div id="multibar">
+      <span id="mcount">Tap items to select</span>
+      <button data-m="all">All</button>
+      <button data-m="dup" aria-label="Duplicate selection">⧉</button>
+      <button data-m="rot" aria-label="Rotate selection">⟳</button>
+      <button data-m="del" class="del" aria-label="Delete selection">✕</button>
+      <button data-m="done" class="done">Done</button>
+    </div>
+  </div>
+
+  <div id="pbar">
+    <input id="pin" type="text" autocomplete="off" autocapitalize="sentences" enterkeyhint="go"
+           placeholder="Describe your event…" aria-label="Describe your event">
+    <button id="prun" aria-label="Build the plan">✨</button>
+  </div>
+
+  <div id="qbar">
+    <div class="ql"><small>Rental estimate</small><b id="qtot">$0</b></div>
+    <button id="autob">Auto ✨</button>
+  </div>
+
+  <div id="tray">
+    <div class="cap">Inventory — tap to place (real-size, no resizing)</div>
+    <div class="row" id="trayRow"></div>
+  </div>
+
+  <div id="veil"></div>
+  <div class="sheet" id="sheet"><div class="grab"></div><div class="body" id="sheetBody"></div></div>
+</div>
+
+<script>
+"use strict";
+/* ============ catalog ============ */
+const CHAIRS = { basic:{name:"Basic chair", price:1.8}, padded:{name:"Padded white chair", price:3} };
+const CAT = {
+  t6:{name:"6 ft table", short:"6 ft", cat:"table", shape:"rect", w:6, h:2.5, price:8,  min:6, max:8},
+  t8:{name:"8 ft table", short:"8 ft", cat:"table", shape:"rect", w:8, h:2.5, price:10, min:8, max:10},
+  r5:{name:"5 ft round", short:"5 ft round", cat:"table", shape:"round", d:5, price:10, min:8, max:10},
+  ck:{name:"Cocktail table", short:"cocktail", cat:"table", shape:"round", d:2.5, price:12, min:0, max:0, standing:true},
+  tt1010:{name:"10×10 tent", size:"10×10", cat:"tent", w:10, h:10, price:75, extras:[
+    {id:"lights", label:"String Lights", price:25},
+    {id:"walls",  label:"Wall Kit",      price:15},
+    {id:"ceil",   label:"Ceiling liner", price:null},
+    {id:"legs",   label:"Leg liners",    price:null}]},
+  tt1020:{name:"10×20 tent", size:"10×20", cat:"tent", w:20, h:10, price:150, extras:[
+    {id:"lights", label:"String Lights", price:35},
+    {id:"walls",  label:"Wall Kit",      price:15},
+    {id:"ceil",   label:"Ceiling liner", price:null},
+    {id:"legs",   label:"Leg liners",    price:null}]},
+  tt2020:{name:"20×20 tent", size:"20×20", cat:"tent", w:20, h:20, price:350, extras:[
+    {id:"lights", label:"String Lights", price:55},
+    {id:"sidewalls", label:"Side Walls", price:25},
+    {id:"windows",   label:"Windows",    price:35},
+    {id:"ceil",   label:"Ceiling liner", price:null},
+    {id:"legs",   label:"Leg liners",    price:null}]},
+};
+const TRAY = ["r5","t6","t8","ck","tt1010","tt1020","tt2020"];
+const TENTS = ["tt1010","tt1020","tt2020"];
+
+/* ============ state ============ */
+let venue = {w:40, h:60};
+let items = [];
+let seq = 1;
+let sel = new Set();
+let selectMode = false;
+let view = {x:-4, y:-4, w:48};
+let undoSnap = null;
+
+const $ = id => document.getElementById(id);
+const cv = $("cv"), gT = $("gTents"), gF = $("gFurn"), gS = $("gSel"), gV = $("gVenue");
+const money = v => "$" + (Math.round(v*100)/100).toLocaleString("en-US",
+  {minimumFractionDigits:(Math.round(v*100)%100 ? 2 : 0), maximumFractionDigits:2});
+const deg = r => r*180/Math.PI;
+
+function newItem(k, x, y){
+  const c = CAT[k];
+  const props = c.cat==="table" ? {chairs:0, ctype:"basic", cloth:"none"} : {extras:{}};
+  return {id:seq++, k, x, y, rot:0, props};
+}
+function snapshot(){ undoSnap = JSON.stringify({items, seq, venue}); }
+function doUndo(){
+  if (!undoSnap) return;
+  const s = JSON.parse(undoSnap);
+  items = s.items; seq = s.seq; venue = s.venue; sel.clear(); undoSnap = null;
+  $("venueChip").textContent = `${venue.w} × ${venue.h} ft ✎`;
+  render(); fitView(true); toast("Reverted to your previous layout");
+}
+
+/* ============ chair layout ============ */
+function chairSpots(c, n){
+  const s = 1.4, off = 0.32, out = [];
+  if (!n) return out;
+  if (c.shape === "round"){
+    const r = c.d/2 + off + s/2;
+    for (let i=0; i<n; i++){
+      const a = i/n * 2*Math.PI - Math.PI/2;
+      const x = r*Math.cos(a), y = r*Math.sin(a);
+      out.push({x, y, rot: deg(Math.atan2(-y, -x)) - 90});
+    }
+  } else {
+    const sideCap = Math.floor(c.w/2);
+    const ends = Math.max(0, Math.min(2, n - 2*sideCap));
+    const side = n - ends, top = Math.ceil(side/2), bot = side - top;
+    const yTop = -(c.h/2 + off + s/2), yBot = -yTop;
+    const place = (cnt, y, rot) => {
+      const span = Math.min(c.w - 1.4, cnt*2);
+      for (let i=0; i<cnt; i++)
+        out.push({x: cnt===1 ? 0 : -span/2 + i*span/(cnt-1), y, rot});
+    };
+    place(top, yTop, 0); place(bot, yBot, 180);
+    if (ends >= 1) out.push({x:-(c.w/2+off+s/2), y:0, rot:90});
+    if (ends === 2) out.push({x:(c.w/2+off+s/2), y:0, rot:-90});
+  }
+  return out;
+}
+
+/* ============ svg ============ */
+function chairSVG(sp, type){
+  const f = type==="padded" ? "var(--chair-pad)" : "var(--chair-basic)";
+  const b = type==="padded" ? "var(--chair-pad-back)" : "var(--chair-basic-back)";
+  return `<g transform="translate(${sp.x} ${sp.y}) rotate(${sp.rot})">
+    <rect x="-.7" y="-.7" width="1.4" height="1.4" rx=".34" fill="${f}" stroke="var(--chair-edge)" stroke-width=".06"/>
+    <rect x="-.62" y="-.68" width="1.24" height=".34" rx=".16" fill="${b}"/></g>`;
+}
+function tableSVG(it){
+  const c = CAT[it.k], p = it.props;
+  const fill = p.cloth==="white" ? "var(--cloth-w)" : p.cloth==="black" ? "var(--cloth-b)" : "var(--wood)";
+  const edge = p.cloth==="black" ? "#000" : "var(--wood-edge)";
+  let s = "";
+  if (!c.standing) chairSpots(c, p.chairs).forEach(sp => s += chairSVG(sp, p.ctype));
+  if (c.shape === "round"){
+    s += `<circle r="${c.d/2}" fill="${fill}" stroke="${edge}" stroke-width=".1"/>`;
+    s += c.standing ? `<circle r=".22" fill="${edge}" opacity=".55"/>`
+                    : `<circle r="${c.d/2-.6}" fill="none" stroke="${edge}" stroke-width=".05" opacity=".4"/>`;
+  } else {
+    s += `<rect x="${-c.w/2}" y="${-c.h/2}" width="${c.w}" height="${c.h}" rx=".18" fill="${fill}" stroke="${edge}" stroke-width=".1"/>
+          <line x1="${-c.w/2+.5}" y1="0" x2="${c.w/2-.5}" y2="0" stroke="${edge}" stroke-width=".05" opacity=".4"/>`;
+  }
+  return `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot})">${s}</g>`;
+}
+function tentSVG(it){
+  const c = CAT[it.k], ex = it.props.extras, hw = c.w/2, hh = c.h/2;
+  let s = `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".25" fill="var(--tent-fill)" stroke="var(--tent-edge)" stroke-width=".14"/>`;
+  if (c.w === c.h){
+    s += `<path d="M${-hw} ${-hh} L0 0 M${hw} ${-hh} L0 0 M${-hw} ${hh} L0 0 M${hw} ${hh} L0 0" stroke="var(--tent-edge)" stroke-width=".07" opacity=".45" fill="none"/>`;
+  } else {
+    const q = c.w/4;
+    s += `<path d="M${-hw} ${-hh} L${-q} 0 M${-hw} ${hh} L${-q} 0 M0 ${-hh} L${-q} 0 M0 ${hh} L${-q} 0
+                 M${hw} ${-hh} L${q} 0 M${hw} ${hh} L${q} 0 M0 ${-hh} L${q} 0 M0 ${hh} L${q} 0
+                 M${-q} 0 L${q} 0" stroke="var(--tent-edge)" stroke-width=".07" opacity=".45" fill="none"/>`;
+  }
+  if (ex.ceil) s += `<rect x="${-hw+.55}" y="${-hh+.55}" width="${c.w-1.1}" height="${c.h-1.1}" rx=".2" fill="var(--cloth-w)" opacity=".35"/>`;
+  if (ex.walls || ex.sidewalls) s += `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".25" fill="none" stroke="var(--wall)" stroke-width=".38"/>`;
+  if (ex.windows) s += `<rect x="${-hw}" y="${-hh}" width="${c.w}" height="${c.h}" rx=".25" fill="none" stroke="var(--window)" stroke-width=".26" stroke-dasharray="1.3 1.7"/>`;
+  if (ex.lights) s += `<rect x="${-hw+1.1}" y="${-hh+1.1}" width="${c.w-2.2}" height="${c.h-2.2}" rx=".3" fill="none" stroke="var(--lights)" stroke-width=".2" stroke-dasharray=".01 .85" stroke-linecap="round"/>`;
+  if (ex.legs){
+    const pts = c.w===c.h ? [[-hw,-hh],[hw,-hh],[-hw,hh],[hw,hh]]
+                          : [[-hw,-hh],[0,-hh],[hw,-hh],[-hw,hh],[0,hh],[hw,hh]];
+    pts.forEach(p => s += `<circle cx="${p[0]}" cy="${p[1]}" r=".42" fill="var(--cloth-w)" stroke="var(--tent-edge)" stroke-width=".08"/>`);
+  }
+  s += `<text y="${hh-.7}" text-anchor="middle" font-size="1.1" fill="var(--tent-edge)" opacity=".8" style="pointer-events:none">${c.size}</text>`;
+  return `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot})">${s}</g>`;
+}
+function render(){
+  gV.innerHTML =
+    `<rect width="${venue.w}" height="${venue.h}" fill="var(--ground)"/>
+     <rect width="${venue.w}" height="${venue.h}" fill="url(#g1)"/>
+     <rect width="${venue.w}" height="${venue.h}" fill="url(#g5)"/>
+     <rect width="${venue.w}" height="${venue.h}" fill="none" stroke="var(--dim)" stroke-width=".16"/>
+     <text x="${venue.w/2}" y="-1" text-anchor="middle" font-size="1.5" fill="var(--dim)">${venue.w} ft</text>
+     <text x="-1" y="${venue.h/2}" text-anchor="middle" font-size="1.5" fill="var(--dim)" transform="rotate(-90 -1 ${venue.h/2})">${venue.h} ft</text>`;
+  gT.innerHTML = items.filter(i => CAT[i.k].cat==="tent").map(tentSVG).join("");
+  gF.innerHTML = items.filter(i => CAT[i.k].cat==="table").map(tableSVG).join("");
+  renderSel(); renderQuote();
+  $("empty").style.display = items.length ? "none" : "block";
+}
+function itemBox(it){
+  const c = CAT[it.k];
+  const hw = c.shape==="round" ? c.d/2 : c.w/2;
+  const hh = c.shape==="round" ? c.d/2 : c.h/2;
+  const a = it.rot*Math.PI/180, ca = Math.abs(Math.cos(a)), sa = Math.abs(Math.sin(a));
+  return {x0: it.x-(hw*ca+hh*sa), y0: it.y-(hw*sa+hh*ca),
+          x1: it.x+(hw*ca+hh*sa), y1: it.y+(hw*sa+hh*ca)};
+}
+function selOutline(it){
+  const c = CAT[it.k];
+  const shape = c.shape==="round"
+    ? `<circle r="${c.d/2+.5}" fill="none"/>`
+    : `<rect x="${-c.w/2-.5}" y="${-c.h/2-.5}" width="${c.w+1}" height="${c.h+1}" rx=".3" fill="none"/>`;
+  return `<g transform="translate(${it.x} ${it.y}) rotate(${it.rot})">${shape}</g>`;
+}
+let marquee = null;
+function renderSel(){
+  const chosen = items.filter(i => sel.has(i.id));
+  let s = chosen.map(selOutline).join("");
+  if (marquee){
+    const x = Math.min(marquee.x0, marquee.x1), y = Math.min(marquee.y0, marquee.y1);
+    s += `<rect x="${x}" y="${y}" width="${Math.abs(marquee.x1-marquee.x0)}" height="${Math.abs(marquee.y1-marquee.y0)}" fill="none"/>`;
+  }
+  gS.innerHTML = s
+    ? `<g stroke="var(--sel)" stroke-width=".14" stroke-dasharray=".5 .35" style="pointer-events:none">${s}</g>`
+    : "";
+  const multi = selectMode || chosen.length > 1;
+  $("pill").style.display = (!multi && chosen.length === 1) ? "flex" : "none";
+  if (!multi && chosen.length === 1) positionPill(chosen[0]);
+  const mb = $("multibar");
+  mb.classList.toggle("on", multi);
+  if (multi){
+    $("mcount").textContent = chosen.length
+      ? `${chosen.length} selected` : "Tap items to select";
+    mb.querySelectorAll("[data-m]").forEach(b => {
+      if (b.dataset.m !== "done" && b.dataset.m !== "all") b.disabled = !chosen.length;
+    });
+  }
+}
+function positionPill(it){
+  const r = cv.getBoundingClientRect(), wr = $("cvwrap").getBoundingClientRect();
+  const c = CAT[it.k], hh = (c.shape==="round" ? c.d/2 : Math.max(c.w,c.h)/2);
+  const px = (it.x - view.x)/view.w * r.width + r.left - wr.left;
+  const py = (it.y - hh - 1.2 - view.y)/viewH()*r.height + r.top - wr.top;
+  const p = $("pill");
+  p.style.display = "flex";
+  p.style.left = Math.max(70, Math.min(wr.width-70, px)) + "px";
+  p.style.top  = Math.max(46, py) + "px";
+}
+function viewH(){ const r = cv.getBoundingClientRect(); return view.w * r.height / (r.width||1); }
+function applyView(){
+  cv.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${viewH()}`);
+  const it = items.find(i => sel.has(i.id)); if (it && sel.size===1) positionPill(it);
+}
+function contentBounds(){
+  if (!items.length) return null;
+  let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+  for (const it of items){
+    const c = CAT[it.k];
+    const seats = c.cat==="table" && it.props.chairs ? 2.1 : 0;
+    const r = (c.cat==="tent" ? Math.max(c.w,c.h)/2
+            : c.shape==="round" ? c.d/2 : Math.max(c.w,c.h)/2) + seats;
+    x0 = Math.min(x0, it.x-r); x1 = Math.max(x1, it.x+r);
+    y0 = Math.min(y0, it.y-r); y1 = Math.max(y1, it.y+r);
+  }
+  return {x0, y0, x1, y1};
+}
+function fitView(toContent){
+  const r = cv.getBoundingClientRect(), ar = (r.height||1)/(r.width||1);
+  const b = toContent ? contentBounds() : null;
+  const m = b ? 3 : 4;
+  const bx = b ? b.x0-m : -m, by = b ? b.y0-m : -m;
+  const bw = b ? (b.x1-b.x0)+2*m : venue.w+2*m;
+  const bh = b ? (b.y1-b.y0)+2*m : venue.h+2*m;
+  let w = Math.max(bw, bh/ar, 12);
+  view = {x: bx + bw/2 - w/2, y: by + bh/2 - (w*ar)/2, w};
+  applyView();
+}
+
+/* ============ quote ============ */
+function quoteLines(){
+  const cats = {Tents:[], "Tent extras":[], Tables:[], Chairs:[], Linens:[]};
+  const push = (cat, label, unit, qty=1) => {
+    const arr = cats[cat], f = arr.find(l => l.label===label && l.unit===unit);
+    f ? f.qty += qty : arr.push({label, unit, qty});
+  };
+  for (const it of items){
+    const c = CAT[it.k];
+    if (c.cat === "tent"){
+      push("Tents", c.name, c.price);
+      for (const ex of c.extras) if (it.props.extras[ex.id])
+        push("Tent extras", `${ex.label} (${c.size})`, ex.price);
+    } else {
+      push("Tables", c.name, c.price);
+      if (it.props.chairs && !c.standing)
+        push("Chairs", CHAIRS[it.props.ctype].name, CHAIRS[it.props.ctype].price, it.props.chairs);
+      if (it.props.cloth !== "none")
+        push("Linens", `Spandex ${it.props.cloth} tablecloth`, 0);
+    }
+  }
+  let total = 0, onReq = false;
+  for (const k in cats) for (const l of cats[k]){
+    if (l.unit == null) onReq = true; else total += l.unit * l.qty;
+  }
+  return {cats, total, onReq};
+}
+function renderQuote(){
+  const q = quoteLines();
+  const chairs = items.reduce((n,i) => n + (CAT[i.k].cat==="table" ? i.props.chairs : 0), 0);
+  const bits = [];
+  if (items.length) bits.push(items.length + " item" + (items.length>1?"s":""));
+  if (chairs) bits.push(chairs + " seats");
+  $("qtot").innerHTML = money(q.total) +
+    (bits.length ? `<em>${bits.join(" · ")} · tap for details</em>` : "");
+}
+
+/* ============ toast ============ */
+let toastT;
+function toast(msg, opts={}){
+  const t = $("toast");
+  $("toastMsg").innerHTML = msg;
+  $("toastUndo").style.display = opts.undo ? "block" : "none";
+  t.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("on"), opts.ms || (opts.undo ? 7000 : 3600));
+}
+$("toastUndo").addEventListener("click", () => { $("toast").classList.remove("on"); doUndo(); });
+
+/* ============ sheets ============ */
+let sheetMode = null;
+function openSheet(html, mode){
+  sheetMode = mode; $("sheetBody").innerHTML = html;
+  $("sheet").classList.add("on"); $("veil").classList.add("on");
+  $("pill").style.display = "none";
+}
+function closeSheet(){
+  sheetMode = null; $("sheet").classList.remove("on"); $("veil").classList.remove("on");
+  renderSel();
+}
+$("veil").addEventListener("click", closeSheet);
+
+function menuFor(id){
+  const it = items.find(i => i.id===id); if (!it) return;
+  const c = CAT[it.k];
+  openSheet(c.cat==="table" ? tableMenuHTML(it,c) : tentMenuHTML(it,c), {type:c.cat, id});
+}
+function tableMenuHTML(it, c){
+  const p = it.props;
+  const seg = (val, cur, label, act) =>
+    `<button class="mrow ${cur===val?"on":""}" data-act="${act}" data-val="${val}"><span class="tick">✓</span>${label}</button>`;
+  let s = `<h3>${c.name} <small>${money(c.price)}</small></h3>
+    <p class="sub">${c.standing ? "Standing height — no chairs by design." :
+      `Seats ${c.min}–${c.max}. Chairs snap around the table and move with it.`}</p>
+    <button class="mrow" data-act="dup"><span class="tick"></span>⧉ Duplicate <span class="pr">copies all properties</span></button>`;
+  if (!c.standing){
+    s += `<div class="seclbl">Chairs · ${p.chairs} placed</div>
+      <div class="grid2">
+        <button class="mrow" data-act="chmin"><span class="tick"></span>Add MIN (${c.min})</button>
+        <button class="mrow" data-act="chmax"><span class="tick"></span>Add MAX (${c.max})</button>
+      </div>
+      <div class="seclbl">Chair type</div><div class="seg">` +
+      seg("none", p.chairs===0 ? "none" : "-", "No chairs", "ctype") +
+      seg("basic", p.chairs>0 ? p.ctype : "-", `Basic <span class="pr">$1.80</span>`, "ctype") +
+      seg("padded", p.chairs>0 ? p.ctype : "-", `Padded white <span class="pr">$3</span>`, "ctype") + `</div>`;
+  }
+  s += `<div class="seclbl">Tablecloth</div><div class="seg">` +
+    seg("none", p.cloth, "None", "cloth") +
+    seg("white", p.cloth, `Spandex white <span class="pr">incl.</span>`, "cloth") +
+    seg("black", p.cloth, `Spandex black <span class="pr">incl.</span>`, "cloth") + `</div>
+    <div class="grid2" style="margin-top:14px">
+      <button class="mrow" data-act="rot"><span class="tick"></span>⟳ Rotate 45°</button>
+      <button class="mrow danger" data-act="del"><span class="tick"></span>✕ Delete</button>
+    </div>`;
+  return s;
+}
+function tentMenuHTML(it, c){
+  const ex = it.props.extras;
+  let s = `<h3>${c.name} <small>${money(c.price)}</small></h3>
+    <p class="sub">Tents always sit behind tables and chairs — real ${c.size} ft footprint.</p>
+    <button class="mrow" data-act="dup"><span class="tick"></span>⧉ Duplicate <span class="pr">copies all properties</span></button>
+    <div class="seclbl">Extras (priced for ${c.size})</div>`;
+  for (const e of c.extras)
+    s += `<button class="mrow ${ex[e.id]?"on":""}" data-act="extra" data-val="${e.id}">
+      <span class="tick">✓</span>${e.label}
+      <span class="pr">${e.price==null ? "price on request" : money(e.price)}</span></button>`;
+  s += `<div class="grid2" style="margin-top:12px">
+      <button class="mrow" data-act="rot"><span class="tick"></span>⟳ Rotate 90°</button>
+      <button class="mrow danger" data-act="del"><span class="tick"></span>✕ Delete</button>
+    </div>`;
+  return s;
+}
+$("sheetBody").addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]"); if (!btn) return;
+  const act = btn.dataset.act, val = btn.dataset.val;
+  if (sheetMode && (sheetMode.type==="table" || sheetMode.type==="tent")){
+    const it = items.find(i => i.id===sheetMode.id); if (!it) return closeSheet();
+    const c = CAT[it.k];
+    if (act==="dup"){ duplicate(it); closeSheet(); return; }
+    if (act==="rot"){ it.rot = (it.rot + (c.cat==="tent"?90:45)) % 360; render(); return; }
+    if (act==="del"){ items = items.filter(i => i!==it); sel.clear(); render(); closeSheet(); return; }
+    if (act==="chmin"){ it.props.chairs = c.min; if (it.props.ctype==="none") it.props.ctype="basic"; }
+    if (act==="chmax"){ it.props.chairs = c.max; if (it.props.ctype==="none") it.props.ctype="basic"; }
+    if (act==="ctype"){ if (val==="none") it.props.chairs = 0;
+                        else { it.props.ctype = val; if (!it.props.chairs) it.props.chairs = c.min; } }
+    if (act==="cloth"){ it.props.cloth = val; }
+    if (act==="extra"){ it.props.extras[val] = !it.props.extras[val]; }
+    render();
+    $("sheetBody").innerHTML = c.cat==="table" ? tableMenuHTML(it,c) : tentMenuHTML(it,c);
+    return;
+  }
+  if (act==="venuePreset"){
+    const [w,h] = val.split("x").map(Number); setVenue(w,h); return;
+  }
+  if (act==="venueSave"){
+    const w = +$("vW").value, h = +$("vD").value;
+    if (w>=15 && h>=15 && w<=300 && h<=300) setVenue(w,h);
+    else toast("Enter 15–300 ft per side");
+    return;
+  }
+  if (act==="saveImg"){ saveImage(); return; }
+  if (act==="autoRun"){ runAuto(); return; }
+  if (act==="segpick"){
+    btn.parentElement.querySelectorAll(".mrow").forEach(b => b.classList.remove("on"));
+    btn.classList.add("on"); return;
+  }
+  if (act==="reqQuote"){ toast("In the real app this sends your layout + quote straight to the rental team 🎉", {ms:4200}); return; }
+  if (act==="clearAll"){ snapshot(); items=[]; sel.clear(); render(); closeSheet(); toast("Canvas cleared", {undo:true}); return; }
+  if (act==="tryex"){ closeSheet(); runPrompt(btn.dataset.ex); return; }
+});
+
+/* ============ quote sheet ============ */
+$("qbar").addEventListener("click", e => {
+  if (e.target.id === "autob") return;
+  const q = quoteLines();
+  let s = `<h3>Itemized estimate</h3><p class="sub">Every item on the canvas, at real rental prices.</p>`;
+  let any = false;
+  for (const cat in q.cats){
+    const lines = q.cats[cat]; if (!lines.length) continue; any = true;
+    s += `<div class="qcat seclbl">${cat}</div>`;
+    for (const l of lines)
+      s += `<div class="qline"><span class="qn">${l.qty}×</span><span class="qlab">${l.label}</span>` +
+        (l.unit==null ? `<span class="qp na">price on request</span>` :
+         l.unit===0   ? `<span class="qp na">included</span>` :
+                        `<span class="qp">${money(l.unit*l.qty)}</span>`) + `</div>`;
+  }
+  if (!any) s += `<p class="sub">Nothing placed yet — describe your event in the box below, or add items from the tray.</p>`;
+  s += `<div class="qtotal"><span>Total${q.onReq ? " (excl. on-request items)" : ""}</span><span>${money(q.total)}</span></div>
+    <button class="cta" data-act="reqQuote">Request this quote</button>
+    ${any ? `<button class="ghost" data-act="clearAll">Clear the canvas</button>` : ""}`;
+  openSheet(s, {type:"quote"});
+});
+
+/* ============ venue sheet ============ */
+const VENUE_PRESETS = [[20,30],[30,50],[40,60],[50,100],[60,120]];
+$("venueChip").addEventListener("click", () => {
+  openSheet(`<h3>Canvas size</h3>
+    <p class="sub">The lot, yard or hall you're planning inside. Everything on the canvas is drawn to scale against it — 1 grid square = 1 ft.</p>
+    <div class="seclbl">Presets</div>
+    <div class="seg">${VENUE_PRESETS.map(([w,h]) =>
+      `<button class="mrow ${w===venue.w&&h===venue.h?"on":""}" data-act="venuePreset" data-val="${w}x${h}">
+        <span class="tick">✓</span>${w} × ${h}</button>`).join("")}</div>
+    <div class="seclbl">Custom</div>
+    <div class="fld"><label>Width</label><input id="vW" type="number" inputmode="numeric" value="${venue.w}"> ft</div>
+    <div class="fld"><label>Depth</label><input id="vD" type="number" inputmode="numeric" value="${venue.h}"> ft</div>
+    <button class="cta" data-act="venueSave">Save</button>
+    <p class="sub" style="margin-top:10px">Tip: you can also say it in the prompt box — “in a 30×50 backyard”.</p>`,
+    {type:"venue"});
+});
+function setVenue(w, h){
+  snapshot(); venue = {w, h};
+  $("venueChip").textContent = `${w} × ${h} ft ✎`;
+  render(); fitView(items.length > 0); closeSheet();
+  toast(`Canvas set to ${w} × ${h} ft`, {undo:true});
+}
+
+/* ============ save as image ============ */
+function resolveVars(str){
+  const cs = getComputedStyle(document.documentElement);
+  return str.replace(/var\((--[a-z0-9-]+)\)/g, (m, v) => cs.getPropertyValue(v).trim() || "#000");
+}
+function planSVG(){
+  const W = 1100, pad = 44;
+  const b = contentBounds();
+  const x0 = Math.min(0, b ? b.x0 : 0) - 3, y0 = Math.min(0, b ? b.y0 : 0) - 3;
+  const x1 = Math.max(venue.w, b ? b.x1 : venue.w) + 3, y1 = Math.max(venue.h, b ? b.y1 : venue.h) + 3;
+  const fw = x1-x0, fh = y1-y0;
+  const s = (W - pad*2) / fw, drawH = fh * s;
+  const q = quoteLines();
+  const lines = [];
+  for (const cat in q.cats) for (const l of q.cats[cat])
+    lines.push(`${l.qty}×  ${l.label}` + (l.unit==null ? "  (on request)" : l.unit===0 ? "  (incl.)" : `  ${money(l.unit*l.qty)}`));
+  const cols = 2, rows = Math.ceil(lines.length/cols);
+  const headH = 104, footH = 34 + rows*25 + 58;
+  const H = headH + drawH + footH;
+  const date = new Date().toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"});
+  const seats = items.reduce((n,i) => n + (CAT[i.k].cat==="table" ? i.props.chairs : 0), 0);
+
+  const plan = items.filter(i => CAT[i.k].cat==="tent").map(tentSVG).join("")
+             + items.filter(i => CAT[i.k].cat==="table").map(tableSVG).join("");
+  const legend = lines.map((txt, i) => {
+    const c = i % cols, r = Math.floor(i/cols);
+    return `<text x="${pad + c*(W-pad*2)/cols}" y="${headH+drawH+58 + r*25}" font-size="16" fill="var(--ink-2)"
+      font-family="-apple-system,Helvetica,Arial,sans-serif">${txt.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</text>`;
+  }).join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Math.round(H)}" viewBox="0 0 ${W} ${Math.round(H)}">
+  <defs>
+    <pattern id="eg" width="5" height="5" patternUnits="userSpaceOnUse">
+      <path d="M5 0H0V5" fill="none" stroke="var(--grid5)" stroke-width="${1/s}"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="var(--paper)"/>
+  <text x="${pad}" y="44" font-size="27" font-weight="700" fill="var(--ink)" font-family="-apple-system,Helvetica,Arial,sans-serif">Event floor plan</text>
+  <text x="${pad}" y="72" font-size="16" fill="var(--ink-2)" font-family="-apple-system,Helvetica,Arial,sans-serif">${venue.w} × ${venue.h} ft · ${items.length} items${seats ? " · " + seats + " seats" : ""} · ${date}</text>
+  <text x="${W-pad}" y="50" text-anchor="end" font-size="30" font-weight="800" fill="var(--accent-ink)" font-family="-apple-system,Helvetica,Arial,sans-serif">${money(q.total)}</text>
+  <text x="${W-pad}" y="72" text-anchor="end" font-size="13" fill="var(--ink-2)" letter-spacing="1.2" font-family="-apple-system,Helvetica,Arial,sans-serif">ESTIMATE${q.onReq ? " (EXCL. ON-REQUEST)" : ""}</text>
+  <g transform="translate(${pad} ${headH}) scale(${s}) translate(${-x0} ${-y0})">
+    <rect width="${venue.w}" height="${venue.h}" fill="var(--ground)"/>
+    <rect width="${venue.w}" height="${venue.h}" fill="url(#eg)"/>
+    <rect width="${venue.w}" height="${venue.h}" fill="none" stroke="var(--dim)" stroke-width="${2/s}"/>
+    ${plan}
+  </g>
+  <g transform="translate(${pad} ${headH+drawH+24})">
+    <line x1="0" y1="0" x2="${10*s}" y2="0" stroke="var(--ink-2)" stroke-width="2"/>
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="var(--ink-2)" stroke-width="2"/>
+    <line x1="${10*s}" y1="-5" x2="${10*s}" y2="5" stroke="var(--ink-2)" stroke-width="2"/>
+    <text x="${10*s+12}" y="5" font-size="15" fill="var(--ink-2)" font-family="-apple-system,Helvetica,Arial,sans-serif">10 ft</text>
+  </g>
+  ${legend}
+  <text x="${pad}" y="${H-20}" font-size="13" fill="var(--dim)" font-family="-apple-system,Helvetica,Arial,sans-serif">Drawn to scale · tables and tents shown at real size · Event Floor Planner</text>
+</svg>`;
+}
+let lastPNG = null;
+let dlCap = null;
+if (typeof claude !== "undefined" && claude && typeof claude.use === "function")
+  claude.use("downloads").then(d => { dlCap = d; }).catch(() => {});
+
+function saveImage(){
+  const blob = sheetMode && sheetMode.blob;
+  if (!blob) return;
+  const name = "event-floor-plan.png";
+  if (dlCap){
+    dlCap.save({filename:name, data:blob})
+      .then(() => toast("Image saved"))
+      .catch(err => {
+        if (err && err.code === "declined") return;
+        toast("Couldn’t save here — press and hold the image above to save it instead.", {ms:4500});
+      });
+    return;
+  }
+  if (navigator.canShare && sheetMode.file && navigator.canShare({files:[sheetMode.file]})){
+    navigator.share({files:[sheetMode.file], title:"Event floor plan"}).catch(() => {});
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = lastPNG; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function exportImage(){
+  if (!items.length) return toast("Nothing to save yet — build a plan first.");
+  const root = document.documentElement, prev = root.getAttribute("data-theme");
+  root.setAttribute("data-theme", "light");
+  const svg = resolveVars(planSVG());
+  prev ? root.setAttribute("data-theme", prev) : root.removeAttribute("data-theme");
+
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2;
+    const cnv = document.createElement("canvas");
+    cnv.width = img.width*scale; cnv.height = img.height*scale;
+    const ctx = cnv.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    cnv.toBlob(blob => {
+      if (lastPNG) URL.revokeObjectURL(lastPNG);
+      lastPNG = URL.createObjectURL(blob);
+      const file = new File([blob], "event-floor-plan.png", {type:"image/png"});
+      openSheet(`<h3>Your floor plan</h3>
+        <p class="sub">To scale, with the itemized estimate baked in — ready to send to the rental team.</p>
+        <img src="${lastPNG}" alt="Floor plan" style="width:100%;border:1px solid var(--line);border-radius:12px;display:block">
+        <button class="cta" data-act="saveImg">Save image</button>
+        <p class="sub" style="margin-top:10px">On iPhone you can also press and hold the image above and choose <b>Add to Photos</b>.</p>`,
+        {type:"image", file, blob});
+    }, "image/png");
+  };
+  img.onerror = () => toast("Couldn’t render the image on this browser.");
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+$("imgBtn").addEventListener("click", exportImage);
+
+/* ============ help ============ */
+const EXAMPLES = [
+  "20×20 tent with 5 round tables, white tablecloths and 40 padded chairs",
+  "60 guests, 8 ft tables, basic chairs, two 10×20 tents with string lights",
+  "10 cocktail tables under a 20×20 tent with bistro lights and black spandex",
+];
+$("helpBtn").addEventListener("click", () => {
+  openSheet(`<h3>60-second demo script</h3>
+    <p class="sub">The pitch: describe your event in one sentence, get a to-scale floor plan and a live rental quote.</p>
+    <div class="helpstep"><span class="n">1</span><div><b>Type it.</b> “20×20 tent with 5 round tables, white tablecloths and 40 padded chairs.” The plan and the price appear together.</div></div>
+    <div class="helpstep"><span class="n">2</span><div><b>Long-press a table</b> (right-click on desktop) — Add MAX chairs, switch the tablecloth to spandex black. The estimate updates live.</div></div>
+    <div class="helpstep"><span class="n">3</span><div><b>Long-press the tent</b> — add String Lights. The quote line is priced for that tent size: “String Lights (20×20) — $55”.</div></div>
+    <div class="helpstep"><span class="n">4</span><div><b>Select several at once</b> — the dashed-square button (top left), then tap items or drag a lasso across them. Duplicate or delete the whole group; drag any one of them to move them together.</div></div>
+    <div class="helpstep"><span class="n">5</span><div><b>Tap the estimate bar</b> — itemized quote → “Request this quote”. That’s the lead.</div></div>
+    <div class="helpstep"><span class="n">6</span><div><b>Save the image</b> — the download button (top left) renders a to-scale plan with the itemized estimate on it, ready to text or email.</div></div>
+    <p class="sub" style="margin-top:4px">Canvas too small? Tap <b>${venue.w} × ${venue.h} ft ✎</b> up top for presets or a custom size.</p>
+    <div class="seclbl">Prompts to try</div>
+    <div class="exlist">${EXAMPLES.map(x => `<button data-act="tryex" data-ex="${x.replace(/"/g,"&quot;")}">${x}</button>`).join("")}
+      <button data-act="tryex" data-ex="add string lights and black tablecloths">add string lights and black tablecloths <em style="color:var(--ink-2)">— edits what’s already on the canvas</em></button>
+    </div>
+    <p class="sub" style="margin-top:12px">By design: nothing can be resized — every item is its real-life size — and tents always render behind tables and chairs.</p>`,
+    {type:"help"});
+});
+
+/* ============ packing ============ */
+const GAPS = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5];
+function fitFor(W, H, key, count){
+  const c = CAT[key];
+  const dims = c.shape==="round" ? [{w:c.d, h:c.d, rot:0}]
+                                 : [{w:c.w, h:c.h, rot:0}, {w:c.h, h:c.w, rot:90}];
+  let best = null;
+  for (const gap of GAPS) for (const d of dims){
+    if (W < d.w || H < d.h) continue;
+    const px = d.w + gap, py = d.h + gap;
+    const nx = Math.floor((W - d.w)/px) + 1;
+    const ny = Math.floor((H - d.h)/py) + 1;
+    const cand = {nx, ny, px, py, rot:d.rot, cap:nx*ny, gap};
+    if (!best || cand.cap > best.cap) best = cand;
+    if (cand.cap >= count) return cand;
+  }
+  return best || {nx:1, ny:1, px:1, py:1, rot:0, cap:0, gap:0};
+}
+function placeGrid(cx, cy, fit, count){
+  const out = [], rows = Math.max(1, Math.ceil(count/Math.max(1,fit.nx)));
+  for (let r=0; r<rows; r++){
+    const inRow = Math.min(fit.nx, count - r*fit.nx);
+    if (inRow <= 0) break;
+    const y = cy - (rows-1)*fit.py/2 + r*fit.py;
+    for (let i=0; i<inRow; i++)
+      out.push({x: cx - (inRow-1)*fit.px/2 + i*fit.px, y, rot: fit.rot});
+  }
+  return out;
+}
+function distribute(total, n, cap){
+  const out = Array(n).fill(0);
+  let left = Math.min(total, n*cap), i = 0;
+  while (left > 0){ if (out[i%n] < cap){ out[i%n]++; left--; } i++; }
+  return out;
+}
+
+/* ============ natural-language prompt ============ */
+const NUMW = {a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,
+  eleven:11,twelve:12,dozen:12,fifteen:15,twenty:20,twentyfive:25,thirty:30,forty:40,fifty:50,
+  sixty:60,seventy:70,eighty:80,ninety:90,hundred:100};
+const num = s => s==null ? null : (/^\d+$/.test(s) ? +s : (NUMW[s] ?? null));
+
+function parsePrompt(raw){
+  let t = " " + raw.toLowerCase()
+    .replace(/[’´]/g, "'")
+    .replace(/[×✕]/g, "x")
+    .replace(/[,;.!?:]/g, " ")
+    .replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen|fifteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)\b/g, w => NUMW[w])
+    .replace(/(\d+)\s*(?:''|"|inch(?:es)?\b|in\b)/g, (m,d) => (+d>=48 ? "5ft " : " "))
+    .replace(/(\d+)\s*(?:'|ft\b|foot\b|feet\b|footer[s]?\b)/g, "$1ft")
+    .replace(/\s+/g, " ") + " ";
+
+  const spec = {venue:null, tents:[], tentSize:null, tentCount:0, tables:[], chairs:null,
+                chairType:null, cloth:null, extras:{}, guests:null, notes:[], any:false};
+  const neg = i => /\b(no|without|skip|minus)\s+[\w\s]{0,12}$/.test(t.slice(Math.max(0,i-20), i));
+
+  /* --- tent extras (stripped so they can't confuse table parsing) --- */
+  const strip = re => { t = t.replace(re, " "); };
+  const findEx = (re, key) => {
+    const m = re.exec(t);
+    if (m && !neg(m.index)){ spec.extras[key] = true; spec.any = true; }
+    if (m) strip(re);
+  };
+  findEx(/\b(?:string|bistro|cafe|fairy|edison|market|globe|twinkle)\s*light\w*\b/, "lights");
+  findEx(/\b(?:ceiling|roof)\s*lin\w*\b/, "ceil");
+  findEx(/\b(?:leg|pole)\s*(?:lin\w*|drap\w*|cover\w*|wrap\w*)\b/, "legs");
+  findEx(/\bwindows?\b/, "windows");
+  findEx(/\b(?:side\s*walls?|wall\s*kits?|walls?|sidewalls?)\b/, "walls");
+  findEx(/\b(?:lights|lighting)\b/, "lights");
+
+  /* --- venue --- */
+  const vm = /(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?\s*(?:yard|backyard|lot|venue|space|area|patio|lawn|garden|driveway|room|hall|field|site)/.exec(t);
+  if (vm){ spec.venue = {w:+vm[1], h:+vm[2]}; spec.any = true; strip(new RegExp(vm[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))); }
+
+  /* --- tents --- */
+  const addTent = (w, h, n) => {
+    const a = Math.max(w,h), b = Math.min(w,h);
+    let key = a<=10 && b<=10 ? "tt1010" : (a<=20 && b<=10) ? "tt1020" : (a<=20 && b<=20) ? "tt2020" : null;
+    if (!key){
+      const need = a*b, per = 400;
+      const n2 = Math.max(1, Math.round(need/per));
+      spec.notes.push(`We stock 10×10, 10×20 and 20×20 — used ${n2} × 20×20 for the ${w}×${h} you asked for.`);
+      for (let i=0;i<n2;i++) spec.tents.push("tt2020");
+      return;
+    }
+    for (let i=0; i<(n||1); i++) spec.tents.push(key);
+  };
+  let m, re = /(?:(\d+|[a-z]+)\s+)?(\d+)\s*(?:ft)?\s*x\s*(\d+)\s*(?:ft)?\s*(?:pop\s*up\s*|canopy\s*|frame\s*)?tents?\b/g;
+  while ((m = re.exec(t))){ addTent(+m[2], +m[3], num(m[1]) || 1); spec.any = true; }
+  if (!spec.tents.length){
+    re = /\btents?\b\s*(?:of\s*|size\s*|at\s*)?(\d+)\s*(?:ft)?\s*x\s*(\d+)/g;
+    while ((m = re.exec(t))){ addTent(+m[1], +m[2], 1); spec.any = true; }
+  }
+  if (!spec.tents.length && /\btents?\b|\bcanopy\b|\bcovered\b|\bunder cover\b/.test(t) && !neg(t.search(/\btents?\b/))){
+    spec.tentAuto = true; spec.any = true;
+    const tc = /(\d+|[a-z]+)\s+tents?\b/.exec(t);
+    spec.tentCount = num(tc && tc[1]) || 1;
+  }
+
+  /* --- tables --- */
+  const tablePats = [
+    [/(?:(\d+|[a-z]+)\s+)?(?:5ft\s*)?\brounds?\b(?:\s*tables?)?/g, "r5"],
+    [/(?:(\d+|[a-z]+)\s+)?6ft\s*(?:banquet\s*|rectangular?\s*|long\s*)?(?:tables?|rectangles?)?/g, "t6"],
+    [/(?:(\d+|[a-z]+)\s+)?8ft\s*(?:banquet\s*|rectangular?\s*|long\s*)?(?:tables?|rectangles?)?/g, "t8"],
+    [/(?:(\d+|[a-z]+)\s+)?\b(?:cocktail|highboy|high\s*top|hightop|bistro|standing)\b\s*(?:tables?)?/g, "ck"],
+    [/(?:(\d+|[a-z]+)\s+)?\b(?:banquet|rectangular|rectangle|long)\b\s*tables?/g, "t6"],
+  ];
+  for (const [rx, key] of tablePats){
+    let mm;
+    while ((mm = rx.exec(t))){
+      const n = num(mm[1]);
+      spec.tables.push({key, n});
+      spec.any = true;
+    }
+  }
+  if (!spec.tables.length){
+    const gm = /(?:(\d+|[a-z]+)\s+)?\btables?\b/.exec(t);
+    if (gm){ spec.tables.push({key:"r5", n:num(gm[1])}); spec.any = true; }
+  }
+
+  /* --- chairs --- */
+  const cm = /(?:(\d+|[a-z]+)\s+)?(?:(padded|white padded|cushioned|basic|folding|plastic|resin|garden|white|black)\s+)?chairs?\b/.exec(t);
+  if (cm){
+    spec.any = true;
+    if (/\b(?:no|without|zero)\s+(?:\w+\s+)?chairs?\b/.test(t)) spec.chairs = 0;
+    else {
+      spec.chairs = num(cm[1]);
+      if (cm[2]) spec.chairType = /pad|cushion/.test(cm[2]) ? "padded"
+                                : /basic|folding|plastic|resin|garden/.test(cm[2]) ? "basic" : null;
+    }
+  }
+  if (!spec.chairType){
+    if (/\bpadded\b|\bcushion\w*\b/.test(t)) spec.chairType = "padded";
+    else if (/\bbasic\b|\bfolding\b|\bplastic\b|\bresin\b/.test(t)) spec.chairType = "basic";
+  }
+  if (spec.chairType) spec.any = true;
+  if (/\bseating\s+for\s+(\d+)/.test(t) && spec.chairs == null)
+    spec.chairs = +/\bseating\s+for\s+(\d+)/.exec(t)[1];
+
+  /* --- linens --- */
+  const lm = /\b(white|black|ivory|cream)?\s*(?:spandex\s*)?(?:table\s*cloths?|tablecloths?|linens?|table\s*covers?)\b/.exec(t)
+          || /\b(?:spandex)\s*(white|black)\b/.exec(t)
+          || /\b(white|black)\s+spandex\b/.exec(t);
+  if (lm){
+    const col = lm[1];
+    spec.cloth = col==="black" ? "black" : "white";
+    if (col==="ivory" || col==="cream") spec.notes.push("Spandex comes in white or black — used white.");
+    spec.any = true;
+  }
+
+  /* --- guests --- */
+  const gm2 = /(\d+|[a-z]+)\s*(?:guests?|people|persons?|attendees?|pax|seats?|kids?)\b/.exec(t)
+           || /\bfor\s+(\d+)\b/.exec(t);
+  if (gm2 && num(gm2[1]) != null){ spec.guests = num(gm2[1]); spec.any = true; }
+
+  return spec;
+}
+
+/* --- modify-in-place mode: prompt only mentions properties --- */
+function isModifyOnly(spec){
+  return items.length > 0 && !spec.tents.length && !spec.tentAuto && !spec.tables.length
+      && spec.guests == null && spec.venue == null
+      && (Object.keys(spec.extras).length || spec.cloth || spec.chairType || spec.chairs != null);
+}
+function applyModify(spec){
+  snapshot();
+  const said = [];
+  const tents = items.filter(i => CAT[i.k].cat==="tent");
+  const tables = items.filter(i => CAT[i.k].cat==="table" && !CAT[i.k].standing);
+  for (const key in spec.extras){
+    let hit = 0;
+    for (const t of tents){
+      const c = CAT[t.k];
+      let id = key;
+      if (key==="walls") id = c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls";
+      if (c.extras.some(e => e.id===id)){ t.props.extras[id] = true; hit++; }
+    }
+    if (hit) said.push(CAT[tents[0].k].extras.find(e => e.id===key || (key==="walls" && e.id==="sidewalls"))?.label || key);
+  }
+  if (spec.cloth){ tables.forEach(t => t.props.cloth = spec.cloth); if (tables.length) said.push(`spandex ${spec.cloth} linens`); }
+  if (spec.chairType){ tables.forEach(t => { t.props.ctype = spec.chairType; if (!t.props.chairs) t.props.chairs = CAT[t.k].min; });
+    if (tables.length) said.push(CHAIRS[spec.chairType].name.toLowerCase() + "s"); }
+  if (spec.chairs != null && tables.length){
+    const per = distribute(spec.chairs, tables.length, Math.max(...tables.map(t => CAT[t.k].max)));
+    tables.forEach((t,i) => t.props.chairs = Math.min(per[i], CAT[t.k].max));
+    said.push(`${spec.chairs} seats`);
+  }
+  render();
+  if (!said.length) return toast("Nothing on the canvas to change — try describing the full setup instead.");
+  toast(`Updated: ${said.join(" · ")} — ${money(quoteLines().total)}`, {undo:true});
+}
+
+/* --- build a full plan from a spec --- */
+function applySpec(spec){
+  snapshot();
+  const notes = spec.notes.slice();
+  const readback = [];
+
+  if (spec.venue){ venue = {w:spec.venue.w, h:spec.venue.h}; readback.push(`${venue.w}×${venue.h} ft space`); }
+
+  /* table list */
+  let tableKey = spec.tables.length ? spec.tables[0].key : "r5";
+  let tableCount = 0;
+  const explicit = spec.tables.filter(x => x.n != null);
+  if (spec.tables.length){
+    tableCount = spec.tables.reduce((n,x) => n + (x.n || 0), 0);
+    if (!explicit.length) tableCount = 0;
+  }
+  const seatCap = CAT[tableKey].min || CAT[tableKey].max;
+  if (!tableCount){
+    const basis = spec.chairs || spec.guests;
+    tableCount = basis && seatCap ? Math.ceil(basis/seatCap) : (spec.tables.length ? 1 : 0);
+    if (!tableCount && (spec.tents.length || spec.tentAuto)) tableCount = 0;
+  }
+
+  /* tents */
+  let tents = spec.tents.slice();
+  if (!tents.length && spec.tentAuto){
+    const want = spec.tentCount || 1;
+    if (want > 1){ tents = Array(want).fill("tt2020"); }
+    else {
+      const pick = TENTS.find(k => fitFor(CAT[k].w-2, CAT[k].h-2, tableKey, tableCount).cap >= tableCount);
+      tents = [pick || "tt2020"];
+      if (!pick && tableCount){
+        const per = Math.max(1, fitFor(18,18,tableKey,tableCount).cap);
+        tents = Array(Math.ceil(tableCount/per)).fill("tt2020");
+      }
+    }
+  }
+
+  /* grow venue to hold the tents */
+  if (tents.length){
+    const tw = CAT[tents[0]].w, th = CAT[tents[0]].h;
+    const cols = Math.max(1, Math.min(tents.length, Math.floor(venue.w/tw) || 1));
+    const rows = Math.ceil(tents.length/cols);
+    const needW = cols*tw + 8, needH = rows*th + 8;
+    if (needW > venue.w || needH > venue.h){
+      venue = {w: Math.max(venue.w, Math.ceil(needW/5)*5), h: Math.max(venue.h, Math.ceil(needH/5)*5)};
+      notes.push(`Venue grown to ${venue.w}×${venue.h} ft to hold the tents.`);
+    }
+  }
+
+  items = []; seq = 1; sel.clear();
+
+  /* place tents, then tables inside them */
+  const slots = [];
+  let tight = false, placedTables = 0;
+  if (tents.length){
+    const tw = CAT[tents[0]].w, th = CAT[tents[0]].h;
+    const cols = Math.max(1, Math.min(tents.length, Math.floor(venue.w/tw) || 1));
+    const rows = Math.ceil(tents.length/cols);
+    let idx = 0, remaining = tableCount;
+    for (let r=0; r<rows; r++) for (let cI=0; cI<cols && idx<tents.length; cI++, idx++){
+      const cx = venue.w/2 - (cols-1)*tw/2 + cI*tw;
+      const cy = venue.h/2 - (rows-1)*th/2 + r*th;
+      const tent = newItem(tents[idx], cx, cy);
+      for (const k in spec.extras){
+        const c = CAT[tents[idx]];
+        let id = k;
+        if (k==="walls") id = c.extras.some(e => e.id==="walls") ? "walls" : "sidewalls";
+        if (c.extras.some(e => e.id===id)) tent.props.extras[id] = true;
+      }
+      items.push(tent);
+      if (remaining > 0){
+        const share = Math.ceil(remaining/(tents.length-idx));
+        const fit = fitFor(tw-2, th-2, tableKey, share);
+        if (fit.gap && fit.gap < 3) tight = true;
+        const put = placeGrid(cx, cy, fit, Math.min(share, Math.max(fit.cap, share)));
+        put.forEach(p => slots.push(p));
+        remaining -= put.length; placedTables += put.length;
+      }
+    }
+    if (remaining > 0){
+      const fit = fitFor(venue.w-6, 12, tableKey, remaining);
+      placeGrid(venue.w/2, venue.h - 8, fit, remaining).forEach(p => slots.push(p));
+      notes.push(`${remaining} table${remaining>1?"s":""} placed outside the tent — not enough room inside.`);
+    }
+  } else if (tableCount){
+    const fit = fitFor(venue.w-6, venue.h-6, tableKey, tableCount);
+    if (fit.gap && fit.gap < 3) tight = true;
+    placeGrid(venue.w/2, venue.h/2, fit, tableCount).forEach(p => slots.push(p));
+  }
+
+  /* chairs across the tables */
+  const cap = CAT[tableKey].max;
+  let chairTotal = spec.chairs != null ? spec.chairs
+                 : spec.guests != null ? spec.guests
+                 : (spec.chairType ? slots.length * (CAT[tableKey].min || 0) : 0);
+  if (CAT[tableKey].standing) chairTotal = 0;
+  const per = slots.length ? distribute(chairTotal, slots.length, cap) : [];
+  let seated = 0;
+  slots.forEach((p, i) => {
+    const it = newItem(tableKey, p.x, p.y);
+    it.rot = p.rot;
+    it.props.chairs = per[i] || 0;
+    it.props.ctype = spec.chairType || "basic";
+    if (spec.cloth) it.props.cloth = spec.cloth;
+    seated += it.props.chairs;
+    items.push(it);
+  });
+
+  render(); fitView(true);
+
+  /* read-back */
+  const tentCounts = {};
+  tents.forEach(k => tentCounts[k] = (tentCounts[k]||0)+1);
+  for (const k in tentCounts) readback.push(`${tentCounts[k]} × ${CAT[k].size} tent`);
+  const exNames = Object.keys(spec.extras).map(k => k==="lights" ? "string lights" : k==="walls" ? "walls"
+    : k==="windows" ? "windows" : k==="ceil" ? "ceiling liner" : "leg liners");
+  if (exNames.length && tents.length) readback.push(exNames.join(" + "));
+  if (slots.length) readback.push(`${slots.length} × ${CAT[tableKey].short}`);
+  if (seated) readback.push(`${seated} ${CHAIRS[spec.chairType || "basic"].name.toLowerCase()}s`);
+  if (spec.cloth && slots.length) readback.push(`spandex ${spec.cloth}`);
+
+  if (chairTotal > seated) notes.unshift(`Seated ${seated} of ${chairTotal} — add a table or a bigger tent for the rest.`);
+  if (tight && seated) notes.push("Tight fit — chairs nearly touch. A bigger tent would breathe better.");
+
+  if (!readback.length){ doUndo(); return toast("I didn’t catch any items — try “20×20 tent with 5 round tables and 40 chairs”."); }
+  const shown = notes.slice(0, 2);
+  toast(`<b>${readback.join(" · ")}</b> — ${money(quoteLines().total)}` +
+        (shown.length ? `<br><span style="color:#dcd8c4;font-weight:500">${shown.join(" ")}</span>` : ""),
+        {undo:true, ms: shown.length ? 9000 : 7000});
+}
+
+function runPrompt(text){
+  const raw = (text ?? $("pin").value).trim();
+  if (!raw) return $("pin").focus();
+  $("pin").value = raw;
+  $("pin").blur();
+  const spec = parsePrompt(raw);
+  if (!spec.any) return toast("I didn’t catch any items — try “20×20 tent with 5 round tables and 40 padded chairs”.");
+  if (isModifyOnly(spec)) applyModify(spec); else applySpec(spec);
+}
+$("prun").addEventListener("click", () => runPrompt());
+$("pin").addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); runPrompt(); } });
+$("exs").innerHTML = EXAMPLES.map(x => `<button class="ex" data-ex="${x.replace(/"/g,"&quot;")}">“${x}”</button>`).join("");
+$("exs").addEventListener("click", e => {
+  const b = e.target.closest("[data-ex]"); if (!b) return;
+  $("pin").value = b.dataset.ex; runPrompt(b.dataset.ex);
+});
+
+/* ============ guided auto-arrange ============ */
+$("autob").addEventListener("click", () => {
+  const segRow = (name, opts, def) => `<div class="seg" data-seg="${name}">` + opts.map(o =>
+    `<button class="mrow ${o.v===def?"on":""}" data-act="segpick" data-val="${o.v}">
+      <span class="tick">✓</span>${o.l}</button>`).join("") + `</div>`;
+  openSheet(`<h3>Auto arrange</h3><p class="sub">The guided version of the prompt box — four questions, then it replaces the layout.</p>
+    <div class="fld"><label>How many guests?</label><input id="aG" type="number" inputmode="numeric" value="40"></div>
+    <div class="seclbl">Table type</div>
+    ${segRow("table", [{v:"r5",l:"5 ft round"},{v:"t6",l:"6 ft"},{v:"t8",l:"8 ft"}], "r5")}
+    <div class="seclbl">Tent</div>
+    ${segRow("tent", [{v:"none",l:"None"},{v:"auto",l:"Choose for me"},{v:"tt1010",l:"10×10"},{v:"tt1020",l:"10×20"},{v:"tt2020",l:"20×20"}], "auto")}
+    <div class="seclbl">Chair type</div>
+    ${segRow("chair", [{v:"basic",l:`Basic <span class="pr">$1.80</span>`},{v:"padded",l:`Padded white <span class="pr">$3</span>`}], "basic")}
+    <button class="cta" data-act="autoRun">Arrange it ✨</button>`, {type:"auto"});
+});
+function runAuto(){
+  const g = Math.max(1, +$("aG").value || 0);
+  const pick = n => document.querySelector(`[data-seg="${n}"] .mrow.on`).dataset.val;
+  const tKey = pick("table"), tentSel = pick("tent"), chair = pick("chair");
+  const spec = {venue:null, tents: tentSel==="none"||tentSel==="auto" ? [] : [tentSel],
+                tentAuto: tentSel==="auto", tentCount:1,
+                tables:[{key:tKey, n:null}], chairs:g, chairType:chair, cloth:null,
+                extras:{}, guests:g, notes:[], any:true};
+  closeSheet();
+  applySpec(spec);
+}
+
+/* ============ tray ============ */
+function trayThumb(k){
+  const c = CAT[k];
+  if (c.cat==="tent") return `<svg viewBox="-11 -7 22 14"><rect x="${-c.w/4}" y="${-c.h/4}" width="${c.w/2}" height="${c.h/2}" rx=".4" fill="var(--tent-fill)" stroke="var(--tent-edge)" stroke-width=".5"/></svg>`;
+  if (c.shape==="round") return `<svg viewBox="-5 -3 10 6"><circle r="${c.d/2*0.9}" fill="var(--wood)" stroke="var(--wood-edge)" stroke-width=".25" transform="scale(1 .85)"/></svg>`;
+  return `<svg viewBox="-6 -3 12 6"><rect x="${-c.w/2*0.9}" y="-1.1" width="${c.w*0.9}" height="2.2" rx=".2" fill="var(--wood)" stroke="var(--wood-edge)" stroke-width=".22"/></svg>`;
+}
+$("trayRow").innerHTML = TRAY.map(k =>
+  `<button class="titem" data-add="${k}">${trayThumb(k)}<b>${CAT[k].name}</b><span>${money(CAT[k].price)}</span></button>`).join("");
+$("trayRow").addEventListener("click", e => {
+  const b = e.target.closest("[data-add]"); if (!b) return;
+  const it = newItem(b.dataset.add, Math.round(view.x + view.w/2), Math.round(view.y + viewH()/2));
+  items.push(it); sel = new Set([it.id]); render();
+});
+
+/* ============ pointer interaction ============ */
+const ptrs = new Map();
+let drag = null, pressT = null, pinch0 = null;
+function toWorld(e){
+  const r = cv.getBoundingClientRect();
+  return {x: view.x + (e.clientX-r.left)/r.width*view.w,
+          y: view.y + (e.clientY-r.top)/r.height*viewH()};
+}
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  clearTimeout(pressT); pressT = null;
+  if (ptrs.size === 2){
+    drag = null;
+    const [a,b] = [...ptrs.values()];
+    pinch0 = {d: Math.hypot(a.x-b.x, a.y-b.y), w: view.w,
+              mx:(a.x+b.x)/2, my:(a.y+b.y)/2, vx:view.x, vy:view.y};
+    return;
+  }
+  const hit = e.target.closest("[data-id]");
+  if (hit){
+    const it = items.find(i => i.id === +hit.dataset.id);
+    if (!it) return;
+    if (selectMode){
+      sel.has(it.id) ? sel.delete(it.id) : sel.add(it.id);
+      renderSel();
+      if (!sel.has(it.id)) { drag = null; return; }
+    } else if (!sel.has(it.id)){
+      sel = new Set([it.id]);
+    }
+    renderSel();
+    const origins = new Map();
+    items.filter(i => sel.has(i.id)).forEach(i => origins.set(i.id, {x:i.x, y:i.y}));
+    drag = {type:"item", origins, sx:e.clientX, sy:e.clientY, moved:false};
+    if (sel.size === 1) pressT = setTimeout(() => { drag = null; menuFor(it.id); }, 480);
+  } else if (selectMode){
+    const w = toWorld(e);
+    drag = {type:"marquee", sx:e.clientX, sy:e.clientY, moved:false};
+    marquee = {x0:w.x, y0:w.y, x1:w.x, y1:w.y};
+    if (!e.shiftKey) sel.clear();
+    renderSel();
+  } else {
+    drag = {type:"pan", sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y, moved:false};
+    sel.clear(); renderSel();
+  }
+});
+cv.addEventListener("pointermove", e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (ptrs.size === 2 && pinch0){
+    const [a,b] = [...ptrs.values()];
+    const d = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+    const r = cv.getBoundingClientRect();
+    const nw = Math.min(400, Math.max(8, pinch0.w * pinch0.d/d));
+    const wx = pinch0.vx + (pinch0.mx-r.left)/r.width * pinch0.w;
+    const wy = pinch0.vy + (pinch0.my-r.top)/r.height * (pinch0.w*r.height/r.width);
+    view.w = nw;
+    view.x = wx - (pinch0.mx-r.left)/r.width * nw;
+    view.y = wy - (pinch0.my-r.top)/r.height * (nw*r.height/r.width);
+    applyView(); return;
+  }
+  if (!drag) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.moved && Math.hypot(dx,dy) > 7){ drag.moved = true; clearTimeout(pressT); pressT = null; }
+  if (!drag.moved) return;
+  const r = cv.getBoundingClientRect(), s = view.w / r.width;
+  if (drag.type === "pan"){
+    view.x = drag.vx - dx*s; view.y = drag.vy - dy*s; applyView();
+  } else if (drag.type === "marquee"){
+    const w = toWorld(e);
+    marquee.x1 = w.x; marquee.y1 = w.y;
+    renderSel();
+  } else {
+    const snap = v => Math.round(v*2)/2;
+    const ddx = snap(dx*s), ddy = snap(dy*s);
+    for (const [id, o] of drag.origins){
+      const it = items.find(i => i.id===id);
+      if (it){ it.x = o.x + ddx; it.y = o.y + ddy; }
+    }
+    render();
+  }
+});
+function endPtr(e){
+  ptrs.delete(e.pointerId);
+  if (ptrs.size < 2) pinch0 = null;
+  clearTimeout(pressT); pressT = null;
+  if (marquee){
+    const x0 = Math.min(marquee.x0, marquee.x1), x1 = Math.max(marquee.x0, marquee.x1);
+    const y0 = Math.min(marquee.y0, marquee.y1), y1 = Math.max(marquee.y0, marquee.y1);
+    if (Math.abs(x1-x0) > .6 || Math.abs(y1-y0) > .6){
+      for (const it of items){
+        const b = itemBox(it);
+        if (b.x1 >= x0 && b.x0 <= x1 && b.y1 >= y0 && b.y0 <= y1) sel.add(it.id);
+      }
+    }
+    marquee = null; renderSel();
+  }
+  drag = null;
+}
+cv.addEventListener("pointerup", endPtr);
+cv.addEventListener("pointercancel", endPtr);
+cv.addEventListener("contextmenu", e => {
+  e.preventDefault();
+  const hit = e.target.closest("[data-id]");
+  if (hit) menuFor(+hit.dataset.id);
+});
+
+/* pill + bulk actions */
+const selItems = () => items.filter(i => sel.has(i.id));
+function actRotate(){
+  const list = selItems(); if (!list.length) return;
+  list.forEach(it => it.rot = (it.rot + (CAT[it.k].cat==="tent" ? 90 : 45)) % 360);
+  render();
+}
+function actDuplicate(){
+  const list = selItems(); if (!list.length) return;
+  snapshot();
+  const made = [];
+  for (const it of list){
+    const n = newItem(it.k, it.x + 3, it.y + 3);
+    n.rot = it.rot;
+    n.props = JSON.parse(JSON.stringify(it.props));
+    items.push(n); made.push(n.id);
+  }
+  sel = new Set(made); render();
+  if (made.length > 1) toast(`Duplicated ${made.length} items with all their properties`, {undo:true});
+}
+function actDelete(){
+  const list = selItems(); if (!list.length) return;
+  snapshot();
+  const n = list.length;
+  items = items.filter(i => !sel.has(i.id));
+  sel.clear(); render();
+  if (n > 1) toast(`Deleted ${n} items`, {undo:true});
+}
+function duplicate(it){ sel = new Set([it.id]); actDuplicate(); }
+
+$("pRot").addEventListener("click", actRotate);
+$("pDup").addEventListener("click", actDuplicate);
+$("pMenu").addEventListener("click", () => { const l = selItems(); if (l.length===1) menuFor(l[0].id); });
+$("pDel").addEventListener("click", actDelete);
+
+$("selBtn").addEventListener("click", () => {
+  selectMode = !selectMode;
+  $("selBtn").classList.toggle("on", selectMode);
+  if (!selectMode) sel.clear();
+  renderSel();
+  if (selectMode) toast("Tap items to select · drag across the canvas to lasso · two fingers to pan", {ms:4200});
+});
+$("multibar").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]"); if (!b) return;
+  const m = b.dataset.m;
+  if (m === "all"){ sel = new Set(items.map(i => i.id)); renderSel(); return; }
+  if (m === "dup") return actDuplicate();
+  if (m === "rot") return actRotate();
+  if (m === "del") return actDelete();
+  if (m === "done"){
+    selectMode = false; $("selBtn").classList.remove("on"); sel.clear(); renderSel();
+  }
+});
+
+/* zoom */
+function zoomBy(f){
+  const cxw = view.x + view.w/2, cyw = view.y + viewH()/2;
+  view.w = Math.min(400, Math.max(8, view.w*f));
+  view.x = cxw - view.w/2; view.y = cyw - viewH()/2; applyView();
+}
+$("zin").addEventListener("click", () => zoomBy(1/1.35));
+$("zout").addEventListener("click", () => zoomBy(1.35));
+$("zfit").addEventListener("click", () => fitView(items.length > 0));
+window.addEventListener("resize", applyView);
+
+/* keep the app inside the visible viewport when the keyboard opens */
+if (window.visualViewport){
+  const vv = window.visualViewport, app = $("app");
+  const fix = () => { app.style.height = vv.height + "px"; window.scrollTo(0,0); applyView(); };
+  vv.addEventListener("resize", fix);
+  vv.addEventListener("scroll", fix);
+}
+
+render(); fitView();
+</script>
