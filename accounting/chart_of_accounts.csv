@@ -1,0 +1,80 @@
+code,account,type,subtype,statement,normal_balance,notes
+1010,Checking - Operating,Asset,Cash,Balance Sheet,Debit,Primary operating account
+1020,Undeposited Funds / Processor In-Transit,Asset,Cash,Balance Sheet,Debit,Card batches not yet landed in checking
+1100,Accounts Receivable,Asset,Receivable,Balance Sheet,Debit,Invoiced but unpaid; memo-only on cash basis
+1210,Inventory - Consumables & Supplies,Asset,Inventory,Balance Sheet,Debit,Disposables cleaning chemicals packaging
+1220,Inventory - Resale Goods,Asset,Inventory,Balance Sheet,Debit,Goods sold outright not rented
+1230,Inventory - Replacement Parts,Asset,Inventory,Balance Sheet,Debit,Spare legs covers hardware
+1300,Prepaid Expenses,Asset,Prepaid,Balance Sheet,Debit,Annual insurance prepaid rent
+1510,Rental Equipment - Tables & Chairs,Asset,Fixed Asset,Balance Sheet,Debit,Capitalized rental fleet
+1520,Rental Equipment - Tents Canopies & Staging,Asset,Fixed Asset,Balance Sheet,Debit,Capitalized rental fleet
+1530,Rental Equipment - Linens & Soft Goods,Asset,Fixed Asset,Balance Sheet,Debit,Capitalized rental fleet
+1540,Rental Equipment - Decor Lighting & Specialty,Asset,Fixed Asset,Balance Sheet,Debit,Capitalized rental fleet
+1550,Rental Equipment - Inflatables & Games,Asset,Fixed Asset,Balance Sheet,Debit,Capitalized rental fleet
+1600,Vehicles & Trailers,Asset,Fixed Asset,Balance Sheet,Debit,Delivery fleet
+1650,Shop & Warehouse Equipment,Asset,Fixed Asset,Balance Sheet,Debit,Racking washers forklift
+1700,Leasehold Improvements,Asset,Fixed Asset,Balance Sheet,Debit,Warehouse buildout
+1810,Accum. Depreciation - Rental Equipment,Asset,Contra Asset,Balance Sheet,Credit,Contra to 1510-1550
+1820,Accum. Depreciation - Vehicles & Trailers,Asset,Contra Asset,Balance Sheet,Credit,Contra to 1600
+1830,Accum. Depreciation - Shop Equipment,Asset,Contra Asset,Balance Sheet,Credit,Contra to 1650
+2010,Credit Card - Card 1,Liability,Credit Card,Balance Sheet,Credit,Rename once CSV identifies issuer
+2020,Credit Card - Card 2,Liability,Credit Card,Balance Sheet,Credit,Rename once CSV identifies issuer
+2100,Accounts Payable,Liability,Payable,Balance Sheet,Credit,Vendor bills unpaid; memo-only on cash basis
+2210,Customer Deposits - Event Retainers,Liability,Unearned Revenue,Balance Sheet,Credit,Cash received before event date NOT revenue yet
+2220,Customer Deposits - Refundable Damage,Liability,Unearned Revenue,Balance Sheet,Credit,Security deposits owed back to customer
+2300,Sales Tax Payable,Liability,Tax,Balance Sheet,Credit,Rentals are taxable in TX; collected not earned
+2410,Payroll Taxes Payable,Liability,Payroll,Balance Sheet,Credit,Withheld and employer share
+2420,Wages Payable,Liability,Payroll,Balance Sheet,Credit,Accrued unpaid wages
+2510,Equipment Loan / Financing,Liability,Long Term Debt,Balance Sheet,Credit,Principal balance only
+2520,Vehicle Loan,Liability,Long Term Debt,Balance Sheet,Credit,Principal balance only
+2530,Line of Credit / SBA Loan,Liability,Long Term Debt,Balance Sheet,Credit,Principal balance only
+2600,Due to Owner,Liability,Related Party,Balance Sheet,Credit,Business costs paid personally not yet reimbursed
+3010,Owner Contributions,Equity,Contributed Capital,Balance Sheet,Credit,Startup funding April 2026
+3020,Owner Draws,Equity,Distributions,Balance Sheet,Debit,Contra equity
+3100,Retained Earnings,Equity,Retained Earnings,Balance Sheet,Credit,Rolls forward at year end
+3900,Opening Balance Equity,Equity,Opening,Balance Sheet,Credit,April 2026 startup plug; clear to 3010/3100
+4010,Rental Revenue - Tables & Chairs,Revenue,Operating Revenue,Income Statement,Credit,Net of sales tax
+4020,Rental Revenue - Tents & Staging,Revenue,Operating Revenue,Income Statement,Credit,Net of sales tax
+4030,Rental Revenue - Linens & Decor,Revenue,Operating Revenue,Income Statement,Credit,Net of sales tax
+4040,Rental Revenue - Specialty & Inflatables,Revenue,Operating Revenue,Income Statement,Credit,Net of sales tax
+4100,Delivery Pickup & Setup Fees,Revenue,Operating Revenue,Income Statement,Credit,Often taxable in TX; confirm with CPA
+4200,Damage Waiver Income,Revenue,Operating Revenue,Income Statement,Credit,Non-refundable waiver fee
+4300,Late Return & Rescheduling Fees,Revenue,Operating Revenue,Income Statement,Credit,
+4400,Damage & Loss Recovery,Revenue,Operating Revenue,Income Statement,Credit,Customer charged for broken or missing items
+4500,Resale Merchandise Revenue,Revenue,Operating Revenue,Income Statement,Credit,Goods sold not rented
+4900,Discounts & Refunds,Revenue,Contra Revenue,Income Statement,Debit,Contra revenue
+5010,Sub-Rentals,COGS,Direct Cost,Income Statement,Debit,Renting from other vendors to fill an order
+5020,Delivery & Fuel,COGS,Direct Cost,Income Statement,Debit,Fuel tolls for delivery runs
+5030,Vehicle Maintenance,COGS,Direct Cost,Income Statement,Debit,Delivery fleet upkeep
+5040,Event Labor & Crew Wages,COGS,Direct Cost,Income Statement,Debit,Setup teardown crew
+5050,Consumables Used,COGS,Direct Cost,Income Statement,Debit,Relieved from 1210 as used
+5060,Linen Laundering & Cleaning,COGS,Direct Cost,Income Statement,Debit,Third party laundry
+5070,Equipment Repairs & Maintenance,COGS,Direct Cost,Income Statement,Debit,Keeping fleet rentable
+5080,Equipment Replacement - Below Threshold,COGS,Direct Cost,Income Statement,Debit,Small replacements under cap threshold
+5090,Merchant Processing Fees,COGS,Direct Cost,Income Statement,Debit,Card and platform fees on revenue
+5100,Cost of Resale Goods Sold,COGS,Direct Cost,Income Statement,Debit,Relieved from 1220 on sale
+6010,Rent - Warehouse & Yard,Expense,Operating Expense,Income Statement,Debit,
+6020,Utilities,Expense,Operating Expense,Income Statement,Debit,
+6030,Insurance - General Liability,Expense,Operating Expense,Income Statement,Debit,
+6040,Insurance - Commercial Auto,Expense,Operating Expense,Income Statement,Debit,
+6050,Insurance - Inland Marine / Equipment Floater,Expense,Operating Expense,Income Statement,Debit,Covers fleet off premises; rental specific
+6100,Advertising & Marketing,Expense,Operating Expense,Income Statement,Debit,
+6110,Website Listings & Lead Generation,Expense,Operating Expense,Income Statement,Debit,The Bash Thumbtack Google Ads
+6200,Software & Subscriptions,Expense,Operating Expense,Income Statement,Debit,Rental management CRM accounting
+6300,Office Supplies & Postage,Expense,Operating Expense,Income Statement,Debit,
+6400,Salaries & Wages - Admin,Expense,Operating Expense,Income Statement,Debit,Non event staff
+6410,Payroll Taxes,Expense,Operating Expense,Income Statement,Debit,Employer share
+6420,Contract Labor - 1099,Expense,Operating Expense,Income Statement,Debit,Track for 1099-NEC filing
+6500,Professional Fees,Expense,Operating Expense,Income Statement,Debit,CPA legal bookkeeping
+6600,Bank Fees,Expense,Operating Expense,Income Statement,Debit,Account and wire fees
+6610,Interest Expense,Expense,Operating Expense,Income Statement,Debit,Loan and card interest; principal is not expense
+6700,Licenses Permits & Taxes,Expense,Operating Expense,Income Statement,Debit,Franchise tax DOT permits
+6800,Depreciation Expense,Expense,Operating Expense,Income Statement,Debit,Non cash; offsets 1810-1830
+6900,Meals & Entertainment,Expense,Operating Expense,Income Statement,Debit,Track separately for 50 percent limit
+6950,Travel,Expense,Operating Expense,Income Statement,Debit,
+6990,Uncategorized - Ask My Accountant,Expense,Suspense,Income Statement,Debit,Holding bucket; must be zero before close
+7010,Gain or Loss on Asset Disposal,Other,Other Income Expense,Income Statement,Credit,Selling retired fleet
+7020,Other Income - Rewards & Bonuses,Other,Other Income Expense,Income Statement,Credit,Card cash back and bank account bonuses
+5090,Merchant Processing Fees - Derived,COGS,Direct Cost,Income Statement,Debit,Gross invoiced less net payout
+8010,Income Tax Expense,Other,Tax,Income Statement,Debit,
+9010,Transfer - Interaccount,Contra,Transfer,None,None,NOT income or expense; card payments and owner moves net to zero

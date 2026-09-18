@@ -1,0 +1,5 @@
+# Bank statements, transaction-level exports and generated books contain
+# account numbers and customer names. Keep them out of version control.
+data_raw/
+out/
+__pycache__/
