@@ -110,3 +110,31 @@ traces back to a row on the Transactions tab.
 Revenue is recognized on the **event date** parsed from the HighLevel invoice name
 (`YYYY-MM-DD Event`), not the date the money arrived. $3,228.99 of cash on hand belongs to
 eight events that had not happened as of 9/18 and is carried as a liability, not income.
+
+## Fleet register
+
+Bank statements only show *what a purchase cost*, never *what it was*. They also miss
+anything bought with cash or on a card not exported. So the fleet is maintained by hand:
+
+1. Fill in **EP Fiesta — Rental Fleet Register** in Drive (one row per item or purchase).
+   Columns A–H are typed; I–M calculate themselves.
+2. Download it as CSV to `data_raw/fleet_register.csv`.
+3. `python3 src/import_fleet.py` — writes `out/fleet.json`.
+4. Re-run `build_statements.py`; it prefers `fleet.json` over the ledger-derived fleet.
+
+Useful lives live in `CATEGORIES` in `src/build_fleet_register.py` and are the single
+source of truth — the register's reference table and the depreciation code both read them.
+
+| Category | Life |
+|---|---:|
+| Tables & Chairs | 7 yr |
+| Tents, Canopies & Staging | 5 yr |
+| Linens & Soft Goods | 3 yr |
+| Decor, Lighting & Specialty | 5 yr |
+| Inflatables & Games | 5 yr |
+| Vehicles & Trailers | 5 yr |
+| Shop & Warehouse Equipment | 7 yr |
+| Leasehold Improvements | 10 yr |
+
+Depreciation counts **whole months elapsed**, matching `DATEDIF(date, TODAY(), "M")` in the
+register, so the sheet and the books never disagree.

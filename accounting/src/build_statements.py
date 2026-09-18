@@ -30,8 +30,25 @@ def revenue_recognition(ghl):
     return earned, deferred, undated
 
 
+def full_months(start, end):
+    """Whole months elapsed - matches the register's DATEDIF(start, end, "M")."""
+    m = (end.year - start.year) * 12 + (end.month - start.month)
+    if end.day < start.day:
+        m -= 1
+    return max(0, m)
+
+
 def depreciation(led):
-    """Straight line, monthly, starting the month after the asset is placed in service."""
+    """Straight line on whole months held.
+
+    Uses the filled-in fleet register when one has been imported, since it carries
+    purchases that never appear on these three statements (cash, or the AMEX).
+    Falls back to the fleet purchases identifiable in the ledger.
+    """
+    fleet_file = os.path.join(OUT, "fleet.json")
+    if os.path.exists(fleet_file):
+        rows = json.load(open(fleet_file))
+        return rows, round(sum(r["depreciation"] for r in rows), 2)
     rows, total = [], 0.0
     for t in led:
         life = LIVES.get(t["account_code"])
@@ -39,8 +56,7 @@ def depreciation(led):
             continue
         cost = -t["amount"]
         d = datetime.date.fromisoformat(t["date"])
-        months = (PERIOD_END.year - d.year) * 12 + (PERIOD_END.month - d.month)
-        months = max(0, months)
+        months = full_months(d, PERIOD_END)
         dep = round(min(cost, cost / life * months), 2)
         total += dep
         rows.append({"date": t["date"], "asset": t["description"][:40], "code": t["account_code"],
