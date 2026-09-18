@@ -6,7 +6,7 @@ from openpyxl.utils import get_column_letter
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_fleet_register import CATEGORIES, CODE_TO_CAT
-import ers_catalog
+import ers_items
 
 BASE = os.path.join(os.path.dirname(__file__), "..")
 OUT = os.path.join(BASE, "out")
@@ -70,20 +70,22 @@ def main():
     # ───────────────────────── Fleet Register (editable) ─────────────────────────
     ws = wb.create_sheet("Fleet Register")
     title(ws, "Rental Fleet Register",
-          "Every product in your ERS catalog, priced per unit. Fill in QUANTITY (column C) and PURCHASE DATE (column F) "
-          "and the depreciation columns calculate themselves. Rows highlighted amber need a price or are duplicates.")
+          "Your ERS inventory: quantity and unit price are real. Amber rows need a price from you. "
+          "Rows with no acquisition date depreciate from the default date in O2 - change it, or set a real date per row.")
     reg_cols = ["Item / description", "Category", "Qty", "Unit cost", "Total cost", "Purchase date",
                 "Vendor", "Paid with", "Useful life (mo)", "Months in service", "Monthly depreciation",
                 "Accumulated depreciation", "Net book value", "Status", "Notes"]
     header(ws, 4, reg_cols, [40, 26, 7, 12, 13, 13, 24, 20, 14, 15, 17, 19, 15, 12, 46])
-    src_short = {"Capital One Savor 5198": "Capital One Savor", "Apple Card": "Apple Card",
-                 "Chase Checking 5784": "Chase Checking"}
+    DEFAULT_DATE = "2026-05-15"   # the only acquisition date ERS carries
+    ws.cell(row=2, column=14, value="Undated rows depreciate from →").font = Font(bold=True, size=10, color=ACCENT)
+    dc = ws.cell(row=2, column=15, value=DEFAULT_DATE)
+    dc.font = Font(bold=True, size=10, color=INK); dc.fill = WARN
     r = 5
 
     def regrow(r, item, cat, qty, unit, date, vendor, paid, status, note, fill=None):
         vals = [item, cat, qty, unit, f"=IF(C{r}*D{r}=0,\"\",C{r}*D{r})", date, vendor, paid,
                 f"=IFERROR(VLOOKUP(B{r},$R$4:$S$11,2,0),\"\")",
-                f"=IF(F{r}=\"\",\"\",MAX(0,DATEDIF(F{r},TODAY(),\"M\")))",
+                f"=IF(AND(F{r}=\"\",$O$2=\"\"),\"\",MAX(0,DATEDIF(IF(F{r}=\"\",$O$2,F{r}),TODAY(),\"M\")))",
                 f"=IFERROR(E{r}/I{r},\"\")",
                 f"=IF(E{r}=\"\",\"\",IFERROR(MIN(E{r},K{r}*J{r}),\"\"))",
                 f"=IF(E{r}=\"\",\"\",IFERROR(E{r}-L{r},\"\"))", status, note]
@@ -94,19 +96,20 @@ def main():
             if fill and i <= 15:
                 c.fill = fill
 
-    # Every product in the ERS catalog, priced per unit. Quantity and purchase
-    # date are what only Mario can supply.
-    for ers_cat, name, unit, _labor in ers_catalog.assets():
-        code = ers_catalog.CATEGORY_MAP[ers_cat]
-        dup = ers_catalog.DUPLICATES.get((ers_cat, name))
-        if unit is None:
-            note, fill = "NO PRICE IN ERS - enter what you paid per unit", WARN
-        elif dup:
-            note, fill = "DUPLICATE LISTING - " + dup, WARN
+    for it in sorted(ers_items.fleet(), key=lambda x: (x["ers_category"], x["name"])):
+        note, fill = "", None
+        if it["unit_price"] is None:
+            note, fill = f"NO PRICE IN ERS - you own {it['qty']:.0f}, enter what you paid each", WARN
+        elif it["name"].strip().lower() in ers_items.AMBIGUOUS:
+            note, fill = "Listed under two ERS categories - confirm this is separate stock", WARN
+        elif not it["date_acq"]:
+            note = "No acquisition date in ERS - depreciating from the default above"
         else:
-            note, fill = "From ERS catalog - enter quantity and purchase date", None
-        regrow(r, name, CODE_TO_CAT[code], "", unit if unit is not None else "",
-               "", f"ERS: {ers_cat}", "", "", note, fill)
+            note = "Acquisition date from ERS"
+        regrow(r, it["name"], CODE_TO_CAT[it["coa_code"]], it["qty"],
+               it["unit_price"] if it["unit_price"] is not None else "",
+               it["date_acq"], f"ERS: {it['ers_category']}", it["manufacturer"],
+               "In service", note, fill)
         r += 1
     for _ in range(30):
         regrow(r, None, None, None, None, None, None, None, None, None)
@@ -411,6 +414,41 @@ def main():
     c.font = Font(bold=True); c.fill = TOTAL
     ws.cell(row=r, column=1, value="TOTAL").font = Font(bold=True)
 
+    # ───────────────────────── Held Out of the Fleet ─────────────────────────
+    ws = wb.create_sheet("Held Out of Fleet")
+    title(ws, "ERS Lines Deliberately Excluded",
+          "These are in ERS but are not fleet assets. Capitalizing them would double count or invent value.")
+    header(ws, 4, ["ERS line", "Type", "Qty", "Unit price", "Would add", "Why it is excluded"],
+           [46, 11, 8, 13, 13, 66])
+    r = 5
+    for it in ers_items.variants():
+        ws.cell(row=r, column=1, value=it["name"]); ws.cell(row=r, column=2, value="Variant")
+        ws.cell(row=r, column=3, value=it["qty"])
+        for col, val in ((4, it["unit_price"]), (5, (it["unit_price"] or 0) * it["qty"])):
+            c = ws.cell(row=r, column=col, value=val); c.number_format = M
+        ws.cell(row=r, column=6, value="Colour/size sub-listing. Cannot tell from the export whether this is "
+                                       "separate stock or a re-listing of the same tablecloths. Confirm.")
+        for col in range(1, 7):
+            ws.cell(row=r, column=col).fill = WARN
+        r += 1
+    for it in ers_items.packages():
+        ws.cell(row=r, column=1, value=it["name"]); ws.cell(row=r, column=2, value="Package")
+        ws.cell(row=r, column=3, value=it["qty"])
+        ws.cell(row=r, column=6, value="A bundle of items already counted individually. It has no purchase price "
+                                       "of its own; capitalizing it would double count.")
+        r += 1
+    for it in ers_items.services():
+        ws.cell(row=r, column=1, value=it["name"]); ws.cell(row=r, column=2, value="Service")
+        ws.cell(row=r, column=3, value=it["qty"])
+        ws.cell(row=r, column=6, value=f"Labor at ${it['labor_per_order']:.2f} per order, not equipment. "
+                                       "Belongs in event labor cost, not the balance sheet.")
+        r += 1
+    r += 1
+    ws.cell(row=r, column=1, value="Variants would add if they are separate stock:").font = Font(bold=True, size=10)
+    c = ws.cell(row=r, column=5,
+                value=round(sum((i["unit_price"] or 0) * i["qty"] for i in ers_items.variants()), 2))
+    c.number_format = M; c.font = Font(bold=True); c.fill = TOTAL
+
     # ───────────────────────── Purchases in Statements ─────────────────────────
     ws = wb.create_sheet("Purchases in Statements")
     title(ws, "Fleet Purchases Found in the Bank Statements",
@@ -442,7 +480,25 @@ def main():
     title(ws, "What I Could Not Verify", "Read this before presenting these numbers to anyone.")
     ws.column_dimensions["A"].width = 34
     ws.column_dimensions["B"].width = 96
+    # What the ERS inventory implies against what the statements can prove.
+    ers_cost = ers_items.total_cost()
+    bank_fleet = st["fleet_cost"]
+    lives = {c: m for _, m, c in CATEGORIES}
+    ers_dep = round(sum(i["unit_price"] * i["qty"] / lives[i["coa_code"]] * 4
+                        for i in ers_items.valued()), 2)
     gaps = [
+        ("FLEET: ERS vs the bank", f"ERS says you own ${ers_cost:,.2f} of equipment. The three statements only "
+         f"account for ${bank_fleet:,.2f} of fleet purchases - a gap of ${ers_cost - bank_fleet:,.2f}. Either it was "
+         "bought on the AMEX, with cash, or before these statements begin. The balance sheet still shows only the "
+         "purchases I can prove; it is NOT yet using the ERS figure, because one line needs your confirmation first."),
+        ("Four 20x20 High Peak Tents", "ERS lists qty 4 at $2,300 each, $9,200 - 43% of the whole fleet value. The "
+         "only tent purchase in the bank data is $3,260.62 to Celina Tent. If that qty means 'how many I can supply' "
+         "including sub-rentals rather than how many you own, the fleet is overstated by thousands. Confirm before "
+         "this goes on the balance sheet."),
+        ("Only 2 of 33 items are dated", "ERS carries an acquisition date for the two canopy tents only, both "
+         f"2026-05-15. Every other row depreciates from the default date in cell O2 of the Fleet Register. On that "
+         f"basis depreciation to date would be about ${ers_dep:,.2f} rather than the ${st['accumulated_depreciation']:,.2f} "
+         "now in the books. Set real dates where you know them."),
         ("Apple Card history", "The export covers 6/1/2026 onward only. April and May charges are missing, so the card's "
          "balance cannot be derived and the balance sheet does not close on its own. The gap is shown openly as "
          "'Opening balance equity / unreconciled' rather than hidden in a plug."),
