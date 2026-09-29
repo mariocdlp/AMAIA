@@ -308,7 +308,41 @@ seated capacity; guests that can't be seated are reported in the read-back
 
 ---
 
-## 6. UX blueprint
+## 6. Visual identity — El Paso Fiesta
+
+The app is skinned to the **El Paso Fiesta design system**, so the perk looks like the business rather than like a generic tool.
+
+### Tokens
+
+| Token | Value | Used for |
+|---|---|---|
+| Fiesta Red | `#ED5959` | Primary CTAs, the running estimate, selection outlines, string lights on the plan |
+| Turquoise | `#0CBFB7` | Links, tags, prices, selected/active states, tent windows on the plan |
+| Cream | `#FAF3E6` | Warm sections — the venue floor, the estimate bar, input and row fills |
+| White | `#FFFFFF` | Primary background — canvas, sheets, bars |
+| Ink | `#1A1A1A` | Body text and headlines; the header bar, secondary buttons, floating overlays, tent walls |
+| Slate | `#71706A` | Secondary text, captions, uppercase labels |
+| Sand Line | `#E5DDC9` | Borders on cream |
+| Hairline | `#E5E5E5` | Borders on white |
+
+### Rules the app follows
+
+- **Red and turquoise are accents, never backgrounds.** Large surfaces stay white or cream; full-strength colour is reserved for buttons, tags and small highlights.
+- **Red is for buttons and highlights; links and tags are turquoise.** The ✨ build button, the "Request this quote" CTA, the RECOMMENDED badge and the estimate total are red. Item prices, the toast's Undo, and every selected toggle or radio are turquoise.
+- **Ink is the secondary button**, matching the system's "Browse Rentals" style — the Auto ✨ button and the chrome bar are ink.
+- **Type**: **Archivo Black** for display (the wordmark, sheet headings, the estimate figure), **Inter** 400–800 for body and UI. Both are embedded in the page as `woff2` data URIs — the artifact CSP blocks font CDNs, and a silent fallback would break the identity. Uppercase labels are Inter 700 at 10–13 px with ~1.5 px tracking, in Slate.
+
+### Applied to the plan drawing
+
+The canvas is part of the brand, not a neutral diagram: the venue floor is **Cream** on a white page with Sand grid lines, tables are a warm tan drawn from the sand family, tent walls are **Ink**, tent **windows are Turquoise**, and **string lights are Fiesta Red** — which reads as festive rather than as a warning. The exported plan image inherits all of it.
+
+### Dark mode
+
+The supplied system is light-only, so the dark palette is derived rather than invented: ink-based warm surfaces, cream text, and the two accents lifted (`#F07070`, `#16D6CD`) to hold contrast on dark. Light remains the reference.
+
+---
+
+## 7. UX blueprint
 
 ```
 ┌──────────────────────────────┐
@@ -340,7 +374,7 @@ seated capacity; guests that can't be seated are reported in the read-back
 
 ---
 
-## 7. Technical architecture
+## 8. Technical architecture
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -381,7 +415,7 @@ Key invariants encoded in the model, not the UI:
 
 ---
 
-## 8. Build roadmap
+## 9. Build roadmap
 
 | Phase | Scope | Est. |
 |---|---|---|
@@ -398,7 +432,7 @@ Free-standing chair rows (ceremonies), **per-side chair control on a table** (so
 
 ---
 
-## 9. Risks & open questions
+## 10. Risks & open questions
 
 1. **Ceiling liner & leg liner pricing** — in the menu but unpriced; need numbers or confirm "price on request" is acceptable at launch.
 2. **Tablecloth pricing** — spandex white/black currently quoted at $0; confirm whether linens are billed.

@@ -36,12 +36,13 @@ It is a demo, not the product: everything lives in memory, so a reload starts a 
 - **Live quote** — every item priced from the catalog, with an itemized sheet and a "Request this quote" handoff.
 - **Auto arrange** — the guided four-question version of the prompt box.
 - **Save as image** — a to-scale PNG with a scale bar and the itemized estimate, ready to send.
+- **El Paso Fiesta branding** — the brand palette, Archivo Black / Inter typography, and the system's usage rules applied throughout, including the plan drawing and the exported image. Fonts are embedded in the file, so it looks right offline.
 
 ## Pricing
 
 Prices live in the `CAT` and `CHAIRS` objects at the top of the prototype's `<script>`. In the real app this becomes a remote-refreshable `catalog.json` so prices change without an app release.
 
-Some prices still need confirming from the owner: **ceiling liners** and **leg liners** show as "price on request", **tablecloths** are quoted as included, and **partial wall sets** are billed at a quarter of the kit price per panel. See §9 of the plan for the full list of open questions.
+Some prices still need confirming from the owner: **ceiling liners** and **leg liners** show as "price on request", **tablecloths** are quoted as included, and **partial wall sets** are billed at a quarter of the kit price per panel. See §10 of the plan for the full list of open questions.
 
 ## Tests
 
