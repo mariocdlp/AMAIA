@@ -199,6 +199,23 @@ svg#cv{display:block; width:100%; height:100%; touch-action:none; user-select:no
 .titem b{font-size:11px; white-space:nowrap;}
 .titem span{font-size:10.5px; color:var(--tag); font-weight:700; font-variant-numeric:tabular-nums;}
 
+/* ---- access gate ---- */
+#gate{position:absolute; inset:0; z-index:50; background:var(--ground);
+  display:none; place-items:center; padding:24px; overflow-y:auto;}
+#gate[data-on="1"]{display:grid;}
+.gatecard{width:100%; max-width:340px; text-align:center; display:flex; flex-direction:column; gap:0;}
+.gatecard .eyebrow{font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase;
+  color:var(--red); margin-bottom:10px;}
+.gatecard h1{font-family:'Archivo Black','Arial Black',Impact,sans-serif; font-weight:400;
+  font-size:30px; line-height:1.05; letter-spacing:-.6px; margin:0 0 10px; color:var(--ink);}
+.gatecard p{margin:0 0 16px; font-size:14px; line-height:1.5; color:var(--ink-2);}
+#gateCode{width:100%; border:1px solid var(--sand); background:var(--paper); color:var(--ink);
+  border-radius:99px; padding:14px 18px; font-size:16px; font-family:inherit; font-weight:600;
+  text-align:center; letter-spacing:2px; text-transform:uppercase; outline:none; margin-bottom:10px;}
+#gateCode:focus{border-color:var(--teal);}
+.gatecard .cta{margin-top:0;}
+#gateErr{margin:12px 0 0; font-size:13px; font-weight:600; color:var(--danger); min-height:1em;}
+.gatefoot{margin-top:18px !important; font-size:12px !important; color:var(--slate);}
 #veil{position:absolute; inset:0; background:rgba(15,18,12,.45); opacity:0; pointer-events:none;
   transition:.22s; z-index:18;}
 #veil.on{opacity:1; pointer-events:auto;}
@@ -280,6 +297,18 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
 </style>
 
 <div id="app">
+  <div id="gate" hidden>
+    <form class="gatecard" id="gateForm">
+      <span class="eyebrow">El Paso Fiesta</span>
+      <h1>Event Floor Planner</h1>
+      <p id="gateMsg">Enter your access code to start planning.</p>
+      <input id="gateCode" type="text" autocomplete="one-time-code" autocapitalize="characters"
+             spellcheck="false" placeholder="Access code" aria-label="Access code">
+      <button class="cta" type="submit">Open the planner</button>
+      <p id="gateErr" role="alert"></p>
+      <p class="gatefoot">Trouble getting in? Reply to your Fiesta Tent &amp; Party Rental email and we'll send a new code.</p>
+    </form>
+  </div>
   <header>
     <div class="brand"><b>Event Floor Planner</b><span>Prototype demo</span></div>
     <button class="chip" id="venueChip">40 × 60 ft ✎</button>
@@ -358,6 +387,23 @@ button:focus-visible,.titem:focus-visible,#pin:focus-visible{outline:2px solid v
 
 <script>
 "use strict";
+/* ============ deployment config ============
+   Edit these when you publish. Everything else can stay as it is.
+
+   accessCodes — who may open the planner.
+     []                       → open to everyone (use this when the GHL page
+                                itself is already behind a membership)
+     ["FIESTA26","VIP"]       → only these codes work. Case and spaces are
+                                ignored, so "fiesta 26" matches "FIESTA26".
+   A code can also arrive in the URL, which is what makes it work inside a
+   HighLevel code element:  …/planner.html?k=FIESTA26
+   Once a code is accepted it is remembered on that device.                     */
+const CONFIG = {
+  accessCodes: [],
+  gateMessage: "Enter your access code to start planning.",
+  rememberAccess: true,
+};
+
 /* ============ catalog ============ */
 const CHAIRS = { basic:{name:"Basic chair", price:1.8}, padded:{name:"Padded white chair", price:3} };
 const CAT = {
@@ -2242,5 +2288,45 @@ if (window.visualViewport){
   vv.addEventListener("scroll", fix);
 }
 
+/* ============ access gate ============ */
+const GATE_STORE = "epf-planner-access";
+const tidyCode = v => String(v == null ? "" : v).replace(/[\s-]/g, "").toUpperCase();
+const codeAccepted = v => CONFIG.accessCodes.some(c => tidyCode(c) === tidyCode(v)) && tidyCode(v) !== "";
+function openPlanner(code){
+  if (CONFIG.rememberAccess && code){
+    try { localStorage.setItem(GATE_STORE, tidyCode(code)); } catch (e) {}
+  }
+  const g = $("gate");
+  if (g) g.remove();
+  applyView();
+}
+function initGate(){
+  const g = $("gate");
+  if (!g) return;
+  if (!CONFIG.accessCodes.length) return openPlanner(null);   // ungated
+
+  let fromUrl = null, stored = null;
+  try {
+    const q = new URLSearchParams(location.search);
+    fromUrl = q.get("k") || q.get("code") || q.get("access");
+  } catch (e) {}
+  try { stored = localStorage.getItem(GATE_STORE); } catch (e) {}
+  if (codeAccepted(fromUrl)) return openPlanner(fromUrl);
+  if (codeAccepted(stored)) return openPlanner(stored);
+
+  $("gateMsg").textContent = CONFIG.gateMessage;
+  g.hidden = false;
+  g.setAttribute("data-on", "1");
+  $("gateForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = $("gateCode").value;
+    if (codeAccepted(v)) return openPlanner(v);
+    $("gateErr").textContent = "That code isn't recognised — check it and try again.";
+    $("gateCode").select();
+  });
+  setTimeout(() => { try { $("gateCode").focus(); } catch (e) {} }, 120);
+}
+
 render(); fitView();
+initGate();
 </script>

@@ -6,6 +6,7 @@ A lightweight "Social Tables"-style event floor planner for iPhone, offered as a
 
 | File | What it is |
 |---|---|
+| [`DEPLOY.md`](DEPLOY.md) | How to publish it on epfiesta.com — hosting, access codes, and the HighLevel code-element embed. |
 | [`PLAN.md`](PLAN.md) | The product and technical plan — design invariants, inventory and pricing, context menus, the prompt box, auto-arrange, architecture, and a phased roadmap. |
 | [`prototype.html`](prototype.html) | A working interactive prototype. Single file, no build step, no dependencies, no network calls. |
 

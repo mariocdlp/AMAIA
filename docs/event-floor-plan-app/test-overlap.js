@@ -2,7 +2,7 @@ const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/prototype.html','utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>\s*$/)[1];
 function mkEl(id){
-  return { id, style:{}, dataset:{}, classList:{add(){},remove(){},toggle(){},contains(){return false}},
+  return { id, style:{}, dataset:{}, remove(){}, hidden:false, select(){}, classList:{add(){},remove(){},toggle(){},contains(){return false}},
     innerHTML:'', value:'', textContent:'', disabled:false,
     addEventListener(){}, focus(){}, blur(){},
     getBoundingClientRect(){ return {width:390, height:520, left:0, top:0}; },
